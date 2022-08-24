@@ -20,7 +20,9 @@ We need a PL/SQL parser library to convert (PL/)SQL into an abstract syntax tree
     2. [Migration Assessment](#migration-assessment)
     3. [Browser and WASM](#browser-and-wasm)
     4. [Transpiler to PL/pgSQL](#transpiler-to-plpgsql)
-2. [Desired Outcome and Service Provision](#deliverables-and-service-provision)
+2. [Desired Outcome and Service Provision](#desired-outcomes-and-service-provision)
+3. [Questions to solve](#questions-to-solve)
+3. [References](#references)
 
 ## Problem Description
 Given a (valid) SQL DDL command to `CREATE` a DBO extract its metadata.
@@ -150,6 +152,8 @@ The user performs an assessment with the following steps:
 Step 4. does the heavy lifting since there we have to extract the meta-data for all PL/SQL code.
 This means we have to interface the JavaScript (TypeScript) code with the analyzer written in Rust.
 
+WebAssembly is a prime target of target with a large community and [first-hand endorse  ment](https://www.rust-lang.org/what/wasm). There also exists an [offical book](https://rustwasm.github.io/docs/book/).
+
 ### Transpiler to PL/pgSQL
 If we can parse (analyze) the PL/SQL code we want to transpile code constructs to PL/pgSQL:
 * automatically: for code constructs we know they can be transpiled correctly
@@ -159,7 +163,7 @@ Show code constructs (as error/warning) which may not be transpiled because of a
 
 ## Desired Outcomes and Service Provision
 
-Ferrous Systems provides its expertise with Rust, compiler construction and the tooling around lexers/parers to coach CYBERTEC's developers with the goal to find an optimal technical solution to the [problem field desrcibed above](#problem-description).
+Ferrous Systems provides its expertise with Rust, compiler construction and the tooling around lexers/parers to coach CYBERTEC's developers with the goal to find an optimal technical solution to the [problem field described above](#problem-description).
 
 The team decides on concrete technologies and
 * Implements a PoC written in Rust to extract the metadata of the Oracle UDP above returning the metadata
@@ -174,20 +178,21 @@ Describe solutions
 * How we can use the tooling to replace the ANTLR4 parser to create the database meta-data model.
 
 > **Non-Goal**  
-> We do not implement a full fledged solution.
+> Implementening a full fledged solution.
 
 ## Questions to Solve
 
 By implementing the PoC we want to find answers/solutions to the following questions
 
 * General software design: boundaries between the analyzer, assessment calculation, respective transpiler (apply fixes)
-    * DDL(Oracle Pl/SQL) --[analyzer]--> Fixes --[apply fixes]--> DDL(PL/pgSQL)
-    * DDL(Oracle Pl/SQL) --[analyzer]--> Fixes --[assessment]--> migration cost
+    * DDL(Oracle PL/SQL) --[analyzer]--> Fixes --[apply fixes]--> DDL(PL/pgSQL)
+    * DDL(Oracle PL/SQL) --[analyzer]--> Fixes --[assessment]--> migration cost
     * --> How do we write a "Clippy for PL/pgSQL" which provides the fixes for the source PL/SQL code?
 
 * Analyzer (and transpiler) are going to operate on abstract syntax trees (AST)
     * How could the data structure of a typed AST look like?
     * Do we have AST data types for each database technology (PostgreSQL, Oracle, DB2, ...) or do we have a super-set of AST with which we can represent all SQL dialects?
+      - Christoph: I'd definitely go with the second option, an AST should be language-agnostic. Language-specific constructs can then be integrated into the AST as language-specific leafs (think: enum-like).
     * Perception of what we do:
         * We work only with PL/pgSQL AST - search for erroneous nodes  vs.
         * We start from an AST provided by the source PL/SQL code and apply transformations to map it to a PL/pgSQL AST
@@ -197,14 +202,21 @@ By implementing the PoC we want to find answers/solutions to the following quest
 
 * Lexer/parser: how are we going to create the trees?
     * Do we define a grammar and use a parser generator or should we write the parser manually using parser combinator frameworks?
+      - Christoph: Definitely parser generator using grammar. Although parser combinator might be a bit more flexible (but not necessarily), the biggest contra is that they are slower. And since running it in a browser is a main goal, this goes directly against that. Parser combinators are usually used for small one-off parser, and thus really not that practible for parsing SQL. It would also result in a lot more code to maintain (and probably a bigger final compiled size, again might not be that suitable for use in browsers).
     * The goal is to reduce the maintenance effort and reduce the likelihood of errors.
         * How much work do we have to add a new database technology? A different version?
         * How much work do we have to for language constructs of a new database version?
 
 * We don't want to reinvent the wheel: open source libraries we could use to base our work on?
     * There are SQL parser libraries can we use them as starting point?
+      - [pest](https://pest.rs/): is probably one of the best-known and widely-used parser libraries. Also in active and regular development. (Christoph: I've used and worked with it before, would be me preferred choice.)
+      - [lalrpop](https://github.com/lalrpop/lalrpop): Less popular/widely used, rather slow releases/development cycles.
+      - [peg](https://github.com/kevinmehall/rust-peg): Smallest of all the options. Also uses [PEG](https://en.wikipedia.org/wiki/Parsing_expression_grammar) like pest.
 
 * What is a goof iterative approach to show working code in a PoC?
   Start with the simplest constructs, enhance the analytical power in each iteration.
   We do not want to write a full fledged solution before we can extract the minimal information.
 
+## References
+
+An article I found recenetly regarding parsing SQL that might be of interest: (Parsing SQL - Strumenta)[https://tomassetti.me/parsing-sql/]
