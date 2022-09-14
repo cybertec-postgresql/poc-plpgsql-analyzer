@@ -27,7 +27,7 @@ pub enum Type {
 /// The result of parsing and analyzing a piece of SQL code.
 #[wasm_bindgen]
 #[derive(Debug, Eq, PartialEq)]
-pub struct Assessment {
+pub struct DboMetaData {
     lines_of_code: usize,
     sql_statements: Vec<()>,
 }
@@ -50,7 +50,7 @@ impl fmt::Display for AnalyzeError {
 }
 
 /// Main entry point into the analyzer.
-pub fn analyze(typ: Type, sql: &str) -> Result<Assessment, AnalyzeError> {
+pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     Err(AnalyzeError::Unknown)
 }
 
@@ -66,7 +66,7 @@ pub fn analyze(typ: Type, sql: &str) -> Result<Assessment, AnalyzeError> {
 /// [`JsError`][`wasm_bindgen::JsError`] doesn't implement the
 /// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
 #[wasm_bindgen(js_name = "analyze")]
-pub fn analyze_js(typ: Type, sql: &str) -> Result<Assessment, JsError> {
+pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(|err| err.into())
 }
 
