@@ -1,0 +1,35 @@
+# Development
+
+## Getting started
+
+First of, you need a working Rust toolchain using [rustup](https://rustup.rs/).
+
+> **Note**
+> This is due to the `wasm32-unknown-unknown` target being not a default one [yet]
+> and needs to be downloaded separatly. Rustup will take care of that automatically.
+
+To generate the WASM code and it's corresponding JavaScript/TypeScript bindings,
+the [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/) tool it needed.
+
+> **Note**
+> If you already have a working Rust toolchain installed, you can also just type
+> `cargo install wasm-pack` to install it from source directly.)
+
+Then, simply type 
+```sh
+wasm-pack build --target nodejs
+```
+in the project directory to build.
+
+## Unit tests
+
+To run all the unit tests, simply run
+```sh
+cargo test
+```
+
+#### Optional tools
+
+It is desired to also install the `wasm-opt` tool from the
+[`binaryen`](https://github.com/WebAssembly/binaryen) project,
+which `wasm-pack` will then automatically use to optimize the produced WASM code.
