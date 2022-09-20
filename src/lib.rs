@@ -74,48 +74,12 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 mod tests {
     use super::*;
 
-    const SECURE_DML: &str = r#"
-        CREATE PROCEDURE secure_dml
-        IS
-        BEGIN
-          IF TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
-                OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
-            RAISE_APPLICATION_ERROR (-20205,
-                'You may only make changes during normal office hours');
-          END IF;
-        END secure_dml;
-    "#;
-
+    const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
     /// Created code by extracting PL/SQL trigger body into PL/pgSQL function.
     /// Meaning, we are going to end up with neither valid PL/SQL nor PL/pgSQL
     /// code.
-    const UPDATE_JOB_HISTORY_TRIGGER_FUNCTION: &str = r#"
-        CREATE FUNCTION update_job_history()
-          RETURNS TRIGGER
-          LANGUAGE PLPGSQL
-        AS $$
-        BEGIN
-          add_job_history(:old.employee_id, :old.hire_date, sysdate,
-                          :old.job_id, :old.department_id);
-        END;
-        $$
-    "#;
-
-    const ADD_JOB_HISTORY: &str = r#"
-        CREATE OR REPLACE PROCEDURE add_job_history
-          (  p_emp_id          job_history.employee_id%type
-           , p_start_date      job_history.start_date%type
-           , p_end_date        job_history.end_date%type
-           , p_job_id          job_history.job_id%type
-           , p_department_id   job_history.department_id%type
-           )
-        IS
-        BEGIN
-          INSERT INTO job_history (employee_id, start_date, end_date,
-                                   job_id, department_id)
-            VALUES(p_emp_id, p_start_date, p_end_date, p_job_id, p_department_id);
-        END add_job_history;
-    "#;
+    const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
+    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
 
     #[test]
     fn test_lines_of_code() {
