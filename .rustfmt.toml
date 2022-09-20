@@ -1,0 +1,5 @@
+edition = "2021"
+newline_style = "Unix"
+
+# Nightly-only options, should be enabled as they become stable.
+#wrap_comments = true

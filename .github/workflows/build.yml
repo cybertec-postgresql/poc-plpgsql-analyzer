@@ -1,0 +1,119 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  # RUSTFLAGS: -D warnings
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    name: Format, build, clipp, test and doc
+    runs-on: [self-hosted, Linux]
+    container: debian:stable
+    timeout-minutes: 8
+    strategy:
+      matrix:
+        toolchain:
+          - 1.56.1 # MSRV
+          - stable
+          - nightly
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install tools
+        run: |
+          apt-get update \
+          && apt-get install --assume-yes curl gcc
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          components: clippy, rustfmt
+          override: true
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Run rustfmt check
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: -- --check
+
+      - name: Build project
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+
+      - name: Run clippy
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+
+      - name: Run tests
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+
+      - name: Generate rustdoc
+        uses: actions-rs/cargo@v1
+        with:
+          command: doc
+          args: --no-deps
+
+  build-wasm:
+    name: Build WASM library
+    runs-on: [self-hosted, Linux]
+    container: debian:stable
+    timeout-minutes: 8
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install tools
+        run: |
+          apt-get update \
+          && apt-get install --assume-yes \
+            curl binaryen gcc libssl-dev make pkg-config
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Install wasm-pack
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: wasm-pack
+
+      - name: Build using wasm-pack
+        run: wasm-pack build --release --target nodejs
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: wasm-library
+          path: pkg/
