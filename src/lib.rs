@@ -83,34 +83,23 @@ mod tests {
 
     #[test]
     fn test_lines_of_code() {
-        assert_eq!(
-            analyze(Type::Procedure, ADD_JOB_HISTORY)
-                .unwrap()
-                .lines_of_code,
-            3,
-        );
+        let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().lines_of_code, 3);
 
-        assert_eq!(
-            analyze(Type::TriggerBody, UPDATE_JOB_HISTORY_TRIGGER_FUNCTION)
-                .unwrap()
-                .lines_of_code,
-            2,
-        );
+        let result = analyze(Type::TriggerBody, UPDATE_JOB_HISTORY);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().lines_of_code, 2);
 
-        assert_eq!(
-            analyze(Type::Procedure, SECURE_DML).unwrap().lines_of_code,
-            5,
-        );
+        let result = analyze(Type::Procedure, SECURE_DML);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().lines_of_code, 5);
     }
 
     #[test]
     fn test_number_of_statements() {
-        assert_eq!(
-            analyze(Type::Procedure, ADD_JOB_HISTORY)
-                .unwrap()
-                .sql_statements
-                .len(),
-            1,
-        );
+        let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap().sql_statements.len(), 1);
     }
 }
