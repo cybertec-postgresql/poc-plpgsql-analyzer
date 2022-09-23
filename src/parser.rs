@@ -7,12 +7,14 @@
 use crate::AnalyzeError;
 use nom::Finish;
 
+/// A specific location in the input data.
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Span {
     line: usize,
     column: usize,
 }
 
+/// An parameter in a procedure definition.
 #[derive(Debug, Eq, PartialEq)]
 pub struct ProcedureParam {
     span: Span,
@@ -20,6 +22,7 @@ pub struct ProcedureParam {
     typ: String,
 }
 
+/// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Node {
     ProcedureDef {
@@ -31,15 +34,19 @@ pub enum Node {
     },
 }
 
+/// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]
 pub enum ParseError {
+    /// The input is incomplete, i.e. it could not be fully parsed through.
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
+    /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
 }
 
 impl Span {
+    /// Currently only used by tests.
     #[cfg(test)]
     fn new(line: usize, column: usize) -> Self {
         Self { line, column }
@@ -75,6 +82,7 @@ mod detail {
     use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
     use nom::{AsChar, IResult, InputTakeAtPosition};
 
+    /// Custom span as used by parser internals.
     type LocatedSpan<'a> = nom_locate::LocatedSpan<&'a str>;
 
     impl From<LocatedSpan<'_>> for Span {
@@ -121,6 +129,7 @@ mod detail {
         alt((recognize(separated_pair(inner, char('.'), inner)), inner))(input)
     }
 
+    /// Parses the start of a procedure, including the procedure name.
     fn procedure_start(input: LocatedSpan) -> IResult<LocatedSpan, (Span, bool, LocatedSpan)> {
         map(
             tuple((
@@ -133,10 +142,13 @@ mod detail {
         )(input)
     }
 
+    /// Parses a single procedure parameter type, either a base type or a column
+    /// reference.
     fn procedure_param_type(input: LocatedSpan) -> IResult<LocatedSpan, LocatedSpan> {
         alt((recognize(pair(ident, tag_no_case("%type"))), ident))(input)
     }
 
+    /// Parses a single procedure paramter, i.e. name and it's datatype.
     fn procedure_param(input: LocatedSpan) -> IResult<LocatedSpan, ProcedureParam> {
         map(pair(ws(ident), ws(procedure_param_type)), |(name, typ)| {
             ProcedureParam {
@@ -147,6 +159,7 @@ mod detail {
         })(input)
     }
 
+    /// Parses a list of procedure parameters, as surrounded by `(` and `)`.
     fn procedure_params(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureParam>> {
         delimited(
             char('('),
@@ -155,6 +168,8 @@ mod detail {
         )(input)
     }
 
+    /// Parses the body of a procedure, that is anything between `IS BEGIN` and
+    /// `END <name>;`.
     fn procedure_body(input: LocatedSpan) -> IResult<LocatedSpan, String> {
         preceded(
             tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
@@ -172,6 +187,7 @@ mod detail {
         )(input)
     }
 
+    /// Parses an complete PL/SQL procedure.
     pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
         all_consuming(map(
             tuple((procedure_start, procedure_params, procedure_body)),
@@ -186,6 +202,7 @@ mod detail {
     }
 }
 
+/// Public entry point for parsing a complete PL/SQL procedure.
 pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
     detail::procedure(input.into()).finish()
         .map(|(_, node)| node)
