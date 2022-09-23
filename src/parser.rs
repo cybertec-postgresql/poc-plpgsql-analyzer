@@ -14,7 +14,7 @@ pub struct Span {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-pub struct ProcedureArg {
+pub struct ProcedureParam {
     span: Span,
     name: String,
     typ: String,
@@ -26,7 +26,7 @@ pub enum Node {
         span: Span,
         name: String,
         replace: bool,
-        arguments: Vec<ProcedureArg>,
+        parameters: Vec<ProcedureParam>,
         body: String, // Should eventually be something like `Vec<ParseNode>`
     },
 }
@@ -133,13 +133,13 @@ mod detail {
         )(input)
     }
 
-    fn procedure_arg_type(input: LocatedSpan) -> IResult<LocatedSpan, LocatedSpan> {
+    fn procedure_param_type(input: LocatedSpan) -> IResult<LocatedSpan, LocatedSpan> {
         alt((recognize(pair(ident, tag_no_case("%type"))), ident))(input)
     }
 
-    fn procedure_arg(input: LocatedSpan) -> IResult<LocatedSpan, ProcedureArg> {
-        map(pair(ws(ident), ws(procedure_arg_type)), |(name, typ)| {
-            ProcedureArg {
+    fn procedure_param(input: LocatedSpan) -> IResult<LocatedSpan, ProcedureParam> {
+        map(pair(ws(ident), ws(procedure_param_type)), |(name, typ)| {
+            ProcedureParam {
                 span: name.into(),
                 name: (*name.fragment()).to_owned(),
                 typ: (*typ.fragment()).to_owned(),
@@ -147,10 +147,10 @@ mod detail {
         })(input)
     }
 
-    fn procedure_args(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureArg>> {
+    fn procedure_params(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureParam>> {
         delimited(
             char('('),
-            separated_list0(char(','), procedure_arg),
+            separated_list0(char(','), procedure_param),
             char(')'),
         )(input)
     }
@@ -174,12 +174,12 @@ mod detail {
 
     pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
         all_consuming(map(
-            tuple((procedure_start, procedure_args, procedure_body)),
-            |((span, replace, name), arguments, body)| Node::ProcedureDef {
+            tuple((procedure_start, procedure_params, procedure_body)),
+            |((span, replace, name), parameters, body)| Node::ProcedureDef {
                 span,
                 name: (*name.fragment()).to_owned(),
                 replace,
-                arguments,
+                parameters,
                 body,
             },
         ))(input)
@@ -210,28 +210,28 @@ mod tests {
                 span: Span::new(1, 1),
                 name: "add_job_history".into(),
                 replace: true,
-                arguments: vec![
-                    ProcedureArg {
+                parameters: vec![
+                    ProcedureParam {
                         span: Span::new(2, 6),
                         name: "p_emp_id".into(),
                         typ: "job_history.employee_id%type".into(),
                     },
-                    ProcedureArg {
+                    ProcedureParam {
                         span: Span::new(3, 6),
                         name: "p_start_date".into(),
                         typ: "job_history.start_date%type".into(),
                     },
-                    ProcedureArg {
+                    ProcedureParam {
                         span: Span::new(4, 6),
                         name: "p_end_date".into(),
                         typ: "job_history.end_date%type".into(),
                     },
-                    ProcedureArg {
+                    ProcedureParam {
                         span: Span::new(5, 6),
                         name: "p_job_id".into(),
                         typ: "job_history.job_id%type".into(),
                     },
-                    ProcedureArg {
+                    ProcedureParam {
                         span: Span::new(6, 6),
                         name: "p_department_id".into(),
                         typ: "job_history.department_id%type".into(),
