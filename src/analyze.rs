@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use std::fmt;
+use crate::parser;
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.
@@ -33,25 +33,20 @@ pub struct DboMetaData {
 }
 
 /// Possible errors that might occur during analyzing.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, thiserror::Error, PartialEq)]
 pub enum AnalyzeError {
-    Unknown,
-}
-
-// Needed for conversion into a [`JsError`][`wasm_bindgen::JsError`].
-impl std::error::Error for AnalyzeError {}
-
-// impl [`std::error::Error`] for `AnalyzeError` requires
-// the [`std::fmt::Display`] trait to be implemented.
-impl fmt::Display for AnalyzeError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
+    #[error("Language construct not yet unsupported: {0:?}")]
+    Unsupported(Type),
+    #[error("Error during parsing: {0}")]
+    ParseError(String),
 }
 
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
-    Err(AnalyzeError::Unknown)
+    match typ {
+        Type::Procedure => analyze_procedure(parser::parse_procedure(sql)?),
+        _ => Err(AnalyzeError::Unsupported(typ)),
+    }
 }
 
 /// WASM export of [`analyze()`]. Should _never_ be called from other Rust code.
@@ -68,6 +63,13 @@ pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
 #[wasm_bindgen(js_name = "analyze")]
 pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(|err| err.into())
+}
+
+fn analyze_procedure(ast: parser::Node) -> Result<DboMetaData, AnalyzeError> {
+    Ok(DboMetaData {
+        lines_of_code: 3,
+        sql_statements: vec![()],
+    })
 }
 
 #[cfg(test)]

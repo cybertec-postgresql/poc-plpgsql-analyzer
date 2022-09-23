@@ -5,5 +5,6 @@
 //! Proof of concept interface and implementation for a PL/SQL parser.
 
 mod analyze;
+mod parser;
 
 pub use analyze::*;

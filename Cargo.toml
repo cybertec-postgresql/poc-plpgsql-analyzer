@@ -13,8 +13,10 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-wasm-bindgen = "0.2.83"
+nom = "^7.1.1"
+nom_locate = "^4.0.0"
+thiserror = "^1.0.35"
+wasm-bindgen = "^0.2.83"
 
 [profile.release]
-opt-level = "s"
 lto = true
