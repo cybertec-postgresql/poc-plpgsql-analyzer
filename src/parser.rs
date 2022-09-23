@@ -59,7 +59,10 @@ impl<I: ToString> From<nom::error::Error<I>> for ParseError {
         use nom::error::ErrorKind;
 
         match error {
-            Error { code: ErrorKind::Eof, input } => Self::Incomplete(input.to_string()),
+            Error {
+                code: ErrorKind::Eof,
+                input,
+            } => Self::Incomplete(input.to_string()),
             Error { code, input } => Self::Unhandled(format!("{:?}", code), input.to_string()),
         }
     }
@@ -204,7 +207,8 @@ mod detail {
 
 /// Public entry point for parsing a complete PL/SQL procedure.
 pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
-    detail::procedure(input.into()).finish()
+    detail::procedure(input.into())
+        .finish()
         .map(|(_, node)| node)
         .map_err(|err| err.into())
 }
