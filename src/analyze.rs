@@ -75,6 +75,7 @@ fn analyze_procedure(ast: parser::Node) -> Result<DboMetaData, AnalyzeError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use pretty_assertions::assert_eq;
 
     const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
     /// Automatically created code by extracting PL/SQL trigger body into a
@@ -86,22 +87,22 @@ mod tests {
     #[test]
     fn test_lines_of_code() {
         let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "{:#?}", result);
         assert_eq!(result.unwrap().lines_of_code, 3);
 
         let result = analyze(Type::TriggerBody, UPDATE_JOB_HISTORY);
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "{:#?}", result);
         assert_eq!(result.unwrap().lines_of_code, 2);
 
         let result = analyze(Type::Procedure, SECURE_DML);
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "{:#?}", result);
         assert_eq!(result.unwrap().lines_of_code, 5);
     }
 
     #[test]
     fn test_number_of_statements() {
         let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "{:#?}", result);
         assert_eq!(result.unwrap().sql_statements.len(), 1);
     }
 }
