@@ -191,3 +191,54 @@ pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
         .map(|(_, node)| node)
         .map_err(|err| err.into())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
+    const ADD_JOB_HISTORY_BODY: &str = include_str!("../tests/fixtures/add_job_history_body.sql");
+
+    #[test]
+    fn test_parse_procedure() {
+        let result = parse_procedure(ADD_JOB_HISTORY);
+        assert!(result.is_ok(), "{:#?}", result);
+        assert_eq!(
+            result.unwrap(),
+            Node::ProcedureDef {
+                span: Span::new(1, 1),
+                name: "add_job_history".into(),
+                replace: true,
+                arguments: vec![
+                    ProcedureArg {
+                        span: Span::new(2, 6),
+                        name: "p_emp_id".into(),
+                        typ: "job_history.employee_id%type".into(),
+                    },
+                    ProcedureArg {
+                        span: Span::new(3, 6),
+                        name: "p_start_date".into(),
+                        typ: "job_history.start_date%type".into(),
+                    },
+                    ProcedureArg {
+                        span: Span::new(4, 6),
+                        name: "p_end_date".into(),
+                        typ: "job_history.end_date%type".into(),
+                    },
+                    ProcedureArg {
+                        span: Span::new(5, 6),
+                        name: "p_job_id".into(),
+                        typ: "job_history.job_id%type".into(),
+                    },
+                    ProcedureArg {
+                        span: Span::new(6, 6),
+                        name: "p_department_id".into(),
+                        typ: "job_history.department_id%type".into(),
+                    },
+                ],
+                body: ADD_JOB_HISTORY_BODY.into(),
+            },
+        );
+    }
+}
