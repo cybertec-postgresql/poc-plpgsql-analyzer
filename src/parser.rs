@@ -4,8 +4,8 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use crate::AnalyzeError;
 use nom::Finish;
+use std::fmt;
 
 /// A specific location in the input data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -30,7 +30,7 @@ pub enum Node {
         name: String,
         replace: bool,
         parameters: Vec<ProcedureParam>,
-        body: String, // Should eventually be something like `Vec<ParseNode>`
+        body: String, // Should eventually be something like `Vec<Node>`
     },
 }
 
@@ -68,9 +68,11 @@ impl<I: ToString> From<nom::error::Error<I>> for ParseError {
     }
 }
 
-impl From<ParseError> for AnalyzeError {
-    fn from(error: ParseError) -> Self {
-        AnalyzeError::ParseError(error.to_string())
+impl fmt::Display for Node {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Node::ProcedureDef { .. } => write!(f, "ProcedureDef"),
+        }
     }
 }
 

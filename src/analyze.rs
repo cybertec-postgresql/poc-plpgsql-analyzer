@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use crate::parser;
+use crate::parser::{parse_procedure, Node, ParseError};
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.
@@ -39,12 +39,20 @@ pub enum AnalyzeError {
     Unsupported(Type),
     #[error("Error during parsing: {0}")]
     ParseError(String),
+    #[error("Expected {0} node, got {1}")]
+    NodeError(String, String),
+}
+
+impl From<ParseError> for AnalyzeError {
+    fn from(error: ParseError) -> Self {
+        AnalyzeError::ParseError(error.to_string())
+    }
 }
 
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        Type::Procedure => analyze_procedure(parser::parse_procedure(sql)?),
+        Type::Procedure => analyze_procedure(parse_procedure(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -65,9 +73,15 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(|err| err.into())
 }
 
-fn analyze_procedure(ast: parser::Node) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(node: Node) -> Result<DboMetaData, AnalyzeError> {
+    let body = match node {
+        Node::ProcedureDef { body, .. } => body,
+        // other => return Err(AnalyzeError::NodeError("ProcedureDef".to_owned(),
+        // other.to_string())),
+    };
+
     Ok(DboMetaData {
-        lines_of_code: 3,
+        lines_of_code: body.matches('\n').count(),
         sql_statements: vec![()],
     })
 }
