@@ -22,4 +22,8 @@ wasm-bindgen = "^0.2.83"
 lto = true
 
 [dev-dependencies]
+datatest = "0.7.1"
 pretty_assertions = "1.3.0"
+
+[package.metadata.nix]
+build = true
