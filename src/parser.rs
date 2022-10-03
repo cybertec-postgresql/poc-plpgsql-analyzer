@@ -166,7 +166,7 @@ mod detail {
                 separated_list0(char(','), procedure_param),
                 char(')'),
             )),
-            |params| params.unwrap_or_else(Vec::new),
+            Option::unwrap_or_default,
         )(input)
     }
 
@@ -199,7 +199,7 @@ mod detail {
     pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
         let (input, ((span, replace, name), parameters)) =
             pair(procedure_start, procedure_params)(input)?;
-        let (input, body) = procedure_body(input, *name.fragment())?;
+        let (input, body) = procedure_body(input, name.fragment())?;
 
         Ok((
             input,
@@ -219,7 +219,7 @@ pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
     detail::procedure(input.into())
         .finish()
         .map(|(_, node)| node)
-        .map_err(|err| err.into())
+        .map_err(Into::into)
 }
 
 #[cfg(test)]
