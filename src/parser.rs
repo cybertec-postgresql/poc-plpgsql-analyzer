@@ -22,16 +22,19 @@ pub struct ProcedureParam {
     typ: String,
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct ProcedureDef {
+    pub span: Span,
+    pub name: String,
+    pub replace: bool,
+    pub parameters: Vec<ProcedureParam>,
+    pub body: String, // Should eventually be something like `Vec<Node>`
+}
+
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Node {
-    ProcedureDef {
-        span: Span,
-        name: String,
-        replace: bool,
-        parameters: Vec<ProcedureParam>,
-        body: String, // Should eventually be something like `Vec<Node>`
-    },
+    ProcedureDef(ProcedureDef),
 }
 
 /// Error type describing all possible parser failures.
@@ -209,13 +212,13 @@ mod detail {
 
         Ok((
             input,
-            Node::ProcedureDef {
+            Node::ProcedureDef(ProcedureDef {
                 span,
                 name: (*name.fragment()).to_owned(),
                 replace,
                 parameters,
                 body,
-            },
+            }),
         ))
     }
 }
@@ -242,7 +245,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         assert_eq!(
             result.unwrap(),
-            Node::ProcedureDef {
+            Node::ProcedureDef(ProcedureDef {
                 span: Span::new(1, 1),
                 name: "add_job_history".into(),
                 replace: true,
@@ -274,7 +277,7 @@ mod tests {
                     },
                 ],
                 body: ADD_JOB_HISTORY_BODY.into(),
-            },
+            }),
         );
     }
 }

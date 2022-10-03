@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use crate::parser::{parse_procedure, Node, ParseError};
+use crate::parser::*;
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.
@@ -75,7 +75,7 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 
 fn analyze_procedure(node: Node) -> Result<DboMetaData, AnalyzeError> {
     let body = match node {
-        Node::ProcedureDef { body, .. } => body,
+        Node::ProcedureDef(ProcedureDef { body, .. }) => body,
         // other => return Err(AnalyzeError::NodeError("ProcedureDef".to_owned(),
         // other.to_string())),
     };
