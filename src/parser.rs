@@ -5,7 +5,6 @@
 //! Implements parsers for different SQL language constructs.
 
 use nom::Finish;
-use std::fmt;
 
 /// A specific location in the input data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -67,14 +66,6 @@ impl<I: ToString> From<nom::error::Error<I>> for ParseError {
                 input,
             } => Self::Incomplete(input.to_string()),
             Error { code, input } => Self::Unhandled(format!("{:?}", code), input.to_string()),
-        }
-    }
-}
-
-impl fmt::Display for Node {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Node::ProcedureDef { .. } => write!(f, "ProcedureDef"),
         }
     }
 }

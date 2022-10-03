@@ -76,8 +76,6 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 fn analyze_procedure(node: Node) -> Result<DboMetaData, AnalyzeError> {
     let body = match node {
         Node::ProcedureDef(ProcedureDef { body, .. }) => body,
-        // other => return Err(AnalyzeError::NodeError("ProcedureDef".to_owned(),
-        // other.to_string())),
     };
 
     Ok(DboMetaData {
