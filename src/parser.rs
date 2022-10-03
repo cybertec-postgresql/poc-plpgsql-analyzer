@@ -166,22 +166,31 @@ mod detail {
 
     /// Parses a list of procedure parameters, as surrounded by `(` and `)`.
     fn procedure_params(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureParam>> {
-        delimited(
-            char('('),
-            separated_list0(char(','), procedure_param),
-            char(')'),
+        map(
+            opt(delimited(
+                char('('),
+                separated_list0(char(','), procedure_param),
+                char(')'),
+            )),
+            |params| params.unwrap_or_else(Vec::new),
         )(input)
     }
 
     /// Parses the body of a procedure, that is anything between `IS BEGIN` and
     /// `END <name>;`.
-    fn procedure_body(input: LocatedSpan) -> IResult<LocatedSpan, String> {
-        preceded(
+    fn procedure_body<'a, E>(
+        input: LocatedSpan<'a>,
+        name: &str,
+    ) -> IResult<LocatedSpan<'a>, String, E>
+    where
+        E: nom::error::ParseError<LocatedSpan<'a>>,
+    {
+        all_consuming(preceded(
             tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
             map(
                 many_till(
-                    recognize(ws(anychar)),
-                    tuple((ws(tag_no_case("end")), ws(ident), ws(char(';')))),
+                    recognize(ws(anychar::<LocatedSpan<'a>, E>)),
+                    tuple((ws(tag_no_case("end")), ws(tag_no_case(name)), ws(char(';')))),
                 ),
                 |(body, _)| {
                     body.into_iter()
@@ -189,21 +198,25 @@ mod detail {
                         .collect::<String>()
                 },
             ),
-        )(input)
+        ))(input)
     }
 
     /// Parses an complete PL/SQL procedure.
     pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
-        all_consuming(map(
-            tuple((procedure_start, procedure_params, procedure_body)),
-            |((span, replace, name), parameters, body)| Node::ProcedureDef {
+        let (input, ((span, replace, name), parameters)) =
+            pair(procedure_start, procedure_params)(input)?;
+        let (input, body) = procedure_body(input, *name.fragment())?;
+
+        Ok((
+            input,
+            Node::ProcedureDef {
                 span,
                 name: (*name.fragment()).to_owned(),
                 replace,
                 parameters,
                 body,
             },
-        ))(input)
+        ))
     }
 }
 
