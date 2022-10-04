@@ -31,3 +31,7 @@ lto = true
 [[test]]
 name = "parser"
 harness = false
+required-features = ["coverage-tests"]
+
+[features]
+coverage-tests = []
