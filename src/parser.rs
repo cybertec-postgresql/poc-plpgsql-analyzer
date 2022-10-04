@@ -94,6 +94,14 @@ mod detail {
         }
     }
 
+    fn discard<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, (), E>
+    where
+        F: FnMut(I) -> IResult<I, O, E>,
+        E: nom::error::ParseError<I>,
+    {
+        map(inner, |_| ())
+    }
+
     /// A combinator that takes a parser `inner` and produces a parser that also
     /// consumes both leading and trailing whitespace, returning the output
     /// of `inner`.
@@ -109,19 +117,17 @@ mod detail {
         E: nom::error::ParseError<I>,
     {
         let linebreak = |input| pair(opt(char('\r')), char('\n'))(input);
-        let space = |input| many0_count(one_of(" \t\r\n"))(input);
-        let single_line_comment = move |input| {
-            opt(preceded(
-                pair(char('-'), char('-')),
-                many_till(anychar, linebreak),
-            ))(input)
+        let single_line_comment =
+            move |input| preceded(pair(char('-'), char('-')), many_till(anychar, linebreak))(input);
+
+        let discardable = move |input| {
+            many0_count(alt((
+                discard(one_of(" \t\r\n")),
+                discard(single_line_comment),
+            )))(input)
         };
 
-        delimited(
-            tuple((space, single_line_comment, space)),
-            inner,
-            tuple((space, single_line_comment, space)),
-        )
+        delimited(discardable, inner, discardable)
     }
 
     /// Parses a identifier according to what PostgreSQL calls valid.
