@@ -75,11 +75,12 @@ mod detail {
     use super::*;
     use nom::branch::alt;
     use nom::bytes::complete::tag_no_case;
-    use nom::character::complete::{anychar, char, multispace0, one_of, satisfy};
+    use nom::character::complete::{anychar, char, one_of, satisfy};
     use nom::combinator::{all_consuming, map, opt, recognize};
-    use nom::multi::{many0, many_till, separated_list0};
+    use nom::multi::{many0, many0_count, many_till, separated_list0};
     use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
-    use nom::{AsChar, IResult, InputTakeAtPosition};
+    use nom::{AsChar, IResult, InputIter, InputLength, InputTakeAtPosition, Slice};
+    use std::ops::RangeFrom;
 
     /// Custom span as used by parser internals.
     type LocatedSpan<'a> = nom_locate::LocatedSpan<&'a str>;
@@ -99,11 +100,28 @@ mod detail {
     fn ws<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, O, E>
     where
         F: Fn(I) -> IResult<I, O, E>,
-        I: InputTakeAtPosition,
-        <I as InputTakeAtPosition>::Item: AsChar + Clone,
+        I: Clone
+            + InputLength
+            + InputIter<Item = char>
+            + InputTakeAtPosition
+            + Slice<RangeFrom<usize>>,
+        <I as InputTakeAtPosition>::Item: AsChar,
         E: nom::error::ParseError<I>,
     {
-        delimited(multispace0, inner, multispace0)
+        let linebreak = |input| pair(opt(char('\r')), char('\n'))(input);
+        let space = |input| many0_count(one_of(" \t\r\n"))(input);
+        let single_line_comment = move |input| {
+            opt(preceded(
+                pair(char('-'), char('-')),
+                many_till(anychar, linebreak),
+            ))(input)
+        };
+
+        delimited(
+            tuple((space, single_line_comment, space)),
+            inner,
+            tuple((space, single_line_comment, space)),
+        )
     }
 
     /// Parses a identifier according to what PostgreSQL calls valid.
@@ -183,8 +201,8 @@ mod detail {
             tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
             map(
                 many_till(
-                    recognize(ws(anychar::<LocatedSpan<'a>, E>)),
-                    tuple((ws(tag_no_case("end")), ws(tag_no_case(name)), ws(char(';')))),
+                    recognize(anychar::<LocatedSpan<'a>, E>),
+                    tuple((tag_no_case("end"), ws(tag_no_case(name)), ws(char(';')))),
                 ),
                 |(body, _)| {
                     body.into_iter()
