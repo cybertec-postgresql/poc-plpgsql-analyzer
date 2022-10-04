@@ -174,21 +174,6 @@ mod detail {
         )(input)
     }
 
-    /// Parses the start of a procedure, including the procedure name.
-    /*
-    fn procedure_start(input: LocatedSpan) -> IResult<LocatedSpan, (Span, bool, LocatedSpan)> {
-        map(
-            tuple((
-                ws(tag_no_case("create")),
-                opt(pair(ws(tag_no_case("or")), ws(tag_no_case("replace")))),
-                ws(tag_no_case("procedure")),
-                ws(ident),
-            )),
-            |(_, or_replace, _, name)| (input.into(), or_replace.is_some(), name),
-        )(input)
-    }
-    */
-
     /// Parses a single procedure parameter type, either a base type or a column
     /// reference.
     /*
@@ -305,6 +290,15 @@ mod detail {
             assert!(procedure_start("CREATE PROCEDURE hello").is_ok());
             assert!(procedure_start(" CREATE PROCEDURE bar").is_ok());
             assert!(procedure_start(" CREATE OR REPLACE PROCEDURE foo").is_ok());
+        }
+
+        #[test]
+        fn parse_procedure_start_with_comment() {
+            const INPUT: &str = "-- This is a test\nCREATE PROCEDURE hello";
+            let result = procedure_start(INPUT);
+            assert!(result.is_ok(), "{:#?}", result);
+            let result = result.unwrap();
+            dbg!(&result);
         }
 
         #[test]
