@@ -3,6 +3,7 @@
 // <office@cybertec.at>
 
 //! Implements parsers for different SQL language constructs.
+
 use nom::Finish;
 
 /// A specific location in the input data.
@@ -247,7 +248,6 @@ pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
     use pretty_assertions::assert_eq;
 
@@ -295,14 +295,4 @@ mod tests {
             }),
         );
     }
-
-    #[datatest::files("tests/procedure", {
-      input in r"^(.*).ora\.sql$",
-    })]
-    #[ignore]
-    fn test_parse_procedure_coverage(input: &str) {
-        let result = parse_procedure(input);
-        assert!(result.is_ok(), "{:#?}", result);
-    }
-
 }
