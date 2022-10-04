@@ -12,7 +12,7 @@ env:
 
 jobs:
   test:
-    name: Format, build, clipp, test and doc
+    name: Format, build, clippy, test and doc
     runs-on: [self-hosted, Linux]
     container: debian:stable
     timeout-minutes: 8
