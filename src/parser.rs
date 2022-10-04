@@ -75,11 +75,12 @@ mod detail {
     use super::*;
     use nom::branch::alt;
     use nom::bytes::complete::tag_no_case;
-    use nom::character::complete::{anychar, char, multispace0, one_of, satisfy};
+    use nom::character::complete::{anychar, char, one_of, satisfy};
     use nom::combinator::{all_consuming, map, opt, recognize};
-    use nom::multi::{many0, many_till, separated_list0};
+    use nom::multi::{many0, many0_count, many_till, separated_list0};
     use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
-    use nom::{AsChar, IResult, InputTakeAtPosition};
+    use nom::{AsChar, IResult, InputIter, InputLength, InputTakeAtPosition, Slice};
+    use std::ops::RangeFrom;
 
     /// Custom span as used by parser internals.
     type LocatedSpan<'a> = nom_locate::LocatedSpan<&'a str>;
@@ -93,17 +94,40 @@ mod detail {
         }
     }
 
+    fn discard<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, (), E>
+    where
+        F: FnMut(I) -> IResult<I, O, E>,
+        E: nom::error::ParseError<I>,
+    {
+        map(inner, |_| ())
+    }
+
     /// A combinator that takes a parser `inner` and produces a parser that also
     /// consumes both leading and trailing whitespace, returning the output
     /// of `inner`.
     fn ws<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, O, E>
     where
         F: Fn(I) -> IResult<I, O, E>,
-        I: InputTakeAtPosition,
-        <I as InputTakeAtPosition>::Item: AsChar + Clone,
+        I: Clone
+            + InputLength
+            + InputIter<Item = char>
+            + InputTakeAtPosition
+            + Slice<RangeFrom<usize>>,
+        <I as InputTakeAtPosition>::Item: AsChar,
         E: nom::error::ParseError<I>,
     {
-        delimited(multispace0, inner, multispace0)
+        let linebreak = |input| pair(opt(char('\r')), char('\n'))(input);
+        let single_line_comment =
+            move |input| preceded(pair(char('-'), char('-')), many_till(anychar, linebreak))(input);
+
+        let discardable = move |input| {
+            many0_count(alt((
+                discard(one_of(" \t\r\n")),
+                discard(single_line_comment),
+            )))(input)
+        };
+
+        delimited(discardable, inner, discardable)
     }
 
     /// Parses a identifier according to what PostgreSQL calls valid.
@@ -166,7 +190,7 @@ mod detail {
                 separated_list0(char(','), procedure_param),
                 char(')'),
             )),
-            |params| params.unwrap_or_else(Vec::new),
+            Option::unwrap_or_default,
         )(input)
     }
 
@@ -183,8 +207,8 @@ mod detail {
             tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
             map(
                 many_till(
-                    recognize(ws(anychar::<LocatedSpan<'a>, E>)),
-                    tuple((ws(tag_no_case("end")), ws(tag_no_case(name)), ws(char(';')))),
+                    recognize(anychar::<LocatedSpan<'a>, E>),
+                    tuple((tag_no_case("end"), ws(tag_no_case(name)), ws(char(';')))),
                 ),
                 |(body, _)| {
                     body.into_iter()
@@ -199,7 +223,7 @@ mod detail {
     pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
         let (input, ((span, replace, name), parameters)) =
             pair(procedure_start, procedure_params)(input)?;
-        let (input, body) = procedure_body(input, *name.fragment())?;
+        let (input, body) = procedure_body(input, name.fragment())?;
 
         Ok((
             input,
@@ -219,7 +243,7 @@ pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
     detail::procedure(input.into())
         .finish()
         .map(|(_, node)| node)
-        .map_err(|err| err.into())
+        .map_err(Into::into)
 }
 
 #[cfg(test)]
