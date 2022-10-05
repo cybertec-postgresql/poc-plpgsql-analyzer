@@ -7,7 +7,7 @@
 use nom::Finish;
 use rowan::GreenNode;
 
-use crate::SyntaxElement;
+use crate::{SyntaxElement, ast::SyntaxNode, SyntaxKind};
 
 /// A specific location in the input data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -72,6 +72,34 @@ impl<I: ToString> From<nom::error::Error<I>> for ParseError {
     }
 }
 
+#[derive(PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Parameter(SyntaxNode);
+
+impl Parameter {
+    pub fn cast(node: SyntaxNode) -> Option<Self> {
+        if node.kind() == SyntaxKind::Param {
+            Some(Self(node))
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Hash)]
+#[repr(transparent)]
+pub struct Procedure(SyntaxNode);
+
+impl Procedure {
+    pub fn cast(node: SyntaxNode) -> Option<Self> {
+        if node.kind() == SyntaxKind::Procedure {
+            Some(Self(node))
+        } else {
+            None
+        }
+    }
+}
+
 /// Implements the [`nom`] internals for implementing the parser.
 mod detail {
     use crate::ast::{leaf, node};
@@ -83,6 +111,7 @@ mod detail {
     use nom::combinator::{map, opt, recognize};
     use nom::multi::{many0, many_till, separated_list0};
     use nom::sequence::{delimited, pair, separated_pair, tuple};
+    use rowan::ast::support::child;
 
     /// Custom span as used by parser internals.
     type IResult<'a> = nom::IResult<&'a str, SyntaxElement>;
@@ -249,25 +278,46 @@ mod detail {
 
     /// Parses the body of a procedure, that is anything between `IS BEGIN` and
     /// `END <name>;`.
+    ///
+    /// For example:
+    /// `let result = procedure_body("IS BEGIN\nEND hello;", "hello");`
+    ///
     fn procedure_body<'a>(input: &'a str, fn_name: &str) -> IResult<'a> {
         map(
             tuple((
+                opt(ws),
                 tag_no_case("is"),
                 ws,
                 tag_no_case("begin"),
                 map(
                     many_till(
                         recognize(anychar),
-                        tuple((tag_no_case("end"), ws, tag_no_case(fn_name), ws, char(';'))),
+                        tuple((tag_no_case("end"), ws, tag_no_case(fn_name), opt(ws), char(';'))),
                     ),
                     |(body, (kw_end, ws1, fn_name, ws2, colon))| {
+                        let body = body.into_iter().map(String::from).collect::<String>();
                         let mut children = Vec::new();
+                        children.push(leaf(SyntaxKind::Text, body.as_str()));
+                        children.push(leaf(SyntaxKind::Keyword, kw_end));
+                        children.push(ws1);
+                        children.push(leaf(SyntaxKind::Ident, fn_name));
+                        if let Some(ws) = ws2 {
+                            children.push(ws);
+                        }
+                        children.push(leaf(SyntaxKind::SemiColon, colon.to_string().as_str()));
                         node(SyntaxKind::Unsupported, children)
                     },
                 ),
             )),
-            |(kw_is, ws1, kw_begin, body)| {
+            |(ws1, kw_is, ws2, kw_begin, body)| {
                 let mut children = Vec::new();
+                if let Some(ws) = ws1 {
+                    children.push(ws);
+                }
+                children.push(leaf(SyntaxKind::Keyword, kw_is));
+                children.push(ws2);
+                children.push(leaf(SyntaxKind::Keyword, kw_begin));
+                children.push(body);
                 node(SyntaxKind::ProcedureBody, children)
             },
         )(input)
@@ -375,8 +425,12 @@ mod detail {
 
         #[test]
         fn parse_procedure_body() {
+            let result = procedure_body("IS BEGIN\nEND hello;", "hello");
+            dbg!(&result);
+
             assert!(procedure_body("IS BEGIN\nEND hello;", "hello").is_ok());
             assert!(procedure_body("IS BEGIN\nEND foo;", "bar").is_err());
+            assert!(procedure_body("IS BEGIN\nNULL\nEND hello;", "hello").is_ok());
         }
     }
 }

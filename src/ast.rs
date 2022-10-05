@@ -22,6 +22,8 @@ pub enum SyntaxKind {
     Ident,
     /// A single comma
     Comma,
+    /// A semi colon
+    SemiColon,
     /// A single Param node, consisting of name & type
     Param,
     /// A node that contains a list of [`SyntaxKind::Param`]
@@ -36,10 +38,18 @@ pub enum SyntaxKind {
     ProcedureStart,
     /// A node that marks a PROCEDURE body block, between `IS BEGIN` & `END;`
     ProcedureBody,
-    /// A text leaf that is not further analyzed yet, e.g. procedure body content.
+    /// A node that is not further analyzed yet, e.g. procedure body content.
     Unsupported,
+    /// A text slice node
+    Text,
     /// The root node element
     Root,
+}
+
+impl SyntaxKind {
+    pub(crate) fn is_trivia(self) -> bool {
+        matches!(self, Self::Whitespace | Self::Comment)
+    }
 }
 
 impl From<SyntaxKind> for rowan::SyntaxKind {
@@ -64,7 +74,7 @@ impl rowan::Language for SqlProcedureLang {
 }
 
 /// TODO how to use these
-// pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
+pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
 // pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
 pub type SyntaxElement = rowan::NodeOrToken<GreenNode, GreenToken>;
 
