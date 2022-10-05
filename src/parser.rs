@@ -238,9 +238,12 @@ mod detail {
 
     /// Parses an complete PL/SQL procedure.
     pub fn procedure(input: &str) -> IResult {
+        let mut children = Vec::new();
         let (input, result) = procedure_start(input)?;
 
-        Ok((input, leaf(SyntaxKind::Root, input)))
+        children.push(result);
+
+        Ok((input, node(SyntaxKind::Root, children)))
         /*
         let (input, ((span, replace, name), parameters)) =
             pair(procedure_start, procedure_params)(input)?;

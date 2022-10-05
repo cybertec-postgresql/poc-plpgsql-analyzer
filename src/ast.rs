@@ -5,6 +5,7 @@ use rowan::{NodeOrToken, GreenToken, GreenNode};
 /// Examples
 /// * https://blog.kiranshila.com/blog/easy_cst.md
 /// * https://arzg.github.io/lang/10/
+/// * https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
