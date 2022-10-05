@@ -78,13 +78,11 @@ mod detail {
     use crate::{SyntaxElement, SyntaxKind};
 
     use nom::branch::alt;
-    use nom::bytes::complete::{tag, tag_no_case, take_until};
-    use nom::character::complete::{
-        alphanumeric1, anychar, char, line_ending, multispace1, one_of, satisfy,
-    };
-    use nom::combinator::{all_consuming, map, opt, recognize};
+    use nom::bytes::complete::{tag, tag_no_case};
+    use nom::character::complete::{anychar, char, line_ending, multispace1, one_of, satisfy};
+    use nom::combinator::{map, opt, recognize};
     use nom::multi::{many0, many_till, separated_list0};
-    use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
+    use nom::sequence::{delimited, pair, separated_pair, tuple};
 
     /// Custom span as used by parser internals.
     type IResult<'a> = nom::IResult<&'a str, SyntaxElement>;
@@ -249,45 +247,31 @@ mod detail {
         )(input)
     }
 
-    /*
-    fn procedure_params(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureParam>> {
-        map(
-            opt(delimited(
-                char('('),
-                separated_list0(char(','), procedure_param),
-                char(')'),
-            )),
-            Option::unwrap_or_default,
-        )(input)
-    }
-    */
-
     /// Parses the body of a procedure, that is anything between `IS BEGIN` and
     /// `END <name>;`.
-    /*
-    fn procedure_body<'a, E>(
-        input: LocatedSpan<'a>,
-        name: &str,
-    ) -> IResult<LocatedSpan<'a>, String, E>
-    where
-        E: nom::error::ParseError<LocatedSpan<'a>>,
-    {
-        all_consuming(preceded(
-            tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
-            map(
-                many_till(
-                    recognize(anychar::<LocatedSpan<'a>, E>),
-                    tuple((tag_no_case("end"), ws(tag_no_case(name)), ws(char(';')))),
+    fn procedure_body<'a>(input: &'a str, fn_name: &str) -> IResult<'a> {
+        map(
+            tuple((
+                tag_no_case("is"),
+                ws,
+                tag_no_case("begin"),
+                map(
+                    many_till(
+                        recognize(anychar),
+                        tuple((tag_no_case("end"), ws, tag_no_case(fn_name), ws, char(';'))),
+                    ),
+                    |(body, (kw_end, ws1, fn_name, ws2, colon))| {
+                        let mut children = Vec::new();
+                        node(SyntaxKind::Unsupported, children)
+                    },
                 ),
-                |(body, _)| {
-                    body.into_iter()
-                        .map(|ls| *ls.fragment())
-                        .collect::<String>()
-                },
-            ),
-        ))(input)
+            )),
+            |(kw_is, ws1, kw_begin, body)| {
+                let mut children = Vec::new();
+                node(SyntaxKind::ProcedureBody, children)
+            },
+        )(input)
     }
-    */
 
     /// Parses an complete PL/SQL procedure.
     pub fn procedure(input: &str) -> IResult {
@@ -317,7 +301,12 @@ mod detail {
 
     #[cfg(test)]
     mod tests {
-        use crate::{parser::detail::{comment, ident, procedure_param, ws, procedure_param_list}, SyntaxKind};
+        use crate::{
+            parser::detail::{
+                comment, ident, procedure_body, procedure_param, procedure_param_list, ws,
+            },
+            SyntaxKind,
+        };
 
         use super::{procedure_param_type, procedure_start};
 
@@ -382,6 +371,12 @@ mod detail {
             const INPUT: &str = "( first var%type , second other_type )";
             let (_, node) = procedure_param_list(INPUT).unwrap();
             assert_eq!(node.kind(), SyntaxKind::ParamList.into());
+        }
+
+        #[test]
+        fn parse_procedure_body() {
+            assert!(procedure_body("IS BEGIN\nEND hello;", "hello").is_ok());
+            assert!(procedure_body("IS BEGIN\nEND foo;", "bar").is_err());
         }
     }
 }

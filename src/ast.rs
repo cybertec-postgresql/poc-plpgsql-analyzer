@@ -20,19 +20,24 @@ pub enum SyntaxKind {
     Keyword,
     /// An identifier, e.g. secure_dml
     Ident,
+    /// A single comma
     Comma,
     /// A single Param node, consisting of name & type
     Param,
     /// A node that contains a list of [`SyntaxKind::Param`]
     ParamList,
-    /// A node that represents the parameter name
+    /// A node that represents the parameter name, contains [`SyntaxKind::Ident`]
     ParamName,
     /// A node that marks a type parameter
     ParamType,
-    /// A node that marks a PROCEDURE block
+    /// A node that marks a full PROCEDURE block
     Procedure,
+    /// A node that marks a PROCEDURE header block
     ProcedureStart,
+    /// A node that marks a PROCEDURE body block, between `IS BEGIN` & `END;`
     ProcedureBody,
+    /// A text leaf that is not further analyzed yet, e.g. procedure body content.
+    Unsupported,
     /// The root node element
     Root,
 }
