@@ -28,6 +28,16 @@ To run all the unit tests, simply run
 cargo test
 ```
 
+To run the unit tests marked with `#[ignore]`
+```sh
+cargo test -- --ignored
+```
+
+To run the coverage test
+```sh
+cargo test -F coverage-tests
+```
+
 #### Optional tools
 
 It is desired to also install the `wasm-opt` tool from the
