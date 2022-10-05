@@ -17,12 +17,12 @@ pub enum SyntaxKind {
     Keyword,
     Ident,
     Comma,
-    Root,
     Procedure,
     ProcedureStart,
     ProcedureParam,
     ProcedureParams,
     ProcedureBody,
+    Root,
 }
 
 impl From<SyntaxKind> for rowan::SyntaxKind {
@@ -32,7 +32,7 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 }
 
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
-enum SqlProcedureLang {}
+pub enum SqlProcedureLang {}
 
 impl rowan::Language for SqlProcedureLang {
     type Kind = SyntaxKind;
@@ -47,14 +47,14 @@ impl rowan::Language for SqlProcedureLang {
 }
 
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
-pub type AstNode = NodeOrToken<GreenNode, GreenToken>;
+pub type SyntaxElement = NodeOrToken<GreenNode, GreenToken>;
 
 /// Creates a new leaf node.
-pub fn leaf(kind: SyntaxKind, input: &str) -> AstNode {
+pub fn leaf(kind: SyntaxKind, input: &str) -> SyntaxElement {
     NodeOrToken::Token(GreenToken::new(kind.into(), input))
 }
 
 /// Creates a new collection of nodes.
-pub fn node(kind: SyntaxKind, children: Vec<AstNode>) -> AstNode {
+pub fn node(kind: SyntaxKind, children: Vec<SyntaxElement>) -> SyntaxElement {
     NodeOrToken::Node(GreenNode::new(kind.into(), children))
 }

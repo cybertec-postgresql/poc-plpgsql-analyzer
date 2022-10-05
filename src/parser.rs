@@ -7,7 +7,7 @@
 use nom::Finish;
 use rowan::GreenNode;
 
-use crate::AstNode;
+use crate::SyntaxElement;
 
 /// A specific location in the input data.
 #[derive(Clone, Debug, Eq, PartialEq)]
@@ -76,7 +76,7 @@ impl<I: ToString> From<nom::error::Error<I>> for ParseError {
 /// Implements the [`nom`] internals for implementing the parser.
 mod detail {
     use crate::ast::{leaf, node};
-    use crate::{AstNode, SyntaxKind, SyntaxNode};
+    use crate::{SyntaxElement, SyntaxKind, SyntaxNode};
 
     use super::*;
     use nom::branch::alt;
@@ -89,7 +89,7 @@ mod detail {
     use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
 
     /// Custom span as used by parser internals.
-    type IResult<'a> = nom::IResult<&'a str, AstNode>;
+    type IResult<'a> = nom::IResult<&'a str, SyntaxElement>;
 
     /// Parses white space characters
     fn ws(input: &str) -> IResult {
@@ -98,9 +98,13 @@ mod detail {
 
     /// Parses an inline comment
     fn comment(input: &str) -> IResult {
+        // TODO fix to return full comment
         map(
             tuple((tag("-"), tag("-"), many_till(anychar, line_ending))),
-            |(_, _, s)| leaf(SyntaxKind::Comment, s.1),
+            |(_, _, s)| {
+                println!("COMMENT: {:?}", s);
+                leaf(SyntaxKind::Comment, s.1)
+            },
         )(input)
     }
 
@@ -153,7 +157,7 @@ mod detail {
                 ident,
             )),
             |(c1, ws1, kw_create, ws2, replace, kw_procedure, ws3, fn_name)| {
-                let mut children: Vec<AstNode> = Vec::new();
+                let mut children: Vec<SyntaxElement> = Vec::new();
                 if let Some(comment) = c1 {
                     children.push(comment);
                 }
@@ -300,8 +304,8 @@ mod detail {
             const INPUT: &str = "-- This is a test\nCREATE PROCEDURE hello";
             let result = procedure_start(INPUT);
             assert!(result.is_ok(), "{:#?}", result);
-            let result = result.unwrap();
-            dbg!(&result);
+            let (_text, node) = result.unwrap();
+            println!("{}", node.to_string());
         }
 
         #[test]
@@ -312,7 +316,7 @@ mod detail {
 }
 
 /// Public entry point for parsing a complete PL/SQL procedure.
-pub fn parse_procedure(input: &str) -> Result<AstNode, ParseError> {
+pub fn parse_procedure(input: &str) -> Result<SyntaxElement, ParseError> {
     detail::procedure(input.into())
         .finish()
         .map(|(_, node)| node)

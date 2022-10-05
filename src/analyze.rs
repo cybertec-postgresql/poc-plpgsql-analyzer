@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use crate::{parser::*, AstNode};
+use crate::{parser::*, SyntaxElement};
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.
@@ -73,7 +73,7 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(|err| err.into())
 }
 
-fn analyze_procedure(node: AstNode) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(node: SyntaxElement) -> Result<DboMetaData, AnalyzeError> {
     let body = match node {
         rowan::NodeOrToken::Node(node) => Node::ProcedureDef(node),
         _ => unimplemented!("Not implemented"),

@@ -10,4 +10,4 @@ mod parser;
 
 pub use analyze::*;
 pub use parser::*;
-pub use ast::{AstNode, SyntaxKind, SyntaxNode};
+pub use ast::{SyntaxElement, SyntaxKind, SyntaxNode};
