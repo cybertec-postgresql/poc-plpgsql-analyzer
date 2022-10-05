@@ -75,7 +75,7 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 
 fn analyze_procedure(node: SyntaxElement) -> Result<DboMetaData, AnalyzeError> {
     let body = match node {
-        rowan::NodeOrToken::Node(node) => Node::ProcedureDef(node),
+        rowan::NodeOrToken::Node(node) => Node::ProcedureDef(node.into()),
         _ => unimplemented!("Not implemented"),
         // Node::ProcedureDef(ProcedureDef { body, .. }) => body,
         

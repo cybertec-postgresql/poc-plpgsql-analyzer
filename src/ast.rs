@@ -12,16 +12,28 @@ use rowan::{NodeOrToken, GreenToken, GreenNode};
 pub enum SyntaxKind {
     LeftParen = 0,
     RightParen,
+    /// Inline comment starting with '--'
     Comment,
+    /// Any whitespace character
     Whitespace,
+    /// A SQL keyword, e.g. "CREATE"
     Keyword,
+    /// An identifier, e.g. secure_dml
     Ident,
     Comma,
+    /// A single Param node, consisting of name & type
+    Param,
+    /// A node that contains a list of [`SyntaxKind::Param`]
+    ParamList,
+    /// A node that represents the parameter name
+    ParamName,
+    /// A node that marks a type parameter
+    ParamType,
+    /// A node that marks a PROCEDURE block
     Procedure,
     ProcedureStart,
-    ProcedureParam,
-    ProcedureParams,
     ProcedureBody,
+    /// The root node element
     Root,
 }
 
@@ -46,8 +58,10 @@ impl rowan::Language for SqlProcedureLang {
     }
 }
 
-pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
-pub type SyntaxElement = NodeOrToken<GreenNode, GreenToken>;
+/// TODO how to use these
+// pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
+// pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
+pub type SyntaxElement = rowan::NodeOrToken<GreenNode, GreenToken>;
 
 /// Creates a new leaf node.
 pub fn leaf(kind: SyntaxKind, input: &str) -> SyntaxElement {
