@@ -33,6 +33,11 @@ To run the unit tests marked with `#[ignore]`
 cargo test -- --ignored
 ```
 
+To run the coverage test
+```sh
+cargo test -F coverage-tests
+```
+
 #### Optional tools
 
 It is desired to also install the `wasm-opt` tool from the
