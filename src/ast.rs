@@ -15,6 +15,8 @@ pub enum SyntaxKind {
     LParen = 0,
     /// Right Paren
     RParen,
+    /// Percentage symbol
+    Percentage,
     /// Inline comment starting with '--'
     Comment,
     /// Any whitespace character
@@ -83,6 +85,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SemiColon => SyntaxKind::SemiColon,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
+            TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
         }

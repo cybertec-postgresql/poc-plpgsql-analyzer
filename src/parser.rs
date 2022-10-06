@@ -83,12 +83,20 @@ impl<'a> Parser<'a> {
         self.tokens.last().map(|token| token.kind)
     }
 
-    /// Consumes the current token
+    /// Consumes the current token as it is
     pub(crate) fn consume(&mut self) -> Token<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
+        token
+    }
+
+    /// Consumes the token with the given [`SyntaxKind`].
+    pub(crate) fn consume_as(&mut self, kind: SyntaxKind) -> Token<'a> {
+        assert!(!self.tokens.is_empty());
+        let token = self.tokens.pop().unwrap();
+        self.builder.token(kind.into(), token.text);
         token
     }
 
@@ -125,132 +133,20 @@ impl<'a> Parser<'a> {
 
     /// Mark the current token as error
     pub(crate) fn error(&mut self, expected: TokenKind) {
-        let message = format!("Found '{:?}' token, expected was '{:?}'", self.peek().unwrap(), expected);
         self.start(SyntaxKind::Error);
-        self.consume();
+        let message = if let Some(token_kind) = self.peek() {
+            self.consume();
+            format!("Expected '{:?}' token, found '{:?}'", expected, token_kind)
+        } else {
+            format!("Expected '{:?}' token, eof found", expected)
+        };
+        self.errors.push(message.clone());
         self.finish();
-        self.errors.push(message);
     }
 }
 
 /// Implements the [`nom`] internals for implementing the parser.
 mod detail {
-    /*
-    /// Parses a single comma
-    fn comma(input: &str) -> IResult {
-        map(tag(","), |s| leaf(SyntaxKind::Comma, s))(input)
-    }
-
-    /// Parses the left paren
-    fn lparen(input: &str) -> IResult {
-        map(tag("("), |s| leaf(SyntaxKind::LeftParen, s))(input)
-    }
-
-    /// Parses the right paren
-    fn rparen(input: &str) -> IResult {
-        map(tag(")"), |s| leaf(SyntaxKind::RightParen, s))(input)
-    }
-    */
-
-    /*
-    /// Parses a single procedure parameter type, either a base type or a column
-    /// reference.
-    fn procedure_param_type(input: &str) -> IResult {
-        map(
-            tuple((
-                opt(ws),
-                opt(comment),
-                opt(ws),
-                alt((
-                    map(recognize(pair(ident, tag_no_case("%type"))), |s| {
-                        leaf(SyntaxKind::Ident, s)
-                    }),
-                    ident,
-                )),
-            )),
-            |(ws1, comment, ws2, var_type)| {
-                let mut children = Vec::new();
-                if let Some(ws) = ws1 {
-                    children.push(ws);
-                }
-                if let Some(comment) = comment {
-                    children.push(comment);
-                }
-                if let Some(ws) = ws2 {
-                    children.push(ws);
-                }
-                children.push(var_type);
-                node(SyntaxKind::ParamType, children)
-            },
-        )(input)
-    }
-    */
-
-    /*
-    /// Parses a single procedure paramter, i.e. name and it's datatype.
-    fn procedure_param(input: &str) -> IResult {
-        map(
-            tuple((opt(ws), opt(comment), opt(ws), ident, procedure_param_type)),
-            |(ws1, comment, ws2, param_name, param_type)| {
-                let mut children = Vec::new();
-                if let Some(ws) = ws1 {
-                    children.push(ws);
-                }
-                if let Some(comment) = comment {
-                    children.push(comment);
-                }
-                if let Some(ws) = ws2 {
-                    children.push(ws);
-                }
-                children.push(param_name);
-                children.push(param_type);
-                node(SyntaxKind::Param, children)
-            },
-        )(input)
-    }
-    */
-
-    /*
-    /// Parses a list of procedure parameters, as surrounded by `(` and `)`.
-    fn procedure_param_list(input: &str) -> IResult {
-        map(
-            opt(delimited(
-                lparen,
-                separated_list0(comma, procedure_param),
-                rparen,
-            )),
-            |s| {
-                let mut children = Vec::new();
-                if let Some(mut nodes) = s {
-                    children.append(&mut nodes);
-                }
-                node(SyntaxKind::ParamList, children)
-            },
-        )(input)
-    }
-    */
-
-    /*
-    /// Parses the procedure header
-    fn procedure_header(input: &str) -> IResult {
-        map(
-            tuple((opt(ws), procedure_start, opt(ws), procedure_param_list)),
-            |(ws1, start, ws2, params)| {
-                let mut children = Vec::new();
-                if let Some(ws) = ws1 {
-                    children.push(ws);
-                }
-                children.push(start);
-                if let Some(ws) = ws2 {
-                    children.push(ws);
-                }
-                children.push(params);
-                node(SyntaxKind::ProcedureHeader, children)
-            },
-        )(input)
-    }
-    */
-
     /*
     /// Parses the body of a procedure, that is anything between `IS BEGIN` and
     /// `END <name>;`.
@@ -319,68 +215,6 @@ mod detail {
     /*
     #[cfg(test)]
     mod tests {
-        use crate::{
-            parser::detail::{
-                ident, procedure_body, procedure_header, procedure_param, procedure_param_list,
-            },
-            SyntaxKind,
-        };
-
-        use super::{procedure_param_type, procedure_start};
-
-        #[test]
-        fn parse_whitespace() {
-            assert!(ws("   ").is_ok());
-            assert!(ws("a").is_err());
-        }
-
-        #[test]
-        fn parse_inline_comments() {
-            assert!(comment("-- hello\n").is_ok());
-            assert!(comment("hello\n").is_err());
-        }
-
-        #[test]
-        fn parse_identifiers() {
-            assert!(ident("abc").is_ok());
-            assert!(ident("abc1").is_ok());
-            assert!(ident("_abc2").is_ok());
-            assert!(ident("abc.123").is_ok());
-        }
-
-        #[test]
-        fn parse_procedure_start() {
-            assert!(procedure_start("CREATE PROCEDURE hello").is_ok());
-            assert!(procedure_start(" CREATE PROCEDURE bar").is_ok());
-            assert!(procedure_start(" CREATE OR REPLACE PROCEDURE foo").is_ok());
-        }
-
-        #[test]
-        fn parse_procedure_start_with_comment() {
-            const INPUT: &str = "-- This is a test\nCREATE PROCEDURE hello";
-            let result = procedure_start(INPUT);
-            assert!(result.is_ok(), "{:#?}", result);
-        }
-
-        #[test]
-        fn reject_invalid_procedure_start() {
-            assert!(procedure_start("PROCEDURE CREATE hello").is_err());
-        }
-
-        #[test]
-        fn parse_valid_procedure_param_type() {
-            assert!(procedure_param_type("hello").is_ok());
-            assert!(procedure_param_type("   lisa12").is_ok());
-            assert!(procedure_param_type("hello%type").is_ok());
-            assert!(procedure_param_type("-- test\n   hello%type").is_ok());
-        }
-
-        #[test]
-        fn parse_single_procedure_param() {
-            assert!(procedure_param("p_1 VARCHAR2").is_ok());
-            assert!(procedure_param("  foo -- comment\n  bar%type").is_ok());
-        }
-
         #[test]
         fn parse_procedure_param_list() {
             assert!(procedure_param_list("()").is_ok());
