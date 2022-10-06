@@ -3,10 +3,8 @@ use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
 /// Parses a complete procedure.
 pub fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
-    p.eat_ws();
     parse_header(p);
     parse_body(p);
-    p.eat_ws();
     p.finish();
 }
 
@@ -73,11 +71,20 @@ fn parse_param_list(p: &mut Parser) {
     }
 }
 
+/// Example:
+///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
     parse_ident(p);
-    p.eat_ws();
     parse_param_type(p);
+    p.eat_ws();
+    if let Some(TokenKind::Assign) = p.peek() {
+        p.consume();
+        p.eat_ws();
+        if let Some(TokenKind::QuotedLiteral) = p.peek() {
+            p.consume();
+        }
+    }
     p.finish();
 }
 
@@ -131,9 +138,6 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_procedure() {}
-
-    #[test]
     fn test_parse_ident() {
         check(
             parse("hello", parse_ident),
@@ -146,14 +150,20 @@ Root@0..5
 
     #[test]
     fn test_parse_param() {
+        assert!(parse("p_1 VARCHAR2", parse_param).ok());
+        assert!(parse("p_2 NUMBER", parse_param).ok());
+        assert!(parse("p_3 IN BOOLEAN := FALSE", parse_param).ok());
+        assert!(parse("p_4 IN OUT NOCOPY DATE", parse_param).ok());
+        assert!(parse("p_5", parse_param).ok());
+
         check(
             parse("p_1 VARCHAR2", parse_param),
             expect![[r#"
 Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
-    Whitespace@3..4 " "
-    ParamType@4..12
+    ParamType@3..12
+      Whitespace@3..4 " "
       Ident@4..12 "VARCHAR2"
 "#]],
         );
@@ -165,11 +175,29 @@ Root@0..14
   Param@0..14
     Whitespace@0..2 "  "
     Ident@2..5 "foo"
-    Whitespace@5..6 " "
-    ParamType@6..14
+    ParamType@5..14
+      Whitespace@5..6 " "
       Ident@6..9 "bar"
       Percentage@9..10 "%"
       Ident@10..14 "type"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_param_with_default_value() {
+        check(parse("p2 VARCHAR2 := 'not empty'", parse_param),
+        expect![[r#"
+Root@0..26
+  Param@0..26
+    Ident@0..2 "p2"
+    ParamType@2..11
+      Whitespace@2..3 " "
+      Ident@3..11 "VARCHAR2"
+    Whitespace@11..12 " "
+    Assign@12..14 ":="
+    Whitespace@14..15 " "
+    QuotedLiteral@15..26 "'not empty'"
 "#]],
         );
     }
@@ -262,24 +290,24 @@ Root@0..146
     ParamList@38..146
       LParen@38..39 "("
       Whitespace@39..41 "  "
-      Param@41..87
+      Param@41..93
         Ident@41..49 "p_emp_id"
-        Whitespace@49..59 "          "
-        ParamType@59..87
+        ParamType@49..87
+          Whitespace@49..59 "          "
           Ident@59..82 "job_history.employee_id"
           Percentage@82..83 "%"
           Ident@83..87 "type"
-      Whitespace@87..93 "\n     "
+        Whitespace@87..93 "\n     "
       Comma@93..94 ","
       Whitespace@94..95 " "
-      Param@95..140
+      Param@95..145
         Ident@95..107 "p_start_date"
-        Whitespace@107..113 "      "
-        ParamType@113..140
+        ParamType@107..140
+          Whitespace@107..113 "      "
           Ident@113..135 "job_history.start_date"
           Percentage@135..136 "%"
           Ident@136..140 "type"
-      Whitespace@140..145 "\n    "
+        Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],
         );

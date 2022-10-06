@@ -31,6 +31,12 @@ pub enum SyntaxKind {
     Comma,
     /// A semi colon
     SemiColon,
+    /// A colon token
+    Colon,
+    /// An Assign operator `:=`
+    Assign,
+    /// A single quoted literal
+    QuotedLiteral,
     /// A single Param node, consisting of name & type
     Param,
     /// A node that consists of multiple parameters
@@ -75,10 +81,14 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::IsKw => SyntaxKind::Keyword,
             TokenKind::EndKw => SyntaxKind::Keyword,
+            TokenKind::InKw => SyntaxKind::Keyword,
+            TokenKind::OutKw => SyntaxKind::Keyword,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
+            TokenKind::Assign => SyntaxKind::Assign,
+            TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,

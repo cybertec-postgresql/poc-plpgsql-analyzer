@@ -64,6 +64,10 @@ impl Parse {
     pub fn tree(&self) -> String {
         format!("{:#?}", self.syntax())
     }
+
+    pub fn ok(&self) -> bool {
+        self.errors.is_empty()
+    }
 }
 
 pub struct Parser<'a> {

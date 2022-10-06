@@ -22,8 +22,17 @@ pub enum TokenKind {
     #[token("end", ignore(case))]
     EndKw,
 
+    #[token("out", ignore(case))]
+    OutKw,
+
+    #[token("in", ignore(case))]
+    InKw,
+
     #[regex("[A-Za-z0-9_][A-Za-z0-9_$.]*")]
     Ident,
+
+    #[regex("'[A-Za-z0-9 ]+'")]
+    QuotedLiteral,
 
     #[token(",")]
     Comma,
@@ -33,6 +42,9 @@ pub enum TokenKind {
 
     #[token(";")]
     SemiColon,
+
+    #[token(":=")]
+    Assign,
 
     #[token("(")]
     LParen,
