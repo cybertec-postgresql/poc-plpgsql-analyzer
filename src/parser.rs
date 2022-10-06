@@ -19,6 +19,15 @@ pub enum ParseError {
     /// The input is incomplete, i.e. it could not be fully parsed through.
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
+    /// A token could not be parsed by the lexer
+    #[error("Token is not known: {0}")]
+    UnknownToken(String),
+    /// The parser expected a specifc token, but found another.
+    #[error("Expected token '{0}', found: {1}")]
+    UnexpectedToken(String, String),
+    /// The parser stumbled upon the end of input, but expecting further input.
+    #[error("Unexpected end of input found")]
+    Eof,
     /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
@@ -36,7 +45,7 @@ pub fn parse(input: &str) -> Result<Parse, ParseError> {
 #[derive(Debug)]
 pub struct Parse {
     green_node: GreenNode,
-    _errors: Vec<ParseError>,
+    errors: Vec<ParseError>,
 }
 
 impl Parse {
@@ -55,7 +64,7 @@ pub(crate) struct Parser<'a> {
     /// The in-progress tree builder
     builder: GreenNodeBuilder<'static>,
     /// The list of all found errors
-    errors: Vec<String>,
+    errors: Vec<ParseError>,
 }
 
 impl<'a> Parser<'a> {
@@ -69,12 +78,12 @@ impl<'a> Parser<'a> {
         parser
     }
 
-    /// Builds the green node tree, called once parsing is complete
+    /// Builds the green node tree, called once the parsing is complete
     pub fn build(mut self) -> Parse {
         self.finish();
         Parse {
             green_node: self.builder.finish(),
-            _errors: Vec::new(),
+            errors: self.errors,
         }
     }
 
@@ -102,11 +111,11 @@ impl<'a> Parser<'a> {
 
     /// Expect the following token, ignore all white spaces inbetween.
     pub(crate) fn expect(&mut self, token_kind: TokenKind) {
-        assert!(!self.tokens.is_empty());
-        if self.peek().unwrap() == token_kind {
-            self.consume();
-        } else {
-            self.error(token_kind);
+        match self.peek() {
+            Some(kind) if kind == token_kind => {
+                self.consume();
+            },
+            _ => self.error(token_kind),
         }
     }
 
@@ -134,13 +143,19 @@ impl<'a> Parser<'a> {
     /// Mark the current token as error
     pub(crate) fn error(&mut self, expected: TokenKind) {
         self.start(SyntaxKind::Error);
-        let message = if let Some(token_kind) = self.peek() {
-            self.consume();
-            format!("Expected '{:?}' token, found '{:?}'", expected, token_kind)
-        } else {
-            format!("Expected '{:?}' token, eof found", expected)
+        let error = match self.peek() {
+            Some(TokenKind::Error) => {
+                let token = self.consume();
+                ParseError::UnknownToken(token.text.to_string())
+            }
+            Some(token_kind) => {
+                let token = self.consume();
+                ParseError::UnexpectedToken(format!("{:?}", expected), format!("{:?}", token_kind))
+            }
+            None => ParseError::Eof,
         };
-        self.errors.push(message.clone());
+
+        self.errors.push(error);
         self.finish();
     }
 }
@@ -198,32 +213,6 @@ mod detail {
     */
 
     /*
-    /// Parses an complete PL/SQL procedure.
-    pub fn procedure(input: &str) -> IResult {
-        let mut children = Vec::new();
-        // let (input, header) = procedure_header(input)?;
-        children.push(header);
-
-        // TODO get the procedure name, pass into body
-
-        // let (input, result) = procedure_body(input, "hello")?;
-        children.push(result);
-        Ok((input, node(SyntaxKind::Root, children)))
-    }
-    */
-
-    /*
-    #[cfg(test)]
-    mod tests {
-        #[test]
-        fn parse_procedure_param_list() {
-            assert!(procedure_param_list("()").is_ok());
-            assert!(procedure_param_list("( hello my%type )").is_ok());
-
-            const INPUT: &str = "( first var%type , second other_type )";
-            let (_, node) = procedure_param_list(INPUT).unwrap();
-            assert_eq!(node.kind(), SyntaxKind::ParamList.into());
-        }
 
         #[test]
         fn parse_procedure_body() {

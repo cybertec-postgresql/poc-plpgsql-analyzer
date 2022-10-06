@@ -6,6 +6,7 @@ pub(crate) fn parse_procedure(p: &mut Parser) {
     p.eat_ws();
     parse_header(p);
     parse_body(p);
+    p.eat_ws();
     p.finish();
 }
 
@@ -75,11 +76,7 @@ fn parse_param(p: &mut Parser) {
 
 fn parse_ident(p: &mut Parser) {
     p.eat_ws();
-    if let Some(TokenKind::Ident) = p.peek() {
-        p.consume();
-    } else {
-        p.error(TokenKind::Ident);
-    }
+    p.expect(TokenKind::Ident);
 }
 
 fn parse_param_type(p: &mut Parser) {
