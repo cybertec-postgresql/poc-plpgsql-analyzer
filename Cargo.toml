@@ -17,8 +17,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 logos = "0.12.1"
-nom = "^7.1.1"
-nom_locate = "^4.0.0"
 num-derive = "0.3.3"
 num-traits = "0.2.15"
 rowan = "0.15.10"

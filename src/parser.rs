@@ -5,7 +5,7 @@
 //! Implements parsers for different SQL language constructs.
 
 use rowan::{GreenNode, GreenNodeBuilder};
-use crate::{SyntaxKind, ast::SyntaxNode, Token, Lexer, lexer::TokenKind};
+use crate::{SyntaxKind, ast::SyntaxNode, Token, Lexer, lexer::TokenKind, grammar::parse_procedure};
 
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
@@ -36,17 +36,23 @@ pub enum ParseError {
 
 /// Main function to parse the input string.
 pub fn parse(input: &str) -> Result<Parse, ParseError> {
-    let tokens = Lexer::new(input).collect::<Vec<_>>();
-    let parser = Parser::new(tokens);
+    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+    tokens.reverse();
+    let mut parser = Parser::new(tokens);
+
+    // Expect a procedure
+    parse_procedure(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())
 }
 
+/// The struct helds the parsed / built green syntax tree with
+/// a list of parse errors.
 #[derive(Debug)]
 pub struct Parse {
     green_node: GreenNode,
-    _errors: Vec<ParseError>,
+    pub errors: Vec<ParseError>,
 }
 
 impl Parse {
@@ -85,7 +91,7 @@ impl<'a> Parser<'a> {
         self.finish();
         Parse {
             green_node: self.builder.finish(),
-            _errors: self.errors,
+            errors: self.errors,
         }
     }
 
@@ -103,12 +109,16 @@ impl<'a> Parser<'a> {
         token
     }
 
-    /// Consumes the token with the given [`SyntaxKind`].
-    pub fn consume_as(&mut self, kind: SyntaxKind) -> Token<'a> {
-        assert!(!self.tokens.is_empty());
-        let token = self.tokens.pop().unwrap();
-        self.builder.token(kind.into(), token.text);
-        token
+    /// Consumes all tokens until the last searched token is found.
+    pub fn until_last(&mut self, token_kind: TokenKind) {
+        // The tokens list is reversed, therefore the search is done from front.
+        if let Some(index) = self.tokens.iter().position(|token| token.kind == token_kind) {
+            while self.tokens.len() > (index + 1) {
+                self.consume();
+            }
+        } else {
+            self.error(token_kind);
+        }
     }
 
     /// Expect the following token, ignore all white spaces inbetween.
@@ -159,138 +169,5 @@ impl<'a> Parser<'a> {
 
         self.errors.push(error);
         self.finish();
-    }
-}
-
-/// Implements the [`nom`] internals for implementing the parser.
-mod detail {
-    /*
-    /// Parses the body of a procedure, that is anything between `IS BEGIN` and
-    /// `END <name>;`.
-    ///
-    /// For example:
-    /// `let result = procedure_body("IS BEGIN\nEND hello;", "hello");`
-    ///
-    fn procedure_body<'a>(input: &'a str, fn_name: &str) -> IResult<'a> {
-        println!("PROCEDURE_BODY: {}\nfn_name: {}", input, fn_name);
-        map(
-            tuple((
-                opt(ws),
-                tag_no_case("is"),
-                ws,
-                tag_no_case("begin"),
-                map(
-                    many_till(
-                        recognize(anychar),
-                        tuple((tag_no_case("end"), ws, tag(fn_name), opt(ws), char(';'))),
-                    ),
-                    |(body, (kw_end, ws1, fn_name, ws2, colon))| {
-                        let body = body.into_iter().map(String::from).collect::<String>();
-                        let mut children = Vec::new();
-                        children.push(leaf(SyntaxKind::Text, body.as_str()));
-                        children.push(leaf(SyntaxKind::Keyword, kw_end));
-                        children.push(ws1);
-                        children.push(leaf(SyntaxKind::Ident, fn_name));
-                        if let Some(ws) = ws2 {
-                            children.push(ws);
-                        }
-                        children.push(leaf(SyntaxKind::SemiColon, colon.to_string().as_str()));
-                        node(SyntaxKind::Unsupported, children)
-                    },
-                ),
-            )),
-            |(ws1, kw_is, ws2, kw_begin, body)| {
-                let mut children = Vec::new();
-                if let Some(ws) = ws1 {
-                    children.push(ws);
-                }
-                children.push(leaf(SyntaxKind::Keyword, kw_is));
-                children.push(ws2);
-                children.push(leaf(SyntaxKind::Keyword, kw_begin));
-                children.push(body);
-                node(SyntaxKind::ProcedureBody, children)
-            },
-        )(input)
-    }
-    */
-
-    /*
-
-        #[test]
-        fn parse_procedure_body() {
-            let result = procedure_body("IS BEGIN\nEND hello;", "hello");
-            dbg!(&result);
-
-            assert!(procedure_body("IS BEGIN\nEND hello;", "hello").is_ok());
-            assert!(procedure_body("IS BEGIN\nEND foo;", "bar").is_err());
-            assert!(procedure_body("IS BEGIN\nNULL\nEND hello;", "hello").is_ok());
-        }
-
-        #[test]
-        fn parse_procedure_header() {
-            const INPUT: &str = r#"
-            CREATE OR REPLACE PROCEDURE add_job_history
-              (  p_emp_id          job_history.employee_id%type
-               , p_start_date      job_history.start_date%type
-               )"#;
-            let result = procedure_header(INPUT);
-            dbg!(&result);
-            assert!(result.is_ok());
-        }
-    }
-    */
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    // use pretty_assertions::assert_eq;
-
-    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
-    const ADD_JOB_HISTORY_BODY: &str = include_str!("../tests/fixtures/add_job_history_body.sql");
-
-    #[test]
-    fn test_parse_procedure() {
-        let result = parse(ADD_JOB_HISTORY);
-        assert!(result.is_ok(), "{:#?}", result);
-        dbg!(&result);
-        /*
-        assert_eq!(
-            result.unwrap(),
-            Node::ProcedureDef(ProcedureDef {
-                span: Span::new(1, 1),
-                name: "add_job_history".into(),
-                replace: true,
-                parameters: vec![
-                    ProcedureParam {
-                        span: Span::new(2, 6),
-                        name: "p_emp_id".into(),
-                        typ: "job_history.employee_id%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(3, 6),
-                        name: "p_start_date".into(),
-                        typ: "job_history.start_date%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(4, 6),
-                        name: "p_end_date".into(),
-                        typ: "job_history.end_date%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(5, 6),
-                        name: "p_job_id".into(),
-                        typ: "job_history.job_id%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(6, 6),
-                        name: "p_department_id".into(),
-                        typ: "job_history.department_id%type".into(),
-                    },
-                ],
-                body: ADD_JOB_HISTORY_BODY.into(),
-            }),
-        );
-        */
     }
 }

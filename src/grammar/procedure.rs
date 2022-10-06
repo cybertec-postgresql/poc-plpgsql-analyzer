@@ -1,7 +1,6 @@
 use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
 
 /// Parses a complete procedure.
-#[allow(unused)]
 pub fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     p.eat_ws();
@@ -33,6 +32,13 @@ fn parse_body(p: &mut Parser) {
     p.expect(TokenKind::IsKw);
     p.eat_ws();
     p.expect(TokenKind::BeginKw);
+    p.start(SyntaxKind::Text);
+    p.until_last(TokenKind::EndKw);
+    p.finish();
+    p.expect(TokenKind::EndKw);
+    parse_ident(p);
+    p.expect(TokenKind::SemiColon);
+    p.eat_ws();
     p.finish();
 }
 
@@ -95,7 +101,7 @@ mod tests {
     use expect_test::expect;
 
     use crate::{
-        grammar::procedure::{parse_header, parse_param},
+        grammar::procedure::{parse_header, parse_param, parse_body},
         parser::{Parse, Parser},
         Lexer,
     };
@@ -275,6 +281,35 @@ Root@0..146
           Ident@136..140 "type"
       Whitespace@140..145 "\n    "
       RParen@145..146 ")"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_body() {
+        const INPUT: &str = r#"
+IS
+BEGIN
+    NULL;
+END hello;
+"#;
+        check(parse(INPUT, parse_body), expect![[r#"
+Root@0..31
+  ProcedureBody@0..31
+    Whitespace@0..1 "\n"
+    Keyword@1..3 "IS"
+    Whitespace@3..4 "\n"
+    Keyword@4..9 "BEGIN"
+    Text@9..20
+      Whitespace@9..14 "\n    "
+      Ident@14..18 "NULL"
+      SemiColon@18..19 ";"
+      Whitespace@19..20 "\n"
+    Keyword@20..23 "END"
+    Whitespace@23..24 " "
+    Ident@24..29 "hello"
+    SemiColon@29..30 ";"
+    Whitespace@30..31 "\n"
 "#]],
         );
     }
