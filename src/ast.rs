@@ -23,7 +23,7 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml
+    /// An identifier, e.g. secure_dml or parameter name
     Ident,
     /// A single dot
     Dot,
@@ -33,22 +33,16 @@ pub enum SyntaxKind {
     SemiColon,
     /// A single Param node, consisting of name & type
     Param,
-    /// A node that contains a list of [`SyntaxKind::Param`]
+    /// A node that consists of multiple parameters
     ParamList,
-    /// A node that represents the parameter name, contains [`SyntaxKind::Ident`]
-    ParamName,
     /// A node that marks a type parameter
     ParamType,
     /// A node that marks a full PROCEDURE block
     Procedure,
-    /// A node that marks a PROCEDURE header block
-    ProcedureStart,
     /// A node that marks a PROCEDURE header with params
     ProcedureHeader,
     /// A node that marks a PROCEDURE body block, between `IS BEGIN` & `END;`
     ProcedureBody,
-    /// A node that is not further analyzed yet, e.g. procedure body content.
-    Unsupported,
     /// A text slice node
     Text,
     /// An error token with a cause

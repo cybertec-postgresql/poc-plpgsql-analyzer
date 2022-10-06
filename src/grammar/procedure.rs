@@ -1,4 +1,4 @@
-use crate::{parser::Parser, Token, lexer::TokenKind, SyntaxKind};
+use crate::{lexer::TokenKind, parser::Parser, SyntaxKind, Token};
 
 /// Parses a complete procedure.
 pub(crate) fn parse_procedure(p: &mut Parser) {
@@ -26,7 +26,12 @@ fn parse_header(p: &mut Parser) {
 }
 
 fn parse_body(p: &mut Parser) {
-
+    p.start(SyntaxKind::ProcedureBody);
+    p.eat_ws();
+    p.expect(TokenKind::IsKw);
+    p.eat_ws();
+    p.expect(TokenKind::BeginKw);
+    p.finish();
 }
 
 /// Parses the parameter list in the procedure header
@@ -44,14 +49,14 @@ fn parse_param_list(p: &mut Parser) {
                 }
                 Some(TokenKind::RParen) => {
                     p.consume();
-                    break
+                    break;
                 }
                 Some(_) => {
                     parse_param(p);
                 }
                 None => {
                     p.error(TokenKind::RParen);
-                    break
+                    break;
                 }
             }
         }
@@ -92,8 +97,9 @@ mod tests {
     use expect_test::expect;
 
     use crate::{
+        grammar::procedure::{parse_header, parse_param},
         parser::{Parse, Parser},
-        Lexer, grammar::procedure::{parse_header, parse_param},
+        Lexer,
     };
 
     use super::parse_ident;
@@ -114,8 +120,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_procedure() {
-    }
+    fn test_parse_procedure() {}
 
     #[test]
     fn test_parse_ident() {
@@ -130,7 +135,9 @@ Root@0..5
 
     #[test]
     fn test_parse_param() {
-        check(parse("p_1 VARCHAR2", parse_param), expect![[r#"
+        check(
+            parse("p_1 VARCHAR2", parse_param),
+            expect![[r#"
 Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
@@ -140,7 +147,9 @@ Root@0..12
 "#]],
         );
 
-        check(parse("  foo bar%type", parse_param), expect![[r#"
+        check(
+            parse("  foo bar%type", parse_param),
+            expect![[r#"
 Root@0..14
   Param@0..14
     Whitespace@0..2 "  "
@@ -157,8 +166,9 @@ Root@0..14
     #[test]
     fn test_parse_ident_with_trivia() {
         const INPUT: &str = " -- hello\n  foo";
-        check(parse(INPUT, parse_ident),
-        expect![[r#"
+        check(
+            parse(INPUT, parse_ident),
+            expect![[r#"
 Root@0..15
   Whitespace@0..1 " "
   Comment@1..9 "-- hello"
@@ -170,7 +180,8 @@ Root@0..15
 
     #[test]
     fn test_parse_header_without_replace() {
-        check(parse("CREATE PROCEDURE hello", parse_header),
+        check(
+            parse("CREATE PROCEDURE hello", parse_header),
             expect![[r#"
 Root@0..22
   ProcedureHeader@0..22
@@ -179,13 +190,15 @@ Root@0..22
     Keyword@7..16 "PROCEDURE"
     Whitespace@16..17 " "
     Ident@17..22 "hello"
-"#]]
+"#]],
         );
     }
 
     #[test]
     fn test_parse_invalid_header() {
-        check(parse("CREATE hello", parse_header), expect![[r#"
+        check(
+            parse("CREATE hello", parse_header),
+            expect![[r#"
 Root@0..12
   ProcedureHeader@0..12
     Keyword@0..6 "CREATE"
@@ -200,8 +213,9 @@ Root@0..12
     #[test]
     fn test_parse_header_without_params() {
         const INPUT: &str = "CREATE OR REPLACE PROCEDURE test";
-        check(parse(INPUT, parse_header),
-        expect![[r#"
+        check(
+            parse(INPUT, parse_header),
+            expect![[r#"
 Root@0..32
   ProcedureHeader@0..32
     Keyword@0..6 "CREATE"
@@ -222,7 +236,9 @@ CREATE PROCEDURE add_job_history
     (  p_emp_id          job_history.employee_id%type
      , p_start_date      job_history.start_date%type
     )"#;
-        check(parse(INPUT, parse_header), expect![[r#"
+        check(
+            parse(INPUT, parse_header),
+            expect![[r#"
 Root@0..146
   ProcedureHeader@0..146
     Whitespace@0..1 "\n"

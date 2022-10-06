@@ -100,7 +100,7 @@ impl<'a> Parser<'a> {
         token
     }
 
-    /// Expect the following token
+    /// Expect the following token, ignore all white spaces inbetween.
     pub(crate) fn expect(&mut self, token_kind: TokenKind) {
         assert!(!self.tokens.is_empty());
         if self.peek().unwrap() == token_kind {
