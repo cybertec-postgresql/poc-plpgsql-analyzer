@@ -1,6 +1,7 @@
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-use rowan::{NodeOrToken, GreenToken, GreenNode};
+
+use crate::lexer::TokenKind;
 
 /// Examples
 /// * https://blog.kiranshila.com/blog/easy_cst.md
@@ -10,8 +11,10 @@ use rowan::{NodeOrToken, GreenToken, GreenNode};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
-    LeftParen = 0,
-    RightParen,
+    /// Left Paren
+    LParen = 0,
+    /// Right Paren
+    RParen,
     /// Inline comment starting with '--'
     Comment,
     /// Any whitespace character
@@ -20,6 +23,8 @@ pub enum SyntaxKind {
     Keyword,
     /// An identifier, e.g. secure_dml
     Ident,
+    /// A single dot
+    Dot,
     /// A single comma
     Comma,
     /// A semi colon
@@ -36,12 +41,16 @@ pub enum SyntaxKind {
     Procedure,
     /// A node that marks a PROCEDURE header block
     ProcedureStart,
+    /// A node that marks a PROCEDURE header with params
+    ProcedureHeader,
     /// A node that marks a PROCEDURE body block, between `IS BEGIN` & `END;`
     ProcedureBody,
     /// A node that is not further analyzed yet, e.g. procedure body content.
     Unsupported,
     /// A text slice node
     Text,
+    /// An error token with a cause
+    Error,
     /// The root node element
     Root,
 }
@@ -55,6 +64,28 @@ impl SyntaxKind {
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         rowan::SyntaxKind(kind.to_u16().unwrap())
+    }
+}
+
+impl From<TokenKind> for SyntaxKind {
+    fn from(kind: TokenKind) -> Self {
+        match kind {
+            TokenKind::Whitespace => SyntaxKind::Whitespace,
+            TokenKind::CreateKw => SyntaxKind::Keyword,
+            TokenKind::ProcedureKw => SyntaxKind::Keyword,
+            TokenKind::OrReplaceKw => SyntaxKind::Keyword,
+            TokenKind::BeginKw => SyntaxKind::Keyword,
+            TokenKind::IsKw => SyntaxKind::Keyword,
+            TokenKind::EndKw => SyntaxKind::Keyword,
+            TokenKind::Ident => SyntaxKind::Ident,
+            TokenKind::Dot => SyntaxKind::Dot,
+            TokenKind::Comma => SyntaxKind::Comma,
+            TokenKind::SemiColon => SyntaxKind::SemiColon,
+            TokenKind::LParen => SyntaxKind::LParen,
+            TokenKind::RParen => SyntaxKind::RParen,
+            TokenKind::Comment => SyntaxKind::Comment,
+            TokenKind::Error => SyntaxKind::Error,
+        }
     }
 }
 
@@ -73,17 +104,6 @@ impl rowan::Language for SqlProcedureLang {
     }
 }
 
-/// TODO how to use these
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
-// pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
-pub type SyntaxElement = rowan::NodeOrToken<GreenNode, GreenToken>;
-
-/// Creates a new leaf node.
-pub fn leaf(kind: SyntaxKind, input: &str) -> SyntaxElement {
-    NodeOrToken::Token(GreenToken::new(kind.into(), input))
-}
-
-/// Creates a new collection of nodes.
-pub fn node(kind: SyntaxKind, children: Vec<SyntaxElement>) -> SyntaxElement {
-    NodeOrToken::Node(GreenNode::new(kind.into(), children))
-}
+pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
+pub type SyntaxElement = rowan::SyntaxElement<SqlProcedureLang>;

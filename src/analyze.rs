@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use crate::{parser::*, SyntaxElement};
+use crate::{parser::*};
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.
@@ -52,7 +52,7 @@ impl From<ParseError> for AnalyzeError {
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        Type::Procedure => analyze_procedure(parse_procedure(sql)?),
+        Type::Procedure => analyze_procedure(parse(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -73,13 +73,8 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(|err| err.into())
 }
 
-fn analyze_procedure(node: SyntaxElement) -> Result<DboMetaData, AnalyzeError> {
-    let body = match node {
-        rowan::NodeOrToken::Node(node) => Node::ProcedureDef(node.into()),
-        _ => unimplemented!("Not implemented"),
-        // Node::ProcedureDef(ProcedureDef { body, .. }) => body,
-        
-    };
+fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+     let node = Node::ProcedureDef(parse.syntax());
 
     Ok(DboMetaData {
         lines_of_code: 1, // TODO fix

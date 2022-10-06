@@ -4,38 +4,13 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use nom::Finish;
-use rowan::GreenNode;
-
-use crate::{SyntaxElement, ast::SyntaxNode, SyntaxKind};
-
-/// A specific location in the input data.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Span {
-    line: usize,
-    column: usize,
-}
-
-/// An parameter in a procedure definition.
-#[derive(Debug, Eq, PartialEq)]
-pub struct ProcedureParam {
-    name: String,
-    typ: String,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct ProcedureDef {
-    pub span: Span,
-    pub name: String,
-    pub replace: bool,
-    pub parameters: Vec<ProcedureParam>,
-    pub body: String, // Should eventually be something like `Vec<Node>`
-}
+use rowan::{GreenNode, GreenNodeBuilder};
+use crate::{SyntaxKind, ast::SyntaxNode, Token, Lexer, lexer::TokenKind};
 
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Node {
-    ProcedureDef(SyntaxElement),
+    ProcedureDef(SyntaxNode),
 }
 
 /// Error type describing all possible parser failures.
@@ -49,86 +24,103 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
-impl Span {
-    /// Currently only used by tests.
-    #[cfg(test)]
-    fn new(line: usize, column: usize) -> Self {
-        Self { line, column }
+/// Main function to parse the input string.
+pub fn parse(input: &str) -> Result<Parse, ParseError> {
+    let tokens = Lexer::new(input).collect::<Vec<_>>();
+    let parser = Parser::new(tokens);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+#[derive(Debug)]
+pub struct Parse {
+    green_node: GreenNode,
+    _errors: Vec<ParseError>,
+}
+
+impl Parse {
+    pub fn syntax(&self) -> SyntaxNode {
+        SyntaxNode::new_root(self.green_node.clone())
+    }
+
+    pub fn tree(&self) -> String {
+        format!("{:#?}", self.syntax())
     }
 }
 
-impl<I: ToString> From<nom::error::Error<I>> for ParseError {
-    fn from(error: nom::error::Error<I>) -> Self {
-        use nom::error::Error;
-        use nom::error::ErrorKind;
-
-        match error {
-            Error {
-                code: ErrorKind::Eof,
-                input,
-            } => Self::Incomplete(input.to_string()),
-            Error { code, input } => Self::Unhandled(format!("{:?}", code), input.to_string()),
-        }
-    }
+pub(crate) struct Parser<'a> {
+    /// The lexer to get tokens
+    tokens: Vec<Token<'a>>,
+    /// The in-progress tree builder
+    builder: GreenNodeBuilder<'static>,
+    /// The list of all found errors
+    errors: Vec<String>,
 }
 
-#[derive(PartialEq, Eq, Hash)]
-#[repr(transparent)]
-pub struct Parameter(SyntaxNode);
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self {
+        let mut parser = Parser {
+            tokens,
+            builder: GreenNodeBuilder::new(),
+            errors: Vec::new(),
+        };
+        parser.start(SyntaxKind::Root);
+        parser
+    }
 
-impl Parameter {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        if node.kind() == SyntaxKind::Param {
-            Some(Self(node))
-        } else {
-            None
+    /// Builds the green node tree
+    pub fn build(mut self) -> Parse {
+        self.finish();
+        Parse {
+            green_node: self.builder.finish(),
+            _errors: Vec::new(),
         }
     }
-}
 
-#[derive(PartialEq, Eq, Hash)]
-#[repr(transparent)]
-pub struct Procedure(SyntaxNode);
+    pub(crate) fn peek(&self) -> Option<TokenKind> {
+        self.tokens.last().map(|token| token.kind)
+    }
 
-impl Procedure {
-    pub fn cast(node: SyntaxNode) -> Option<Self> {
-        if node.kind() == SyntaxKind::Procedure {
-            Some(Self(node))
-        } else {
-            None
+    /// Consumes the current token
+    pub(crate) fn consume(&mut self) {
+        assert!(!self.tokens.is_empty());
+        let token = self.tokens.pop().unwrap();
+        let syntax_kind: SyntaxKind = token.kind.into();
+        self.builder.token(syntax_kind.into(), token.text);
+    }
+
+    /// Consume all whitespaces / comments
+    pub(crate) fn eat_ws(&mut self) {
+        loop {
+            match self.peek() {
+                Some(token) if token.is_trivia() => {
+                    self.consume();
+                },
+                _ => break,
+            }
         }
+    }
+
+    pub(crate) fn start(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(kind.into());
+    }
+
+    pub(crate) fn finish(&mut self) {
+        self.builder.finish_node()
+    }
+
+    /// Mark the current token as error
+    pub(crate) fn error(&mut self, expected: TokenKind) {
+        let message = format!("Found '{:?}' token, expected was '{:?}'", self.peek().unwrap(), expected);
+        self.consume();
+        self.errors.push(message);
     }
 }
 
 /// Implements the [`nom`] internals for implementing the parser.
 mod detail {
-    use crate::ast::{leaf, node};
-    use crate::{SyntaxElement, SyntaxKind};
-
-    use nom::branch::alt;
-    use nom::bytes::complete::{tag, tag_no_case};
-    use nom::character::complete::{anychar, char, line_ending, multispace1, one_of, satisfy};
-    use nom::combinator::{map, opt, recognize};
-    use nom::multi::{many0, many_till, separated_list0};
-    use nom::sequence::{delimited, pair, separated_pair, tuple};
-    use rowan::ast::support::child;
-
-    /// Custom span as used by parser internals.
-    type IResult<'a> = nom::IResult<&'a str, SyntaxElement>;
-
-    /// Parses white space characters
-    fn ws(input: &str) -> IResult {
-        map(multispace1, |ws| leaf(SyntaxKind::Whitespace, ws))(input)
-    }
-
-    /// Parses an inline comment
-    fn comment(input: &str) -> IResult {
-        map(
-            recognize(tuple((tag("-"), tag("-"), many_till(anychar, line_ending)))),
-            |s| leaf(SyntaxKind::Comment, s),
-        )(input)
-    }
-
+    /*
     /// Parses a single comma
     fn comma(input: &str) -> IResult {
         map(tag(","), |s| leaf(SyntaxKind::Comma, s))(input)
@@ -143,7 +135,9 @@ mod detail {
     fn rparen(input: &str) -> IResult {
         map(tag(")"), |s| leaf(SyntaxKind::RightParen, s))(input)
     }
+    */
 
+    /*
     /// Parses a identifier according to what PostgreSQL calls valid.
     ///
     /// "SQL identifiers and key words must begin with a letter (a-z, but also
@@ -168,7 +162,9 @@ mod detail {
             |s| leaf(SyntaxKind::Ident, s),
         )(input)
     }
+    */
 
+    /*
     /// Parses the start of a procedure, including the procedure name.
     fn procedure_start(input: &str) -> IResult {
         map(
@@ -203,7 +199,9 @@ mod detail {
             },
         )(input)
     }
+    */
 
+    /*
     /// Parses a single procedure parameter type, either a base type or a column
     /// reference.
     fn procedure_param_type(input: &str) -> IResult {
@@ -235,7 +233,9 @@ mod detail {
             },
         )(input)
     }
+    */
 
+    /*
     /// Parses a single procedure paramter, i.e. name and it's datatype.
     fn procedure_param(input: &str) -> IResult {
         map(
@@ -257,7 +257,9 @@ mod detail {
             },
         )(input)
     }
+    */
 
+    /*
     /// Parses a list of procedure parameters, as surrounded by `(` and `)`.
     fn procedure_param_list(input: &str) -> IResult {
         map(
@@ -275,7 +277,30 @@ mod detail {
             },
         )(input)
     }
+    */
 
+    /*
+    /// Parses the procedure header
+    fn procedure_header(input: &str) -> IResult {
+        map(
+            tuple((opt(ws), procedure_start, opt(ws), procedure_param_list)),
+            |(ws1, start, ws2, params)| {
+                let mut children = Vec::new();
+                if let Some(ws) = ws1 {
+                    children.push(ws);
+                }
+                children.push(start);
+                if let Some(ws) = ws2 {
+                    children.push(ws);
+                }
+                children.push(params);
+                node(SyntaxKind::ProcedureHeader, children)
+            },
+        )(input)
+    }
+    */
+
+    /*
     /// Parses the body of a procedure, that is anything between `IS BEGIN` and
     /// `END <name>;`.
     ///
@@ -283,6 +308,7 @@ mod detail {
     /// `let result = procedure_body("IS BEGIN\nEND hello;", "hello");`
     ///
     fn procedure_body<'a>(input: &'a str, fn_name: &str) -> IResult<'a> {
+        println!("PROCEDURE_BODY: {}\nfn_name: {}", input, fn_name);
         map(
             tuple((
                 opt(ws),
@@ -292,7 +318,7 @@ mod detail {
                 map(
                     many_till(
                         recognize(anychar),
-                        tuple((tag_no_case("end"), ws, tag_no_case(fn_name), opt(ws), char(';'))),
+                        tuple((tag_no_case("end"), ws, tag(fn_name), opt(ws), char(';'))),
                     ),
                     |(body, (kw_end, ws1, fn_name, ws2, colon))| {
                         let body = body.into_iter().map(String::from).collect::<String>();
@@ -322,38 +348,29 @@ mod detail {
             },
         )(input)
     }
+    */
 
+    /*
     /// Parses an complete PL/SQL procedure.
     pub fn procedure(input: &str) -> IResult {
         let mut children = Vec::new();
-        let (input, result) = procedure_start(input)?;
+        // let (input, header) = procedure_header(input)?;
+        children.push(header);
 
+        // TODO get the procedure name, pass into body
+
+        // let (input, result) = procedure_body(input, "hello")?;
         children.push(result);
-
         Ok((input, node(SyntaxKind::Root, children)))
-        /*
-        let (input, ((span, replace, name), parameters)) =
-            pair(procedure_start, procedure_params)(input)?;
-        let (input, body) = procedure_body(input, name.fragment())?;
-
-        Ok((
-            input,
-            Node::ProcedureDef(ProcedureDef {
-                span,
-                name: (*name.fragment()).to_owned(),
-                replace,
-                parameters,
-                body,
-            }),
-        ))
-        */
     }
+    */
 
+    /*
     #[cfg(test)]
     mod tests {
         use crate::{
             parser::detail::{
-                comment, ident, procedure_body, procedure_param, procedure_param_list, ws,
+                ident, procedure_body, procedure_header, procedure_param, procedure_param_list,
             },
             SyntaxKind,
         };
@@ -432,28 +449,33 @@ mod detail {
             assert!(procedure_body("IS BEGIN\nEND foo;", "bar").is_err());
             assert!(procedure_body("IS BEGIN\nNULL\nEND hello;", "hello").is_ok());
         }
-    }
-}
 
-/// Public entry point for parsing a complete PL/SQL procedure.
-pub fn parse_procedure(input: &str) -> Result<SyntaxElement, ParseError> {
-    detail::procedure(input.into())
-        .finish()
-        .map(|(_, node)| node)
-        .map_err(Into::into)
+        #[test]
+        fn parse_procedure_header() {
+            const INPUT: &str = r#"
+            CREATE OR REPLACE PROCEDURE add_job_history
+              (  p_emp_id          job_history.employee_id%type
+               , p_start_date      job_history.start_date%type
+               )"#;
+            let result = procedure_header(INPUT);
+            dbg!(&result);
+            assert!(result.is_ok());
+        }
+    }
+    */
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use pretty_assertions::assert_eq;
+    // use pretty_assertions::assert_eq;
 
     const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
     const ADD_JOB_HISTORY_BODY: &str = include_str!("../tests/fixtures/add_job_history_body.sql");
 
     #[test]
     fn test_parse_procedure() {
-        let result = parse_procedure(ADD_JOB_HISTORY);
+        let result = parse(ADD_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
         dbg!(&result);
         /*
