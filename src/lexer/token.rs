@@ -1,5 +1,5 @@
 /// Use to tokenize the input text
-#[derive(logos::Logos, Debug, Copy, Clone, PartialEq)]
+#[derive(logos::Logos, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
     #[regex("[ \n\r]+")]
     Whitespace,
@@ -58,8 +58,8 @@ impl TokenKind {
 
 #[cfg(test)]
 mod tests {
-    use crate::Lexer;
     use super::TokenKind;
+    use crate::Lexer;
 
     fn check(input: &str, kind: TokenKind) {
         let mut lexer = Lexer::new(input);

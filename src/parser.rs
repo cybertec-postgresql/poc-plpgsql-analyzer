@@ -10,6 +10,7 @@ use crate::{SyntaxKind, ast::SyntaxNode, Token, Lexer, lexer::TokenKind};
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Node {
+    /// TODO replace with a cast-able Procedure that maps the syntax node
     ProcedureDef(SyntaxNode),
 }
 
@@ -45,7 +46,7 @@ pub fn parse(input: &str) -> Result<Parse, ParseError> {
 #[derive(Debug)]
 pub struct Parse {
     green_node: GreenNode,
-    errors: Vec<ParseError>,
+    _errors: Vec<ParseError>,
 }
 
 impl Parse {
@@ -53,13 +54,14 @@ impl Parse {
         SyntaxNode::new_root(self.green_node.clone())
     }
 
+    #[allow(unused)]
     pub fn tree(&self) -> String {
         format!("{:#?}", self.syntax())
     }
 }
 
-pub(crate) struct Parser<'a> {
-    /// The lexer to get tokens
+pub struct Parser<'a> {
+    /// All tokens generated from a Lexer.
     tokens: Vec<Token<'a>>,
     /// The in-progress tree builder
     builder: GreenNodeBuilder<'static>,
@@ -83,17 +85,17 @@ impl<'a> Parser<'a> {
         self.finish();
         Parse {
             green_node: self.builder.finish(),
-            errors: self.errors,
+            _errors: self.errors,
         }
     }
 
     /// Returns the current [`TokenKind`] if there is a token.
-    pub(crate) fn peek(&self) -> Option<TokenKind> {
+    pub fn peek(&self) -> Option<TokenKind> {
         self.tokens.last().map(|token| token.kind)
     }
 
     /// Consumes the current token as it is
-    pub(crate) fn consume(&mut self) -> Token<'a> {
+    pub fn consume(&mut self) -> Token<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         let syntax_kind: SyntaxKind = token.kind.into();
@@ -102,7 +104,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Consumes the token with the given [`SyntaxKind`].
-    pub(crate) fn consume_as(&mut self, kind: SyntaxKind) -> Token<'a> {
+    pub fn consume_as(&mut self, kind: SyntaxKind) -> Token<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         self.builder.token(kind.into(), token.text);
@@ -110,7 +112,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Expect the following token, ignore all white spaces inbetween.
-    pub(crate) fn expect(&mut self, token_kind: TokenKind) {
+    pub fn expect(&mut self, token_kind: TokenKind) {
         match self.peek() {
             Some(kind) if kind == token_kind => {
                 self.consume();
@@ -121,7 +123,7 @@ impl<'a> Parser<'a> {
 
     /// Consume all whitespaces / comments & attach
     /// them to the current node to preserve them.
-    pub(crate) fn eat_ws(&mut self) {
+    pub fn eat_ws(&mut self) {
         loop {
             match self.peek() {
                 Some(token) if token.is_trivia() => {
@@ -149,7 +151,7 @@ impl<'a> Parser<'a> {
                 ParseError::UnknownToken(token.text.to_string())
             }
             Some(token_kind) => {
-                let token = self.consume();
+                self.consume();
                 ParseError::UnexpectedToken(format!("{:?}", expected), format!("{:?}", token_kind))
             }
             None => ParseError::Eof,

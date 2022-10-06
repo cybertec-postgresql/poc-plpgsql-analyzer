@@ -11,6 +11,6 @@ mod parser;
 mod grammar;
 
 pub use analyze::*;
-pub use parser::*;
-pub use lexer::{Lexer, Token};
 pub use ast::{SyntaxElement, SyntaxKind};
+pub use lexer::{Lexer, Token};
+pub use parser::{Parser, ParseError};

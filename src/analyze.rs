@@ -74,7 +74,7 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 }
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
-     let node = Node::ProcedureDef(parse.syntax());
+    let _node = Node::ProcedureDef(parse.syntax());
 
     Ok(DboMetaData {
         lines_of_code: 1, // TODO fix

@@ -52,6 +52,8 @@ pub enum SyntaxKind {
 }
 
 impl SyntaxKind {
+    /// Returns true when the [`SyntaxKind`] are not syntactically important.
+    #[allow(unused)]
     pub(crate) fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
     }
@@ -102,5 +104,6 @@ impl rowan::Language for SqlProcedureLang {
 }
 
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
+#[allow(unused)]
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
 pub type SyntaxElement = rowan::SyntaxElement<SqlProcedureLang>;

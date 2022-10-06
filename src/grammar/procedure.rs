@@ -1,7 +1,8 @@
-use crate::{lexer::TokenKind, parser::Parser, SyntaxKind, Token};
+use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
 
 /// Parses a complete procedure.
-pub(crate) fn parse_procedure(p: &mut Parser) {
+#[allow(unused)]
+pub fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     p.eat_ws();
     parse_header(p);
@@ -101,17 +102,24 @@ mod tests {
 
     use super::parse_ident;
 
+    /// Helper function to compare the build syntax tree with the expected output.
     fn check(parse: Parse, expected_tree: expect_test::Expect) {
         expected_tree.assert_eq(parse.tree().as_str())
     }
 
+    /// Creates a new parser by lexing the input first.
+    fn build_parser(input: &str) -> Parser {
+        let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+        tokens.reverse();
+        Parser::new(tokens)
+    }
+
+    /// A helper to allow to call the different parse functions.
     fn parse<F>(input: &str, f: F) -> Parse
     where
         F: Fn(&mut Parser),
     {
-        let mut tokens = Lexer::new(input).collect::<Vec<_>>();
-        tokens.reverse();
-        let mut parser = Parser::new(tokens);
+        let mut parser = build_parser(input);
         f(&mut parser);
         parser.build()
     }

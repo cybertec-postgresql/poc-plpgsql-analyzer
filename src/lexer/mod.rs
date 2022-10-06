@@ -1,9 +1,9 @@
 mod token;
 
-pub use token::TokenKind;
 use logos::Logos;
-use rowan::{TextSize, TextRange};
+use rowan::{TextRange, TextSize};
 use std::ops::Range as StdRange;
+pub use token::TokenKind;
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
@@ -37,7 +37,7 @@ impl<'a> Iterator for Lexer<'a> {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
     pub text: &'a str,
