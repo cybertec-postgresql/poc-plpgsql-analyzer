@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 /// Use to tokenize the input text
 #[derive(logos::Logos, Debug, Copy, Clone, PartialEq)]
 pub enum TokenKind {

@@ -69,7 +69,7 @@ impl<'a> Parser<'a> {
         parser
     }
 
-    /// Builds the green node tree
+    /// Builds the green node tree, called once parsing is complete
     pub fn build(mut self) -> Parse {
         self.finish();
         Parse {
@@ -78,19 +78,32 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Returns the current [`TokenKind`] if there is a token.
     pub(crate) fn peek(&self) -> Option<TokenKind> {
         self.tokens.last().map(|token| token.kind)
     }
 
     /// Consumes the current token
-    pub(crate) fn consume(&mut self) {
+    pub(crate) fn consume(&mut self) -> Token<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
+        token
     }
 
-    /// Consume all whitespaces / comments
+    /// Expect the following token
+    pub(crate) fn expect(&mut self, token_kind: TokenKind) {
+        assert!(!self.tokens.is_empty());
+        if self.peek().unwrap() == token_kind {
+            self.consume();
+        } else {
+            self.error(token_kind);
+        }
+    }
+
+    /// Consume all whitespaces / comments & attach
+    /// them to the current node to preserve them.
     pub(crate) fn eat_ws(&mut self) {
         loop {
             match self.peek() {
@@ -113,7 +126,9 @@ impl<'a> Parser<'a> {
     /// Mark the current token as error
     pub(crate) fn error(&mut self, expected: TokenKind) {
         let message = format!("Found '{:?}' token, expected was '{:?}'", self.peek().unwrap(), expected);
+        self.start(SyntaxKind::Error);
         self.consume();
+        self.finish();
         self.errors.push(message);
     }
 }
@@ -134,70 +149,6 @@ mod detail {
     /// Parses the right paren
     fn rparen(input: &str) -> IResult {
         map(tag(")"), |s| leaf(SyntaxKind::RightParen, s))(input)
-    }
-    */
-
-    /*
-    /// Parses a identifier according to what PostgreSQL calls valid.
-    ///
-    /// "SQL identifiers and key words must begin with a letter (a-z, but also
-    /// letters with diacritical marks and non-Latin letters) or an underscore
-    /// (_). Subsequent characters in an identifier or key word can be
-    /// letters, underscores, digits (0-9), or dollar signs ($)."
-    ///
-    /// TODO: Escaped/quoted identifiers
-    fn ident(input: &str) -> IResult {
-        let inner = |input| {
-            recognize(pair(
-                alt((satisfy(|c| c.is_alphabetic()), one_of("0123456789_"))),
-                many0(alt((
-                    satisfy(|c| c.is_alphabetic()),
-                    one_of("0123456789_$"),
-                ))),
-            ))(input)
-        };
-
-        map(
-            alt((recognize(separated_pair(inner, char('.'), inner)), inner)),
-            |s| leaf(SyntaxKind::Ident, s),
-        )(input)
-    }
-    */
-
-    /*
-    /// Parses the start of a procedure, including the procedure name.
-    fn procedure_start(input: &str) -> IResult {
-        map(
-            tuple((
-                opt(comment),
-                opt(ws),
-                tag_no_case("create"),
-                ws,
-                opt(pair(tag_no_case("or replace"), ws)),
-                tag_no_case("procedure"),
-                ws,
-                ident,
-            )),
-            |(c1, ws1, kw_create, ws2, replace, kw_procedure, ws3, fn_name)| {
-                let mut children: Vec<SyntaxElement> = Vec::new();
-                if let Some(comment) = c1 {
-                    children.push(comment);
-                }
-                if let Some(ws) = ws1 {
-                    children.push(ws);
-                }
-                children.push(leaf(SyntaxKind::Keyword, kw_create));
-                children.push(ws2);
-                if let Some((replace, ws)) = replace {
-                    children.push(leaf(SyntaxKind::Keyword, replace));
-                    children.push(ws);
-                }
-                children.push(leaf(SyntaxKind::Keyword, kw_procedure));
-                children.push(ws3);
-                children.push(fn_name);
-                node(SyntaxKind::ProcedureStart, children)
-            },
-        )(input)
     }
     */
 
