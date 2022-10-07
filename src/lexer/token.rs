@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 /// Use to tokenize the input text
 #[derive(logos::Logos, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
@@ -65,6 +67,12 @@ pub enum TokenKind {
 impl TokenKind {
     pub fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
+    }
+}
+
+impl Display for TokenKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self)
     }
 }
 

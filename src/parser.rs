@@ -24,8 +24,8 @@ pub enum ParseError {
     #[error("Token is not known: {0}")]
     UnknownToken(String),
     /// The parser expected a specifc token, but found another.
-    #[error("Expected token '{0}', found: {1}")]
-    UnexpectedToken(String, String),
+    #[error("Expected token '{0}'")]
+    ExpectedToken(TokenKind),
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
@@ -107,13 +107,24 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Checks if the current token is `kind`.
+    pub fn at(&mut self, kind: TokenKind) -> bool {
+        self.eat_ws();
+        if let Some(token) = self.tokens.last() {
+            token.kind == kind
+        } else {
+            false
+        }
+    }
+
     /// Returns the current [`TokenKind`] if there is a token.
-    pub fn peek(&self) -> Option<TokenKind> {
+    pub fn current(&mut self) -> Option<TokenKind> {
+        self.eat_ws();
         self.tokens.last().map(|token| token.kind)
     }
 
     /// Consumes the current token as it is
-    pub fn consume(&mut self) -> Token<'a> {
+    pub fn bump(&mut self) -> Token<'a> {
         let token = self.tokens.pop().unwrap();
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
@@ -125,21 +136,20 @@ impl<'a> Parser<'a> {
         // The tokens list is reversed, therefore the search is done from front.
         if let Some(index) = self.tokens.iter().position(|token| token.kind == token_kind) {
             while self.tokens.len() > (index + 1) {
-                self.consume();
+                self.bump();
             }
         } else {
-            self.token_error(token_kind);
+            self.error(ParseError::ExpectedToken(token_kind));
         }
     }
 
     /// Expect the following token, ignore all white spaces inbetween.
     pub fn expect(&mut self, token_kind: TokenKind) {
-        self.eat_ws();
-        match self.peek() {
+        match self.current() {
             Some(kind) if kind == token_kind => {
-                self.consume();
+                self.bump();
             },
-            _ => self.token_error(token_kind),
+            _ => self.error(ParseError::ExpectedToken(token_kind)),
         }
     }
 
@@ -147,8 +157,8 @@ impl<'a> Parser<'a> {
     /// them to the current node to preserve them.
     pub fn eat_ws(&mut self) {
         loop {
-            match self.peek() {
-                Some(token) if token.is_trivia() => {
+            match self.tokens.last() {
+                Some(token) if token.kind.is_trivia() => {
                     let token = self.tokens.pop().unwrap();
                     let syntax_kind: SyntaxKind = token.kind.into();
                     self.builder.token(syntax_kind.into(), token.text);
@@ -163,24 +173,14 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn finish(&mut self) {
-        self.builder.finish_node()
+        self.builder.finish_node();
+        self.eat_ws();
     }
 
-    /// Mark the current token as error
-    pub(crate) fn token_error(&mut self, expected: TokenKind) {
+    /// Mark the given error.
+    fn error(&mut self, error: ParseError) {
         self.start(SyntaxKind::Error);
-        let error = match self.peek() {
-            Some(TokenKind::Error) => {
-                let token = self.consume();
-                ParseError::UnknownToken(token.text.to_string())
-            }
-            Some(token_kind) => {
-                self.consume();
-                ParseError::UnexpectedToken(format!("{:?}", expected), format!("{:?}", token_kind))
-            }
-            None => ParseError::Eof,
-        };
-
+        self.builder.token(SyntaxKind::Text.into(), error.to_string().as_str());
         self.errors.push(error);
         self.finish();
     }

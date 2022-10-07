@@ -11,12 +11,9 @@ pub fn parse_procedure(p: &mut Parser) {
 /// Parses the header
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
-    p.eat_ws();
     p.expect(TokenKind::CreateKw);
-    p.eat_ws();
-    if let Some(TokenKind::OrReplaceKw) = p.peek() {
-        p.consume();
-        p.eat_ws();
+    if p.at(TokenKind::OrReplaceKw) {
+        p.bump();
     }
     p.expect(TokenKind::ProcedureKw);
     parse_ident(p);
@@ -26,9 +23,7 @@ fn parse_header(p: &mut Parser) {
 
 fn parse_body(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureBody);
-    p.eat_ws();
     p.expect(TokenKind::IsKw);
-    p.eat_ws();
     p.expect(TokenKind::BeginKw);
     p.start(SyntaxKind::Text);
     p.until_last(TokenKind::EndKw);
@@ -36,32 +31,30 @@ fn parse_body(p: &mut Parser) {
     p.expect(TokenKind::EndKw);
     parse_ident(p);
     p.expect(TokenKind::SemiColon);
-    p.eat_ws();
     p.finish();
 }
 
 /// Parses the parameter list in the procedure header
+/// TODO refactor
 fn parse_param_list(p: &mut Parser) {
-    p.eat_ws();
-    if let Some(TokenKind::LParen) = p.peek() {
+    if p.at(TokenKind::LParen) {
         p.start(SyntaxKind::ParamList);
-        p.consume();
+        p.bump();
 
         loop {
-            p.eat_ws();
-            match p.peek() {
+            match p.current() {
                 Some(TokenKind::Comma) => {
-                    p.consume();
+                    p.bump();
                 }
                 Some(TokenKind::RParen) => {
-                    p.consume();
+                    p.bump();
                     break;
                 }
                 Some(_) => {
                     parse_param(p);
                 }
                 None => {
-                    p.token_error(TokenKind::RParen);
+                    p.expect(TokenKind::RParen);
                     break;
                 }
             }
@@ -77,27 +70,24 @@ fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
     parse_ident(p);
     parse_param_type(p);
-    p.eat_ws();
-    if let Some(TokenKind::Assign) = p.peek() {
-        p.consume();
-        p.eat_ws();
-        if let Some(TokenKind::QuotedLiteral) = p.peek() {
-            p.consume();
+    if p.at(TokenKind::Assign) {
+        p.bump();
+        if p.at(TokenKind::QuotedLiteral) {
+            p.bump();
         }
     }
     p.finish();
 }
 
 fn parse_ident(p: &mut Parser) {
-    p.eat_ws();
     p.expect(TokenKind::Ident);
 }
 
 fn parse_param_type(p: &mut Parser) {
     p.start(SyntaxKind::ParamType);
     parse_ident(p);
-    if let Some(TokenKind::Percentage) = p.peek() {
-        p.consume();
+    if p.at(TokenKind::Percentage) {
+        p.bump();
         p.expect(TokenKind::Ident);
     }
     p.finish();
@@ -191,10 +181,10 @@ Root@0..14
 Root@0..26
   Param@0..26
     Ident@0..2 "p2"
-    ParamType@2..11
+    ParamType@2..12
       Whitespace@2..3 " "
       Ident@3..11 "VARCHAR2"
-    Whitespace@11..12 " "
+      Whitespace@11..12 " "
     Assign@12..14 ":="
     Whitespace@14..15 " "
     QuotedLiteral@15..26 "'not empty'"
@@ -238,13 +228,13 @@ Root@0..22
         check(
             parse("CREATE hello", parse_header),
             expect![[r#"
-Root@0..12
-  ProcedureHeader@0..12
+Root@0..40
+  ProcedureHeader@0..40
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
-    Error@7..12
-      Ident@7..12 "hello"
-    Error@12..12
+    Error@7..35
+      Text@7..35 "Expected token 'Proce ..."
+    Ident@35..40 "hello"
 "#]],
         );
     }
@@ -323,7 +313,7 @@ END hello;
 "#;
         check(parse(INPUT, parse_body), expect![[r#"
 Root@0..31
-  ProcedureBody@0..31
+  ProcedureBody@0..30
     Whitespace@0..1 "\n"
     Keyword@1..3 "IS"
     Whitespace@3..4 "\n"
@@ -337,7 +327,7 @@ Root@0..31
     Whitespace@23..24 " "
     Ident@24..29 "hello"
     SemiColon@29..30 ";"
-    Whitespace@30..31 "\n"
+  Whitespace@30..31 "\n"
 "#]],
         );
     }

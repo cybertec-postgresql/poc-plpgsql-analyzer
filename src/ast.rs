@@ -63,6 +63,29 @@ impl SyntaxKind {
     pub(crate) fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
     }
+
+    /// Returns true if the [`SyntaxKind`] is a keyword
+    #[allow(unused)]
+    pub(crate) fn is_keyword(self) -> bool {
+        matches!(
+            self,
+            SyntaxKind::Keyword,
+        )
+    }
+
+    #[allow(unused)]
+    pub(crate) fn is_punct(self) -> bool {
+        matches!(
+            self,
+            Self::LParen
+                | Self::RParen
+                | Self::Percentage
+                | Self::Dot
+                | Self::Comma
+                | Self::SemiColon
+                | Self::Colon
+        )
+    }
 }
 
 impl From<SyntaxKind> for rowan::SyntaxKind {
