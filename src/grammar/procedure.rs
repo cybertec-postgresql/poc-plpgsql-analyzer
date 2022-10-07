@@ -61,7 +61,7 @@ fn parse_param_list(p: &mut Parser) {
                     parse_param(p);
                 }
                 None => {
-                    p.error(TokenKind::RParen);
+                    p.token_error(TokenKind::RParen);
                     break;
                 }
             }

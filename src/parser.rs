@@ -92,6 +92,14 @@ impl<'a> Parser<'a> {
 
     /// Builds the green node tree, called once the parsing is complete
     pub fn build(mut self) -> Parse {
+        if !self.tokens.is_empty() {
+            let remaining_tokens = self.tokens.iter().map(|t| t.text).collect::<String>();
+            let error = ParseError::Incomplete(remaining_tokens);
+            self.start(SyntaxKind::Error);
+            self.errors.push(error);
+            self.finish();
+        }
+
         self.finish();
         Parse {
             green_node: self.builder.finish(),
@@ -106,7 +114,6 @@ impl<'a> Parser<'a> {
 
     /// Consumes the current token as it is
     pub fn consume(&mut self) -> Token<'a> {
-        assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
@@ -121,17 +128,18 @@ impl<'a> Parser<'a> {
                 self.consume();
             }
         } else {
-            self.error(token_kind);
+            self.token_error(token_kind);
         }
     }
 
     /// Expect the following token, ignore all white spaces inbetween.
     pub fn expect(&mut self, token_kind: TokenKind) {
+        self.eat_ws();
         match self.peek() {
             Some(kind) if kind == token_kind => {
                 self.consume();
             },
-            _ => self.error(token_kind),
+            _ => self.token_error(token_kind),
         }
     }
 
@@ -141,7 +149,9 @@ impl<'a> Parser<'a> {
         loop {
             match self.peek() {
                 Some(token) if token.is_trivia() => {
-                    self.consume();
+                    let token = self.tokens.pop().unwrap();
+                    let syntax_kind: SyntaxKind = token.kind.into();
+                    self.builder.token(syntax_kind.into(), token.text);
                 },
                 _ => break,
             }
@@ -157,7 +167,7 @@ impl<'a> Parser<'a> {
     }
 
     /// Mark the current token as error
-    pub(crate) fn error(&mut self, expected: TokenKind) {
+    pub(crate) fn token_error(&mut self, expected: TokenKind) {
         self.start(SyntaxKind::Error);
         let error = match self.peek() {
             Some(TokenKind::Error) => {
