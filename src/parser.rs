@@ -21,7 +21,7 @@ pub enum ParseError {
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
     /// A token could not be parsed by the lexer
-    #[error("Token is not known: {0}")]
+    #[error("Uknown token found: {0}")]
     UnknownToken(String),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
@@ -47,7 +47,7 @@ pub fn parse(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
-/// The struct helds the parsed / built green syntax tree with
+/// The struct holds the parsed / built green syntax tree with
 /// a list of parse errors.
 #[derive(Debug)]
 pub struct Parse {
@@ -94,10 +94,7 @@ impl<'a> Parser<'a> {
     pub fn build(mut self) -> Parse {
         if !self.tokens.is_empty() {
             let remaining_tokens = self.tokens.iter().map(|t| t.text).collect::<String>();
-            let error = ParseError::Incomplete(remaining_tokens);
-            self.start(SyntaxKind::Error);
-            self.errors.push(error);
-            self.finish();
+            self.error(ParseError::Incomplete(remaining_tokens));
         }
 
         self.finish();
@@ -192,6 +189,9 @@ impl<'a> Parser<'a> {
     fn do_bump(&mut self) {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
+        if token.kind == TokenKind::Error {
+            self.error(ParseError::UnknownToken(token.text.to_string()));
+        }
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
     }

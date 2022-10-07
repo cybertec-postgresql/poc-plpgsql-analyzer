@@ -5,6 +5,9 @@ pub fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     parse_header(p);
     parse_body(p);
+    while !p.at(TokenKind::Eof) {
+        p.bump_any();
+    }
     p.finish();
 }
 

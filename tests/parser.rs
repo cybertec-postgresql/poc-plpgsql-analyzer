@@ -7,7 +7,7 @@ fn test_parse_procedure_coverage(path: &Path) -> datatest_stable::Result<()> {
     let result = parse(&input);
     assert!(result.is_ok(), "{:#?}", result);
     let parse = result.unwrap();
-    assert!(parse.errors.is_empty(), "\n{}", parse.tree());
+    assert!(parse.errors.is_empty(), "\n{}\n{:?}", parse.tree(), parse.errors);
     Ok(())
 }
 
