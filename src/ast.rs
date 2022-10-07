@@ -17,6 +17,8 @@ pub enum SyntaxKind {
     RParen,
     /// Percentage symbol
     Percentage,
+    /// Slash char '/'
+    Slash,
     /// Inline comment starting with '--'
     Comment,
     /// Any whitespace character
@@ -80,6 +82,7 @@ impl SyntaxKind {
             Self::LParen
                 | Self::RParen
                 | Self::Percentage
+                | Self::Slash
                 | Self::Dot
                 | Self::Comma
                 | Self::SemiColon
@@ -115,6 +118,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
+            TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
             TokenKind::Eof => unreachable!(),

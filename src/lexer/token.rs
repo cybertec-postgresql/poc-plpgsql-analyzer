@@ -57,6 +57,9 @@ pub enum TokenKind {
     #[token("%")]
     Percentage,
 
+    #[token("/")]
+    Slash,
+
     #[regex("--.*")]
     Comment,
 
