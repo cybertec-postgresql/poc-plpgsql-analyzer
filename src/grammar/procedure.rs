@@ -13,7 +13,7 @@ fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
     p.expect(TokenKind::CreateKw);
     if p.at(TokenKind::OrReplaceKw) {
-        p.bump();
+        p.bump(TokenKind::OrReplaceKw);
     }
     p.expect(TokenKind::ProcedureKw);
     parse_ident(p);
@@ -25,9 +25,11 @@ fn parse_body(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureBody);
     p.expect(TokenKind::IsKw);
     p.expect(TokenKind::BeginKw);
+
     p.start(SyntaxKind::Text);
     p.until_last(TokenKind::EndKw);
     p.finish();
+
     p.expect(TokenKind::EndKw);
     parse_ident(p);
     p.expect(TokenKind::SemiColon);
@@ -35,31 +37,26 @@ fn parse_body(p: &mut Parser) {
 }
 
 /// Parses the parameter list in the procedure header
-/// TODO refactor
 fn parse_param_list(p: &mut Parser) {
     if p.at(TokenKind::LParen) {
         p.start(SyntaxKind::ParamList);
-        p.bump();
+        p.bump(TokenKind::LParen);
 
         loop {
             match p.current() {
-                Some(TokenKind::Comma) => {
-                    p.bump();
+                TokenKind::Comma => {
+                    p.bump(TokenKind::Comma);
                 }
-                Some(TokenKind::RParen) => {
-                    p.bump();
+                TokenKind::RParen | TokenKind::Eof => {
                     break;
                 }
-                Some(_) => {
+                _ => {
                     parse_param(p);
-                }
-                None => {
-                    p.expect(TokenKind::RParen);
-                    break;
                 }
             }
         }
 
+        p.expect(TokenKind::RParen);
         p.finish();
     }
 }
@@ -68,14 +65,12 @@ fn parse_param_list(p: &mut Parser) {
 ///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
-    parse_ident(p);
-    parse_param_type(p);
-    if p.at(TokenKind::Assign) {
-        p.bump();
-        if p.at(TokenKind::QuotedLiteral) {
-            p.bump();
-        }
+    p.expect(TokenKind::Ident);
+
+    while !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
+        p.bump_any();
     }
+
     p.finish();
 }
 
@@ -83,22 +78,12 @@ fn parse_ident(p: &mut Parser) {
     p.expect(TokenKind::Ident);
 }
 
-fn parse_param_type(p: &mut Parser) {
-    p.start(SyntaxKind::ParamType);
-    parse_ident(p);
-    if p.at(TokenKind::Percentage) {
-        p.bump();
-        p.expect(TokenKind::Ident);
-    }
-    p.finish();
-}
-
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
 
     use crate::{
-        grammar::procedure::{parse_header, parse_param, parse_body},
+        grammar::procedure::{parse_body, parse_header, parse_param},
         parser::{Parse, Parser},
         Lexer,
     };
@@ -152,9 +137,8 @@ Root@0..5
 Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
-    ParamType@3..12
-      Whitespace@3..4 " "
-      Ident@4..12 "VARCHAR2"
+    Whitespace@3..4 " "
+    Ident@4..12 "VARCHAR2"
 "#]],
         );
 
@@ -165,26 +149,25 @@ Root@0..14
   Param@0..14
     Whitespace@0..2 "  "
     Ident@2..5 "foo"
-    ParamType@5..14
-      Whitespace@5..6 " "
-      Ident@6..9 "bar"
-      Percentage@9..10 "%"
-      Ident@10..14 "type"
+    Whitespace@5..6 " "
+    Ident@6..9 "bar"
+    Percentage@9..10 "%"
+    Ident@10..14 "type"
 "#]],
         );
     }
 
     #[test]
     fn test_parse_param_with_default_value() {
-        check(parse("p2 VARCHAR2 := 'not empty'", parse_param),
-        expect![[r#"
+        check(
+            parse("p2 VARCHAR2 := 'not empty'", parse_param),
+            expect![[r#"
 Root@0..26
   Param@0..26
     Ident@0..2 "p2"
-    ParamType@2..12
-      Whitespace@2..3 " "
-      Ident@3..11 "VARCHAR2"
-      Whitespace@11..12 " "
+    Whitespace@2..3 " "
+    Ident@3..11 "VARCHAR2"
+    Whitespace@11..12 " "
     Assign@12..14 ":="
     Whitespace@14..15 " "
     QuotedLiteral@15..26 "'not empty'"
@@ -282,21 +265,19 @@ Root@0..146
       Whitespace@39..41 "  "
       Param@41..93
         Ident@41..49 "p_emp_id"
-        ParamType@49..87
-          Whitespace@49..59 "          "
-          Ident@59..82 "job_history.employee_id"
-          Percentage@82..83 "%"
-          Ident@83..87 "type"
+        Whitespace@49..59 "          "
+        Ident@59..82 "job_history.employee_id"
+        Percentage@82..83 "%"
+        Ident@83..87 "type"
         Whitespace@87..93 "\n     "
       Comma@93..94 ","
       Whitespace@94..95 " "
       Param@95..145
         Ident@95..107 "p_start_date"
-        ParamType@107..140
-          Whitespace@107..113 "      "
-          Ident@113..135 "job_history.start_date"
-          Percentage@135..136 "%"
-          Ident@136..140 "type"
+        Whitespace@107..113 "      "
+        Ident@113..135 "job_history.start_date"
+        Percentage@135..136 "%"
+        Ident@136..140 "type"
         Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],
@@ -311,7 +292,9 @@ BEGIN
     NULL;
 END hello;
 "#;
-        check(parse(INPUT, parse_body), expect![[r#"
+        check(
+            parse(INPUT, parse_body),
+            expect![[r#"
 Root@0..31
   ProcedureBody@0..30
     Whitespace@0..1 "\n"

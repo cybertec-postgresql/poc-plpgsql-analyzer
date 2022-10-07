@@ -109,26 +109,38 @@ impl<'a> Parser<'a> {
 
     /// Checks if the current token is `kind`.
     pub fn at(&mut self, kind: TokenKind) -> bool {
-        self.eat_ws();
-        if let Some(token) = self.tokens.last() {
-            token.kind == kind
-        } else {
-            false
-        }
+        self.current() == kind
     }
 
     /// Returns the current [`TokenKind`] if there is a token.
-    pub fn current(&mut self) -> Option<TokenKind> {
+    pub fn current(&mut self) -> TokenKind {
         self.eat_ws();
-        self.tokens.last().map(|token| token.kind)
+        match self.tokens.last() {
+            Some(token) => token.kind,
+            None => TokenKind::Eof,
+        }
+    }
+
+    /// Consumes the next token if `kind` matches.
+    pub fn eat(&mut self, kind: TokenKind) -> bool {
+        if !self.at(kind) {
+            return false;
+        }
+        self.do_bump();
+        true
     }
 
     /// Consumes the current token as it is
-    pub fn bump(&mut self) -> Token<'a> {
-        let token = self.tokens.pop().unwrap();
-        let syntax_kind: SyntaxKind = token.kind.into();
-        self.builder.token(syntax_kind.into(), token.text);
-        token
+    pub fn bump(&mut self, kind: TokenKind) {
+        assert!(self.eat(kind));
+    }
+
+    /// Consumes the next token, advances by one token
+    pub fn bump_any(&mut self) {
+        if self.current() == TokenKind::Eof {
+            return;
+        }
+        self.do_bump();
     }
 
     /// Consumes all tokens until the last searched token is found.
@@ -136,7 +148,7 @@ impl<'a> Parser<'a> {
         // The tokens list is reversed, therefore the search is done from front.
         if let Some(index) = self.tokens.iter().position(|token| token.kind == token_kind) {
             while self.tokens.len() > (index + 1) {
-                self.bump();
+                self.do_bump();
             }
         } else {
             self.error(ParseError::ExpectedToken(token_kind));
@@ -144,13 +156,12 @@ impl<'a> Parser<'a> {
     }
 
     /// Expect the following token, ignore all white spaces inbetween.
-    pub fn expect(&mut self, token_kind: TokenKind) {
-        match self.current() {
-            Some(kind) if kind == token_kind => {
-                self.bump();
-            },
-            _ => self.error(ParseError::ExpectedToken(token_kind)),
+    pub fn expect(&mut self, token_kind: TokenKind) -> bool {
+        if self.eat(token_kind) {
+            return true;
         }
+        self.error(ParseError::ExpectedToken(token_kind));
+        false
     }
 
     /// Consume all whitespaces / comments & attach
@@ -175,6 +186,14 @@ impl<'a> Parser<'a> {
     pub(crate) fn finish(&mut self) {
         self.builder.finish_node();
         self.eat_ws();
+    }
+
+    /// Function to consume the next token, regardless of any [`TokenKind`]
+    fn do_bump(&mut self) {
+        assert!(!self.tokens.is_empty());
+        let token = self.tokens.pop().unwrap();
+        let syntax_kind: SyntaxKind = token.kind.into();
+        self.builder.token(syntax_kind.into(), token.text);
     }
 
     /// Mark the given error.

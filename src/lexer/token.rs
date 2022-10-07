@@ -60,6 +60,9 @@ pub enum TokenKind {
     #[regex("--.*")]
     Comment,
 
+    /// Marker token to indicate end of input, not used by lexer directly.
+    Eof,
+
     #[error]
     Error,
 }

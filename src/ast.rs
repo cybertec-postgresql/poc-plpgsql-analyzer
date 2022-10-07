@@ -117,6 +117,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
+            TokenKind::Eof => unreachable!(),
         }
     }
 }
