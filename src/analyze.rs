@@ -29,7 +29,7 @@ pub enum Type {
 #[wasm_bindgen]
 #[derive(Debug, Eq, PartialEq)]
 pub struct DboMetaData {
-    lines_of_code: usize,
+    pub lines_of_code: usize,
     sql_statements: Vec<()>,
 }
 
