@@ -21,6 +21,8 @@ wasm-pack build --target nodejs
 ```
 in the project directory to build.
 
+This will create a full npm package in the `pkg/` directory.
+
 ## Unit tests
 
 To run all the unit tests, simply run
@@ -36,6 +38,12 @@ cargo test -- --ignored
 To run the coverage test
 ```sh
 cargo test -F coverage-tests
+```
+
+To run the TypeScript test suite
+```sh
+npm --prefix tests/typescript clean-install
+npm --prefix tests/typescript test
 ```
 
 ## Rustdoc
