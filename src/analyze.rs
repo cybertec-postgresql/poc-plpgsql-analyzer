@@ -4,7 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
-use crate::{parser::*};
+use crate::parser::*;
 use wasm_bindgen::prelude::*;
 
 /// Different types the analyzer can possibly examine.

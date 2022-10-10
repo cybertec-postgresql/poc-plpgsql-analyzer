@@ -4,8 +4,10 @@
 
 //! Implements parsers for different SQL language constructs.
 
+use crate::{
+    ast::SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
+};
 use rowan::{GreenNode, GreenNodeBuilder};
-use crate::{SyntaxKind, ast::SyntaxNode, Token, Lexer, lexer::TokenKind, grammar::parse_procedure};
 
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
@@ -145,7 +147,11 @@ impl<'a> Parser<'a> {
     /// Consumes all tokens until the last searched token is found.
     pub fn until_last(&mut self, token_kind: TokenKind) {
         // The tokens list is reversed, therefore the search is done from front.
-        if let Some(index) = self.tokens.iter().position(|token| token.kind == token_kind) {
+        if let Some(index) = self
+            .tokens
+            .iter()
+            .position(|token| token.kind == token_kind)
+        {
             while self.tokens.len() > (index + 1) {
                 self.do_bump();
             }
@@ -172,7 +178,7 @@ impl<'a> Parser<'a> {
                     let token = self.tokens.pop().unwrap();
                     let syntax_kind: SyntaxKind = token.kind.into();
                     self.builder.token(syntax_kind.into(), token.text);
-                },
+                }
                 _ => break,
             }
         }
@@ -203,7 +209,8 @@ impl<'a> Parser<'a> {
     /// Mark the given error.
     fn error(&mut self, error: ParseError) {
         self.start(SyntaxKind::Error);
-        self.builder.token(SyntaxKind::Text.into(), error.to_string().as_str());
+        self.builder
+            .token(SyntaxKind::Text.into(), error.to_string().as_str());
         self.errors.push(error);
         self.finish();
     }

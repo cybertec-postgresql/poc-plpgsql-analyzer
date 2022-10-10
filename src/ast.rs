@@ -67,10 +67,7 @@ impl SyntaxKind {
     /// Returns true if the [`SyntaxKind`] is a keyword
     #[allow(unused)]
     pub(crate) fn is_keyword(self) -> bool {
-        matches!(
-            self,
-            SyntaxKind::Keyword,
-        )
+        matches!(self, SyntaxKind::Keyword,)
     }
 
     #[allow(unused)]

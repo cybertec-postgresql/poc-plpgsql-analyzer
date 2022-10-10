@@ -6,11 +6,11 @@
 
 mod analyze;
 mod ast;
+mod grammar;
 mod lexer;
 mod parser;
-mod grammar;
 
 pub use analyze::*;
 pub use ast::{SyntaxElement, SyntaxKind};
 pub use lexer::{Lexer, Token};
-pub use parser::{parse, Parser, ParseError};
+pub use parser::{parse, ParseError, Parser};
