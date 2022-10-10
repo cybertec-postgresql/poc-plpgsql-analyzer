@@ -75,12 +75,11 @@ mod detail {
     use super::*;
     use nom::branch::alt;
     use nom::bytes::complete::tag_no_case;
-    use nom::character::complete::{anychar, char, one_of, satisfy};
+    use nom::character::complete::{anychar, char, line_ending, one_of, satisfy, multispace1};
     use nom::combinator::{all_consuming, map, opt, recognize};
     use nom::multi::{many0, many0_count, many_till, separated_list0};
     use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
-    use nom::{AsChar, IResult, InputIter, InputLength, InputTakeAtPosition, Slice};
-    use std::ops::RangeFrom;
+    use nom::IResult;
 
     /// Custom span as used by parser internals.
     type LocatedSpan<'a> = nom_locate::LocatedSpan<&'a str>;
@@ -105,24 +104,18 @@ mod detail {
     /// A combinator that takes a parser `inner` and produces a parser that also
     /// consumes both leading and trailing whitespace, returning the output
     /// of `inner`.
-    fn ws<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, O, E>
+    fn ws<'a, F, O, E>(inner: F) -> impl FnMut(LocatedSpan<'a>) -> IResult<LocatedSpan<'a>, O, E>
     where
-        F: Fn(I) -> IResult<I, O, E>,
-        I: Clone
-            + InputLength
-            + InputIter<Item = char>
-            + InputTakeAtPosition
-            + Slice<RangeFrom<usize>>,
-        <I as InputTakeAtPosition>::Item: AsChar,
-        E: nom::error::ParseError<I>,
+        F: Fn(LocatedSpan<'a>) -> IResult<LocatedSpan<'a>, O, E>,
+        E: nom::error::ParseError<LocatedSpan<'a>>,
     {
-        let linebreak = |input| pair(opt(char('\r')), char('\n'))(input);
-        let single_line_comment =
-            move |input| preceded(pair(char('-'), char('-')), many_till(anychar, linebreak))(input);
+        let single_line_comment = move |input| {
+            preceded(pair(char('-'), char('-')), many_till(anychar, line_ending))(input)
+        };
 
         let discardable = move |input| {
             many0_count(alt((
-                discard(one_of(" \t\r\n")),
+                discard(multispace1),
                 discard(single_line_comment),
             )))(input)
         };
