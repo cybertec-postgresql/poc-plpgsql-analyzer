@@ -70,12 +70,14 @@ impl Parse {
     }
 }
 
+/// A custom parser to build a green Syntax Tree from a list
+/// of tokens.
 pub struct Parser<'a> {
     /// All tokens generated from a Lexer.
     tokens: Vec<Token<'a>>,
     /// The in-progress tree builder
     builder: GreenNodeBuilder<'static>,
-    /// The list of all found errors
+    /// The list of all found errors.
     errors: Vec<ParseError>,
 }
 
@@ -176,10 +178,12 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Start a new (nested) node
     pub(crate) fn start(&mut self, kind: SyntaxKind) {
         self.builder.start_node(kind.into());
     }
 
+    /// Finish the current node
     pub(crate) fn finish(&mut self) {
         self.builder.finish_node();
         self.eat_ws();

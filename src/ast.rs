@@ -43,8 +43,6 @@ pub enum SyntaxKind {
     Param,
     /// A node that consists of multiple parameters
     ParamList,
-    /// A node that marks a type parameter
-    ParamType,
     /// A node that marks a full PROCEDURE block
     Procedure,
     /// A node that marks a PROCEDURE header with params
