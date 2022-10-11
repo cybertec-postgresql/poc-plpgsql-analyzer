@@ -12,7 +12,7 @@ describe('try to parse Oracle procedures', () => {
     .filter((name) => name.match(/^(.+)\.ora\.sql$/))
     .map((name) => path.join(PROCEDURE_HEADINGS_DIR, name));
 
-  test.skip.each(files)('%s', async (path) => {
+  it.skip.each(files)('should parse %s successfully', (path) => {
     const content = fs.readFileSync(path, 'utf8');
 
     let error;
@@ -23,5 +23,12 @@ describe('try to parse Oracle procedures', () => {
     }
 
     expect(error).toEqual(undefined);
+  });
+
+  it('should count the lines of code correctly', () => {
+    const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
+
+    const metaData = analyze(Type.Procedure, content);
+    expect(metaData.lines_of_code).toEqual(3);
   });
 });
