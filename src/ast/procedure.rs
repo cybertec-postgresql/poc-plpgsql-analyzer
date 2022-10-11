@@ -3,8 +3,11 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+//! Typed AST nodes for PL/SQL procedures.
+
 use crate::{syntax::SyntaxToken, AstNode, AstToken, SyntaxKind, SyntaxNode};
 
+/// Automatically generate `struct`s and implementation of the [`AstNode`] or [`AstToken`] trait for [`SyntaxKind`] variants.
 macro_rules! typed_syntax {
     ($synty:ty [ $astty:ty ] { $( $name:ident ),+ $(,)? }) => {
         $(
@@ -37,7 +40,7 @@ typed_syntax!(SyntaxNode[AstNode] { Procedure, ProcedureHeader, ProcedureBody })
 typed_syntax!(SyntaxToken[AstToken] { Ident });
 
 impl Procedure {
-    /// Returns the name of the procedure
+    /// Returns the name of the procedure.
     #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
@@ -46,13 +49,14 @@ impl Procedure {
             .name()
     }
 
-    /// Returns the name of the procedure
+    /// Returns the name of the procedure.
     pub fn body(&self) -> Option<ProcedureBody> {
         self.syntax.children().find_map(ProcedureBody::cast)
     }
 }
 
 impl ProcedureHeader {
+    /// Returns the name of the procedure.
     #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
@@ -64,6 +68,7 @@ impl ProcedureHeader {
 }
 
 impl Ident {
+    /// Returns the identifier name itself.
     #[allow(unused)]
     pub fn name(&self) -> String {
         self.syntax.text().to_string()

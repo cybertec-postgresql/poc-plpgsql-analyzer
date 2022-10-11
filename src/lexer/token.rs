@@ -3,6 +3,8 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+//! Token definition for the [`logos`] parser.
+
 use std::fmt;
 
 /// Use to tokenize the input text

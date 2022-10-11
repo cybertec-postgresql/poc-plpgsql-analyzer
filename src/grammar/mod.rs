@@ -3,6 +3,8 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+//! Implements grammar parsing of the token tree from the lexer.
+
 mod procedure;
 
 pub use procedure::parse_procedure;

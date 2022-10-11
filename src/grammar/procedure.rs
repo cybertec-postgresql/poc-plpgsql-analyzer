@@ -3,6 +3,8 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+//! Implements parsing of procedures from a token tree.
+
 use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
 
 /// Parses a complete procedure.
@@ -16,7 +18,7 @@ pub fn parse_procedure(p: &mut Parser) {
     p.finish();
 }
 
-/// Parses the header
+/// Parses the header of a procedure.
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
     p.expect(TokenKind::CreateKw);
@@ -29,6 +31,7 @@ fn parse_header(p: &mut Parser) {
     p.finish();
 }
 
+/// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
     p.expect(TokenKind::IsKw);
     p.expect(TokenKind::BeginKw);
@@ -69,6 +72,8 @@ fn parse_param_list(p: &mut Parser) {
     }
 }
 
+/// Parses a single parameter in a parameter list of a procedure.
+///
 /// Example:
 ///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
@@ -82,6 +87,7 @@ fn parse_param(p: &mut Parser) {
     p.finish();
 }
 
+/// Parses a single SQL identifier.
 fn parse_ident(p: &mut Parser) {
     p.expect(TokenKind::Ident);
 }

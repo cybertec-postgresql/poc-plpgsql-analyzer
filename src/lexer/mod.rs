@@ -3,6 +3,8 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+//! Implements a Lexer based on the [`logos`] crate.
+
 mod token;
 
 use logos::Logos;
@@ -10,12 +12,14 @@ use rowan::{TextRange, TextSize};
 use std::ops::Range as StdRange;
 pub use token::TokenKind;
 
+/// Wrapper for the actual [`Logos`] parser.
 #[derive(Debug)]
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, TokenKind>,
 }
 
 impl<'a> Lexer<'a> {
+    /// Creates a new parsing from an input.
     pub fn new(input: &'a str) -> Self {
         Self {
             inner: TokenKind::lexer(input),
@@ -42,6 +46,7 @@ impl<'a> Iterator for Lexer<'a> {
     }
 }
 
+/// Represents a single token in the token tree.
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token<'a> {
     pub kind: TokenKind,
