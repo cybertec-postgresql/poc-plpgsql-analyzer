@@ -6,7 +6,7 @@
 //! Implements parsers for different SQL language constructs.
 
 use crate::{
-    ast::SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
+    SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
 };
 use rowan::{GreenNode, GreenNodeBuilder};
 

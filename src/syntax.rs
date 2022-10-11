@@ -3,10 +3,9 @@
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
+use crate::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
-
-use crate::lexer::TokenKind;
 
 /// Examples
 /// * https://blog.kiranshila.com/blog/easy_cst.md
@@ -17,7 +16,7 @@ use crate::lexer::TokenKind;
 #[repr(u16)]
 pub enum SyntaxKind {
     /// Left Paren
-    LParen = 0,
+    LParen,
     /// Right Paren
     RParen,
     /// Percentage symbol
@@ -144,4 +143,5 @@ impl rowan::Language for SqlProcedureLang {
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
 #[allow(unused)]
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
+#[allow(unused)]
 pub type SyntaxElement = rowan::SyntaxElement<SqlProcedureLang>;
