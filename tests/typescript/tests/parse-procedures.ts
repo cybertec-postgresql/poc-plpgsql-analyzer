@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { analyze, Type } from 'poc-plpgsql-analyzer';
+import { analyze, DboMetaData, Type } from 'poc-plpgsql-analyzer';
 
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
 
@@ -12,17 +12,11 @@ describe('try to parse Oracle procedures', () => {
     .filter((name) => name.match(/^(.+)\.ora\.sql$/))
     .map((name) => path.join(PROCEDURE_HEADINGS_DIR, name));
 
-  it.skip.each(files)('should parse %s successfully', (path) => {
+  it.each(files)('should parse %s successfully', (path) => {
     const content = fs.readFileSync(path, 'utf8');
+    const result = analyze(Type.Procedure, content);
 
-    let error;
-    try {
-      analyze(Type.Procedure, content);
-    } catch (err) {
-      error = err;
-    }
-
-    expect(error).toEqual(undefined);
+    expect(result).toBeInstanceOf(DboMetaData);
   });
 
   it('should count the lines of code correctly', () => {
