@@ -9,7 +9,7 @@ const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
 
 describe('try to parse Oracle procedures', () => {
   const files = fs.readdirSync(PROCEDURE_HEADINGS_DIR)
-    .filter((name) => name.match(/^(.*)\.ora\.sql$/))
+    .filter((name) => name.match(/^(.+)\.ora\.sql$/))
     .map((name) => path.join(PROCEDURE_HEADINGS_DIR, name));
 
   test.skip.each(files)('%s', async (path) => {
