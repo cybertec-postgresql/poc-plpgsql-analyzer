@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
+// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// <office@cybertec.at>
+
 use poc_plpgsql_analyzer::parse;
 use std::fs;
 use std::path::Path;
