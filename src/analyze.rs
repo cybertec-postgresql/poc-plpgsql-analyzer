@@ -4,6 +4,7 @@
 
 //! Implements the main analyzer functionality.
 
+use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use wasm_bindgen::prelude::*;
 
@@ -74,10 +75,13 @@ pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
 }
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
-    let _node = Node::ProcedureDef(parse.syntax());
+    let body = Root::cast(parse.syntax())
+        .and_then(|p| p.procedure())
+        .and_then(|p| p.body())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure body".to_owned()))?;
 
     Ok(DboMetaData {
-        lines_of_code: 1, // TODO fix
+        lines_of_code: body.syntax().text().to_string().matches('\n').count(),
         sql_statements: vec![()],
     })
 }

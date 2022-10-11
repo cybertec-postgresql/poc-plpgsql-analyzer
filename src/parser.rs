@@ -5,17 +5,10 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use crate::{
-    SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
-};
+use crate::grammar::parse_procedure;
+use crate::lexer::TokenKind;
+use crate::{Lexer, SyntaxKind, SyntaxNode, Token};
 use rowan::{GreenNode, GreenNodeBuilder};
-
-/// Represents a single node in the AST.
-#[derive(Debug, Eq, PartialEq)]
-pub enum Node {
-    /// TODO replace with a cast-able Procedure that maps the syntax node
-    ProcedureDef(SyntaxNode),
-}
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]
