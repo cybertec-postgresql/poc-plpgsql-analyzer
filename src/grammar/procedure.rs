@@ -30,18 +30,18 @@ fn parse_header(p: &mut Parser) {
 }
 
 fn parse_body(p: &mut Parser) {
-    p.start(SyntaxKind::ProcedureBody);
     p.expect(TokenKind::IsKw);
     p.expect(TokenKind::BeginKw);
+    p.eat_ws();
 
-    p.start(SyntaxKind::Text);
+    p.start(SyntaxKind::ProcedureBody);
     p.until_last(TokenKind::EndKw);
     p.finish();
 
     p.expect(TokenKind::EndKw);
     parse_ident(p);
     p.expect(TokenKind::SemiColon);
-    p.finish();
+    p.eat_ws();
 }
 
 /// Parses the parameter list in the procedure header
@@ -304,20 +304,19 @@ END hello;
             parse(INPUT, parse_body),
             expect![[r#"
 Root@0..31
-  ProcedureBody@0..30
-    Whitespace@0..1 "\n"
-    Keyword@1..3 "IS"
-    Whitespace@3..4 "\n"
-    Keyword@4..9 "BEGIN"
-    Text@9..20
-      Whitespace@9..14 "\n    "
-      Ident@14..18 "NULL"
-      SemiColon@18..19 ";"
-      Whitespace@19..20 "\n"
-    Keyword@20..23 "END"
-    Whitespace@23..24 " "
-    Ident@24..29 "hello"
-    SemiColon@29..30 ";"
+  Whitespace@0..1 "\n"
+  Keyword@1..3 "IS"
+  Whitespace@3..4 "\n"
+  Keyword@4..9 "BEGIN"
+  Whitespace@9..14 "\n    "
+  ProcedureBody@14..20
+    Ident@14..18 "NULL"
+    SemiColon@18..19 ";"
+    Whitespace@19..20 "\n"
+  Keyword@20..23 "END"
+  Whitespace@23..24 " "
+  Ident@24..29 "hello"
+  SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
         );
