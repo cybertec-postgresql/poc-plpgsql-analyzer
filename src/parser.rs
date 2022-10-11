@@ -4,36 +4,16 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use nom::Finish;
-
-/// A specific location in the input data.
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct Span {
-    line: usize,
-    column: usize,
-}
-
-/// An parameter in a procedure definition.
-#[derive(Debug, Eq, PartialEq)]
-pub struct ProcedureParam {
-    span: Span,
-    name: String,
-    typ: String,
-}
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct ProcedureDef {
-    pub span: Span,
-    pub name: String,
-    pub replace: bool,
-    pub parameters: Vec<ProcedureParam>,
-    pub body: String, // Should eventually be something like `Vec<Node>`
-}
+use crate::{
+    ast::SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
+};
+use rowan::{GreenNode, GreenNodeBuilder};
 
 /// Represents a single node in the AST.
 #[derive(Debug, Eq, PartialEq)]
 pub enum Node {
-    ProcedureDef(ProcedureDef),
+    /// TODO replace with a cast-able Procedure that maps the syntax node
+    ProcedureDef(SyntaxNode),
 }
 
 /// Error type describing all possible parser failures.
@@ -42,257 +22,196 @@ pub enum ParseError {
     /// The input is incomplete, i.e. it could not be fully parsed through.
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
+    /// A token could not be parsed by the lexer
+    #[error("Uknown token found: {0}")]
+    UnknownToken(String),
+    /// The parser expected a specifc token, but found another.
+    #[error("Expected token '{0}'")]
+    ExpectedToken(TokenKind),
+    /// The parser stumbled upon the end of input, but expecting further input.
+    #[error("Unexpected end of input found")]
+    Eof,
     /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
 }
 
-impl Span {
-    /// Currently only used by tests.
-    #[cfg(test)]
-    fn new(line: usize, column: usize) -> Self {
-        Self { line, column }
+/// Main function to parse the input string.
+pub fn parse(input: &str) -> Result<Parse, ParseError> {
+    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+    tokens.reverse();
+    let mut parser = Parser::new(tokens);
+
+    // Expect a procedure
+    parse_procedure(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+/// The struct holds the parsed / built green syntax tree with
+/// a list of parse errors.
+#[derive(Debug)]
+pub struct Parse {
+    green_node: GreenNode,
+    pub errors: Vec<ParseError>,
+}
+
+impl Parse {
+    pub fn syntax(&self) -> SyntaxNode {
+        SyntaxNode::new_root(self.green_node.clone())
+    }
+
+    #[allow(unused)]
+    pub fn tree(&self) -> String {
+        format!("{:#?}", self.syntax())
+    }
+
+    pub fn ok(&self) -> bool {
+        self.errors.is_empty()
     }
 }
 
-impl<I: ToString> From<nom::error::Error<I>> for ParseError {
-    fn from(error: nom::error::Error<I>) -> Self {
-        use nom::error::Error;
-        use nom::error::ErrorKind;
+/// A custom parser to build a green Syntax Tree from a list
+/// of tokens.
+pub struct Parser<'a> {
+    /// All tokens generated from a Lexer.
+    tokens: Vec<Token<'a>>,
+    /// The in-progress tree builder
+    builder: GreenNodeBuilder<'static>,
+    /// The list of all found errors.
+    errors: Vec<ParseError>,
+}
 
-        match error {
-            Error {
-                code: ErrorKind::Eof,
-                input,
-            } => Self::Incomplete(input.to_string()),
-            Error { code, input } => Self::Unhandled(format!("{:?}", code), input.to_string()),
+impl<'a> Parser<'a> {
+    pub fn new(tokens: Vec<Token<'a>>) -> Self {
+        let mut parser = Parser {
+            tokens,
+            builder: GreenNodeBuilder::new(),
+            errors: Vec::new(),
+        };
+        parser.start(SyntaxKind::Root);
+        parser
+    }
+
+    /// Builds the green node tree, called once the parsing is complete
+    pub fn build(mut self) -> Parse {
+        if !self.tokens.is_empty() {
+            let remaining_tokens = self.tokens.iter().map(|t| t.text).collect::<String>();
+            self.error(ParseError::Incomplete(remaining_tokens));
+        }
+
+        self.finish();
+        Parse {
+            green_node: self.builder.finish(),
+            errors: self.errors,
         }
     }
-}
 
-/// Implements the [`nom`] internals for implementing the parser.
-mod detail {
-    use super::*;
-    use nom::branch::alt;
-    use nom::bytes::complete::tag_no_case;
-    use nom::character::complete::{anychar, char, one_of, satisfy};
-    use nom::combinator::{all_consuming, map, opt, recognize};
-    use nom::multi::{many0, many0_count, many_till, separated_list0};
-    use nom::sequence::{delimited, pair, preceded, separated_pair, tuple};
-    use nom::{AsChar, IResult, InputIter, InputLength, InputTakeAtPosition, Slice};
-    use std::ops::RangeFrom;
+    /// Checks if the current token is `kind`.
+    pub fn at(&mut self, kind: TokenKind) -> bool {
+        self.current() == kind
+    }
 
-    /// Custom span as used by parser internals.
-    type LocatedSpan<'a> = nom_locate::LocatedSpan<&'a str>;
+    /// Returns the current [`TokenKind`] if there is a token.
+    pub fn current(&mut self) -> TokenKind {
+        self.eat_ws();
+        match self.tokens.last() {
+            Some(token) => token.kind,
+            None => TokenKind::Eof,
+        }
+    }
 
-    impl From<LocatedSpan<'_>> for Span {
-        fn from(span: LocatedSpan<'_>) -> Self {
-            Self {
-                line: span.location_line() as usize,
-                column: span.naive_get_utf8_column(),
+    /// Consumes the next token if `kind` matches.
+    pub fn eat(&mut self, kind: TokenKind) -> bool {
+        if !self.at(kind) {
+            return false;
+        }
+        self.do_bump();
+        true
+    }
+
+    /// Consumes the current token as it is
+    pub fn bump(&mut self, kind: TokenKind) {
+        assert!(self.eat(kind));
+    }
+
+    /// Consumes the next token, advances by one token
+    pub fn bump_any(&mut self) {
+        if self.current() == TokenKind::Eof {
+            return;
+        }
+        self.do_bump();
+    }
+
+    /// Consumes all tokens until the last searched token is found.
+    pub fn until_last(&mut self, token_kind: TokenKind) {
+        // The tokens list is reversed, therefore the search is done from front.
+        if let Some(index) = self
+            .tokens
+            .iter()
+            .position(|token| token.kind == token_kind)
+        {
+            while self.tokens.len() > (index + 1) {
+                self.do_bump();
+            }
+        } else {
+            self.error(ParseError::ExpectedToken(token_kind));
+        }
+    }
+
+    /// Expect the following token, ignore all white spaces inbetween.
+    pub fn expect(&mut self, token_kind: TokenKind) -> bool {
+        if self.eat(token_kind) {
+            return true;
+        }
+        self.error(ParseError::ExpectedToken(token_kind));
+        false
+    }
+
+    /// Consume all whitespaces / comments & attach
+    /// them to the current node to preserve them.
+    pub fn eat_ws(&mut self) {
+        loop {
+            match self.tokens.last() {
+                Some(token) if token.kind.is_trivia() => {
+                    let token = self.tokens.pop().unwrap();
+                    let syntax_kind: SyntaxKind = token.kind.into();
+                    self.builder.token(syntax_kind.into(), token.text);
+                }
+                _ => break,
             }
         }
     }
 
-    fn discard<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, (), E>
-    where
-        F: FnMut(I) -> IResult<I, O, E>,
-        E: nom::error::ParseError<I>,
-    {
-        map(inner, |_| ())
+    /// Start a new (nested) node
+    pub(crate) fn start(&mut self, kind: SyntaxKind) {
+        self.builder.start_node(kind.into());
     }
 
-    /// A combinator that takes a parser `inner` and produces a parser that also
-    /// consumes both leading and trailing whitespace, returning the output
-    /// of `inner`.
-    fn ws<F, I, O, E>(inner: F) -> impl FnMut(I) -> IResult<I, O, E>
-    where
-        F: Fn(I) -> IResult<I, O, E>,
-        I: Clone
-            + InputLength
-            + InputIter<Item = char>
-            + InputTakeAtPosition
-            + Slice<RangeFrom<usize>>,
-        <I as InputTakeAtPosition>::Item: AsChar,
-        E: nom::error::ParseError<I>,
-    {
-        let linebreak = |input| pair(opt(char('\r')), char('\n'))(input);
-        let single_line_comment =
-            move |input| preceded(pair(char('-'), char('-')), many_till(anychar, linebreak))(input);
-
-        let discardable = move |input| {
-            many0_count(alt((
-                discard(one_of(" \t\r\n")),
-                discard(single_line_comment),
-            )))(input)
-        };
-
-        delimited(discardable, inner, discardable)
+    /// Finish the current node
+    pub(crate) fn finish(&mut self) {
+        self.builder.finish_node();
+        self.eat_ws();
     }
 
-    /// Parses a identifier according to what PostgreSQL calls valid.
-    ///
-    /// "SQL identifiers and key words must begin with a letter (a-z, but also
-    /// letters with diacritical marks and non-Latin letters) or an underscore
-    /// (_). Subsequent characters in an identifier or key word can be
-    /// letters, underscores, digits (0-9), or dollar signs ($)."
-    ///
-    /// TODO: Escaped/quoted identifiers
-    fn ident(input: LocatedSpan) -> IResult<LocatedSpan, LocatedSpan> {
-        let inner = |input| {
-            recognize(pair(
-                alt((satisfy(|c| c.is_alphabetic()), one_of("0123456789_"))),
-                many0(alt((
-                    satisfy(|c| c.is_alphabetic()),
-                    one_of("0123456789_$"),
-                ))),
-            ))(input)
-        };
-
-        alt((recognize(separated_pair(inner, char('.'), inner)), inner))(input)
+    /// Function to consume the next token, regardless of any [`TokenKind`]
+    fn do_bump(&mut self) {
+        assert!(!self.tokens.is_empty());
+        let token = self.tokens.pop().unwrap();
+        if token.kind == TokenKind::Error {
+            self.error(ParseError::UnknownToken(token.text.to_string()));
+        }
+        let syntax_kind: SyntaxKind = token.kind.into();
+        self.builder.token(syntax_kind.into(), token.text);
     }
 
-    /// Parses the start of a procedure, including the procedure name.
-    fn procedure_start(input: LocatedSpan) -> IResult<LocatedSpan, (Span, bool, LocatedSpan)> {
-        map(
-            tuple((
-                ws(tag_no_case("create")),
-                opt(pair(ws(tag_no_case("or")), ws(tag_no_case("replace")))),
-                ws(tag_no_case("procedure")),
-                ws(ident),
-            )),
-            |(_, or_replace, _, name)| (input.into(), or_replace.is_some(), name),
-        )(input)
-    }
-
-    /// Parses a single procedure parameter type, either a base type or a column
-    /// reference.
-    fn procedure_param_type(input: LocatedSpan) -> IResult<LocatedSpan, LocatedSpan> {
-        alt((recognize(pair(ident, tag_no_case("%type"))), ident))(input)
-    }
-
-    /// Parses a single procedure paramter, i.e. name and it's datatype.
-    fn procedure_param(input: LocatedSpan) -> IResult<LocatedSpan, ProcedureParam> {
-        map(pair(ws(ident), ws(procedure_param_type)), |(name, typ)| {
-            ProcedureParam {
-                span: name.into(),
-                name: (*name.fragment()).to_owned(),
-                typ: (*typ.fragment()).to_owned(),
-            }
-        })(input)
-    }
-
-    /// Parses a list of procedure parameters, as surrounded by `(` and `)`.
-    fn procedure_params(input: LocatedSpan) -> IResult<LocatedSpan, Vec<ProcedureParam>> {
-        map(
-            opt(delimited(
-                char('('),
-                separated_list0(char(','), procedure_param),
-                char(')'),
-            )),
-            Option::unwrap_or_default,
-        )(input)
-    }
-
-    /// Parses the body of a procedure, that is anything between `IS BEGIN` and
-    /// `END <name>;`.
-    fn procedure_body<'a, E>(
-        input: LocatedSpan<'a>,
-        name: &str,
-    ) -> IResult<LocatedSpan<'a>, String, E>
-    where
-        E: nom::error::ParseError<LocatedSpan<'a>>,
-    {
-        all_consuming(preceded(
-            tuple((ws(tag_no_case("is")), ws(tag_no_case("begin")))),
-            map(
-                many_till(
-                    recognize(anychar::<LocatedSpan<'a>, E>),
-                    tuple((tag_no_case("end"), ws(tag_no_case(name)), ws(char(';')))),
-                ),
-                |(body, _)| {
-                    body.into_iter()
-                        .map(|ls| *ls.fragment())
-                        .collect::<String>()
-                },
-            ),
-        ))(input)
-    }
-
-    /// Parses an complete PL/SQL procedure.
-    pub fn procedure(input: LocatedSpan) -> IResult<LocatedSpan, Node> {
-        let (input, ((span, replace, name), parameters)) =
-            pair(procedure_start, procedure_params)(input)?;
-        let (input, body) = procedure_body(input, name.fragment())?;
-
-        Ok((
-            input,
-            Node::ProcedureDef(ProcedureDef {
-                span,
-                name: (*name.fragment()).to_owned(),
-                replace,
-                parameters,
-                body,
-            }),
-        ))
-    }
-}
-
-/// Public entry point for parsing a complete PL/SQL procedure.
-pub fn parse_procedure(input: &str) -> Result<Node, ParseError> {
-    detail::procedure(input.into())
-        .finish()
-        .map(|(_, node)| node)
-        .map_err(Into::into)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
-    const ADD_JOB_HISTORY_BODY: &str = include_str!("../tests/fixtures/add_job_history_body.sql");
-
-    #[test]
-    fn test_parse_procedure() {
-        let result = parse_procedure(ADD_JOB_HISTORY);
-        assert!(result.is_ok(), "{:#?}", result);
-        assert_eq!(
-            result.unwrap(),
-            Node::ProcedureDef(ProcedureDef {
-                span: Span::new(1, 1),
-                name: "add_job_history".into(),
-                replace: true,
-                parameters: vec![
-                    ProcedureParam {
-                        span: Span::new(2, 6),
-                        name: "p_emp_id".into(),
-                        typ: "job_history.employee_id%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(3, 6),
-                        name: "p_start_date".into(),
-                        typ: "job_history.start_date%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(4, 6),
-                        name: "p_end_date".into(),
-                        typ: "job_history.end_date%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(5, 6),
-                        name: "p_job_id".into(),
-                        typ: "job_history.job_id%type".into(),
-                    },
-                    ProcedureParam {
-                        span: Span::new(6, 6),
-                        name: "p_department_id".into(),
-                        typ: "job_history.department_id%type".into(),
-                    },
-                ],
-                body: ADD_JOB_HISTORY_BODY.into(),
-            }),
-        );
+    /// Mark the given error.
+    fn error(&mut self, error: ParseError) {
+        self.start(SyntaxKind::Error);
+        self.builder
+            .token(SyntaxKind::Text.into(), error.to_string().as_str());
+        self.errors.push(error);
+        self.finish();
     }
 }

@@ -5,7 +5,12 @@
 //! Proof of concept interface and implementation for a PL/SQL parser.
 
 mod analyze;
+mod ast;
+mod grammar;
+mod lexer;
 mod parser;
 
 pub use analyze::*;
-pub use parser::*;
+pub use ast::{SyntaxElement, SyntaxKind};
+pub use lexer::{Lexer, Token};
+pub use parser::{parse, ParseError, Parser};
