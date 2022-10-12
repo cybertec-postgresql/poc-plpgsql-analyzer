@@ -38,6 +38,18 @@ To run the coverage test
 cargo test -F coverage-tests
 ```
 
+## Rustdoc
+
+To generate the (public) rustdoc for this library:
+```sh
+cargo doc
+```
+
+And to generate the full rustdoc for all items, including private ones:
+```sh
+cargo doc --document-private-items
+```
+
 #### Optional tools
 
 It is desired to also install the `wasm-opt` tool from the

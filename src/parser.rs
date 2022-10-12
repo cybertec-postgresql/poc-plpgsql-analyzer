@@ -1,20 +1,14 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
 //! Implements parsers for different SQL language constructs.
 
-use crate::{
-    ast::SyntaxNode, grammar::parse_procedure, lexer::TokenKind, Lexer, SyntaxKind, Token,
-};
+use crate::grammar::parse_procedure;
+use crate::lexer::{Lexer, Token, TokenKind};
+use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::{GreenNode, GreenNodeBuilder};
-
-/// Represents a single node in the AST.
-#[derive(Debug, Eq, PartialEq)]
-pub enum Node {
-    /// TODO replace with a cast-able Procedure that maps the syntax node
-    ProcedureDef(SyntaxNode),
-}
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]

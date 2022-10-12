@@ -1,4 +1,13 @@
-use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
+// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
+
+//! Implements parsing of procedures from a token tree.
+
+use crate::lexer::TokenKind;
+use crate::parser::Parser;
+use crate::syntax::SyntaxKind;
 
 /// Parses a complete procedure.
 pub fn parse_procedure(p: &mut Parser) {
@@ -11,7 +20,7 @@ pub fn parse_procedure(p: &mut Parser) {
     p.finish();
 }
 
-/// Parses the header
+/// Parses the header of a procedure.
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
     p.expect(TokenKind::CreateKw);
@@ -24,19 +33,20 @@ fn parse_header(p: &mut Parser) {
     p.finish();
 }
 
+/// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
-    p.start(SyntaxKind::ProcedureBody);
     p.expect(TokenKind::IsKw);
     p.expect(TokenKind::BeginKw);
+    p.eat_ws();
 
-    p.start(SyntaxKind::Text);
+    p.start(SyntaxKind::ProcedureBody);
     p.until_last(TokenKind::EndKw);
     p.finish();
 
     p.expect(TokenKind::EndKw);
     parse_ident(p);
     p.expect(TokenKind::SemiColon);
-    p.finish();
+    p.eat_ws();
 }
 
 /// Parses the parameter list in the procedure header
@@ -64,6 +74,8 @@ fn parse_param_list(p: &mut Parser) {
     }
 }
 
+/// Parses a single parameter in a parameter list of a procedure.
+///
 /// Example:
 ///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
@@ -77,19 +89,17 @@ fn parse_param(p: &mut Parser) {
     p.finish();
 }
 
+/// Parses a single SQL identifier.
 fn parse_ident(p: &mut Parser) {
     p.expect(TokenKind::Ident);
 }
 
 #[cfg(test)]
 mod tests {
+    use crate::grammar::procedure::{parse_body, parse_header, parse_param};
+    use crate::lexer::Lexer;
+    use crate::parser::{Parse, Parser};
     use expect_test::expect;
-
-    use crate::{
-        grammar::procedure::{parse_body, parse_header, parse_param},
-        parser::{Parse, Parser},
-        Lexer,
-    };
 
     use super::parse_ident;
 
@@ -299,20 +309,19 @@ END hello;
             parse(INPUT, parse_body),
             expect![[r#"
 Root@0..31
-  ProcedureBody@0..30
-    Whitespace@0..1 "\n"
-    Keyword@1..3 "IS"
-    Whitespace@3..4 "\n"
-    Keyword@4..9 "BEGIN"
-    Text@9..20
-      Whitespace@9..14 "\n    "
-      Ident@14..18 "NULL"
-      SemiColon@18..19 ";"
-      Whitespace@19..20 "\n"
-    Keyword@20..23 "END"
-    Whitespace@23..24 " "
-    Ident@24..29 "hello"
-    SemiColon@29..30 ";"
+  Whitespace@0..1 "\n"
+  Keyword@1..3 "IS"
+  Whitespace@3..4 "\n"
+  Keyword@4..9 "BEGIN"
+  Whitespace@9..14 "\n    "
+  ProcedureBody@14..20
+    Ident@14..18 "NULL"
+    SemiColon@18..19 ";"
+    Whitespace@19..20 "\n"
+  Keyword@20..23 "END"
+  Whitespace@23..24 " "
+  Ident@24..29 "hello"
+  SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
         );

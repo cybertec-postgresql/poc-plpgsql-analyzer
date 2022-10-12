@@ -1,3 +1,7 @@
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
+// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// <office@cybertec.at>
+
 use poc_plpgsql_analyzer::parse;
 
 const ADD_JOB_HISTORY: &str = include_str!("fixtures/add_job_history.sql");

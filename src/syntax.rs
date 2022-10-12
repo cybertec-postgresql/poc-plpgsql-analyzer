@@ -1,18 +1,26 @@
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
+// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
+
+//! Implements a syntax-level representation of the input.
+
+use crate::lexer::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 
-use crate::lexer::TokenKind;
-
+/// Represents all possible kind of syntax items the parser can process.
+///
 /// Examples
-/// * https://blog.kiranshila.com/blog/easy_cst.md
-/// * https://arzg.github.io/lang/10/
-/// * https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs
+/// * <https://blog.kiranshila.com/blog/easy_cst.md>
+/// * <https://arzg.github.io/lang/10/>
+/// * <https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs>
 ///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
     /// Left Paren
-    LParen = 0,
+    LParen,
     /// Right Paren
     RParen,
     /// Percentage symbol
@@ -121,6 +129,7 @@ impl From<TokenKind> for SyntaxKind {
     }
 }
 
+/// Dummy type for our PL/SQL language definition, for use with rowan.
 #[derive(Debug, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub enum SqlProcedureLang {}
 
@@ -136,7 +145,11 @@ impl rowan::Language for SqlProcedureLang {
     }
 }
 
+/// Typed [`SyntaxNode`] with our [`SqlProcedureLang`] language definition.
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
+/// Typed [`SyntaxToken`] with our [`SqlProcedureLang`] language definition.
 #[allow(unused)]
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
+/// Typed [`SyntaxElement`] with our [`SqlProcedureLang`] language definition.
+#[allow(unused)]
 pub type SyntaxElement = rowan::SyntaxElement<SqlProcedureLang>;

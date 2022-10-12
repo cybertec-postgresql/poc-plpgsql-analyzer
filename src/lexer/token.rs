@@ -1,4 +1,11 @@
-use std::fmt::Display;
+// SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
+// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
+
+//! Token definition for the [`logos`] parser.
+
+use std::fmt;
 
 /// Use to tokenize the input text
 #[derive(logos::Logos, Debug, Copy, Clone, PartialEq, Eq)]
@@ -76,16 +83,16 @@ impl TokenKind {
     }
 }
 
-impl Display for TokenKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::TokenKind;
-    use crate::Lexer;
+    use super::*;
+    use crate::lexer::Lexer;
 
     fn check(input: &str, kind: TokenKind) {
         let mut lexer = Lexer::new(input);
