@@ -7,7 +7,7 @@
 
 mod procedure;
 
-use crate::{syntax::SyntaxToken, SyntaxKind, SyntaxNode};
+use crate::syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 pub use procedure::*;
 pub use rowan::ast::AstNode;
 

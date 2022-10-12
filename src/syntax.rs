@@ -5,7 +5,7 @@
 
 //! Implements a syntax-level representation of the input.
 
-use crate::TokenKind;
+use crate::lexer::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
 

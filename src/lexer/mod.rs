@@ -9,7 +9,7 @@ mod token;
 
 use logos::Logos;
 use rowan::{TextRange, TextSize};
-use std::ops::Range as StdRange;
+use std::ops;
 pub use token::TokenKind;
 
 /// Wrapper for the actual [`Logos`] parser.
@@ -35,7 +35,7 @@ impl<'a> Iterator for Lexer<'a> {
         let text = self.inner.slice();
 
         let range = {
-            let StdRange { start, end } = self.inner.span();
+            let ops::Range { start, end } = self.inner.span();
             let start = TextSize::try_from(start).unwrap();
             let end = TextSize::try_from(end).unwrap();
 

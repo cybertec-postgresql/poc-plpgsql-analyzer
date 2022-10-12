@@ -5,7 +5,9 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::{lexer::TokenKind, parser::Parser, SyntaxKind};
+use crate::lexer::TokenKind;
+use crate::parser::Parser;
+use crate::syntax::SyntaxKind;
 
 /// Parses a complete procedure.
 pub fn parse_procedure(p: &mut Parser) {
@@ -94,13 +96,10 @@ fn parse_ident(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
+    use crate::grammar::procedure::{parse_body, parse_header, parse_param};
+    use crate::lexer::Lexer;
+    use crate::parser::{Parse, Parser};
     use expect_test::expect;
-
-    use crate::{
-        grammar::procedure::{parse_body, parse_header, parse_param},
-        parser::{Parse, Parser},
-        Lexer,
-    };
 
     use super::parse_ident;
 

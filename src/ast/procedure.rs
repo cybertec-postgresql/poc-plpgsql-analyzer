@@ -6,7 +6,8 @@
 //! Typed AST nodes for PL/SQL procedures.
 
 use super::{typed_syntax_node, typed_syntax_token};
-use crate::{syntax::SyntaxToken, AstNode, AstToken, SyntaxKind, SyntaxNode};
+use crate::ast::{AstNode, AstToken};
+use crate::syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 typed_syntax_token!(Ident);
@@ -49,7 +50,8 @@ impl Ident {
 
 #[cfg(test)]
 mod tests {
-    use crate::{parse, AstNode, Root};
+    use super::*;
+    use crate::ast::Root;
 
     #[test]
     fn check_ast_node_to_procedure() {
@@ -63,7 +65,7 @@ mod tests {
                 NULL;
             END multiple_parameters;
         "#;
-        let result = parse(INPUT).unwrap();
+        let result = crate::parse(INPUT).unwrap();
         let root = Root::cast(result.syntax());
         assert!(root.is_some());
 

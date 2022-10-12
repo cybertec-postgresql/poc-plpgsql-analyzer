@@ -13,7 +13,3 @@ mod syntax;
 
 pub use analyze::*;
 pub use parser::parse;
-
-pub(crate) use ast::*;
-pub(crate) use lexer::*;
-pub(crate) use syntax::*;
