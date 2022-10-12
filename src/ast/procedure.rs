@@ -5,11 +5,11 @@
 
 //! Typed AST nodes for PL/SQL procedures.
 
+use super::{typed_syntax_node, typed_syntax_token};
 use crate::{syntax::SyntaxToken, AstNode, AstToken, SyntaxKind, SyntaxNode};
-use super::typed_syntax;
 
-typed_syntax!(SyntaxNode[AstNode] { Procedure, ProcedureHeader, ProcedureBody });
-typed_syntax!(SyntaxToken[AstToken] { Ident });
+typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
+typed_syntax_token!(Ident);
 
 impl Procedure {
     /// Returns the name of the procedure.

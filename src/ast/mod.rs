@@ -9,59 +9,61 @@ mod procedure;
 
 use crate::{syntax::SyntaxToken, SyntaxKind, SyntaxNode};
 pub use procedure::*;
+pub use rowan::ast::AstNode;
 
-/// Automatically generate `struct`s and implementation of the [`AstNode`] or
-/// [`AstToken`] trait for [`SyntaxKind`] variants.
 macro_rules! typed_syntax {
-    ($synty:ty [ $astty:ty ] { $( $name:ident ),+ $(,)? }) => {
+    ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
+        pub struct $name {
+            pub(crate) syntax: $synty,
+        }
+
+        impl $astty for $name {
+            $( $( $additional )+ )?
+
+            fn can_cast(kind: SyntaxKind) -> bool {
+                kind == SyntaxKind::$name
+            }
+
+            fn cast(syntax: $synty) -> Option<Self> {
+                if Self::can_cast(syntax.kind()) {
+                    Some(Self { syntax })
+                } else {
+                    None
+                }
+            }
+
+            fn syntax(&self) -> &$synty {
+                &self.syntax
+            }
+        }
+    };
+}
+
+/// Automatically generate `struct`s and implementation of the [`AstNode`] trait
+/// for [`SyntaxKind`] variants.
+macro_rules! typed_syntax_node {
+    ($( $name:ident ),+ $(,)?) => {
         $(
-            pub struct $name {
-                pub(crate) syntax: $synty,
-            }
-
-            impl $astty for $name {
-                fn can_cast(kind: SyntaxKind) -> bool {
-                    kind == SyntaxKind::$name
-                }
-
-                fn cast(syntax: $synty) -> Option<Self> {
-                    if Self::can_cast(syntax.kind()) {
-                        Some(Self { syntax })
-                    } else {
-                        None
-                    }
-                }
-
-                fn syntax(&self) -> &$synty {
-                    &self.syntax
-                }
-            }
+            crate::ast::typed_syntax!(SyntaxNode, AstNode, $name; {
+                type Language = crate::syntax::SqlProcedureLang;
+            });
         )+
     };
 }
 
-// Needed so that submodules can import [`typed_syntax`] as `super::typed_syntax`.
-use typed_syntax;
-
-/// Represents a interface for typed AST nodes.
-pub trait AstNode {
-    /// Returns whether the passed [`SyntaxKind`] can be casted to this type of node or
-    /// not.
-    fn can_cast(kind: SyntaxKind) -> bool
-    where
-        Self: Sized;
-
-    /// Tries to cast the passed (generic) node to a typed node. Might
-    /// fail if the syntax kind is not compatible (see [`can_cast()`](Self::can_cast())).
-    fn cast(syntax: SyntaxNode) -> Option<Self>
-    where
-        Self: Sized;
-
-    /// Returns the [`SyntaxNode`] for this typed node.
-    fn syntax(&self) -> &SyntaxNode;
+/// Automatically generate `struct`s and implementation of the [`AstToken`] trait
+/// for [`SyntaxKind`] variants.
+macro_rules! typed_syntax_token {
+    ($( $name:ident ),+ $(,)?) => {
+        $( crate::ast::typed_syntax!(SyntaxToken, AstToken, $name); )+
+    };
 }
 
-/// Represents a interface for typed AST tokens.
+// Needed so that submodules can import [`typed_syntax_node`] and [`typed_syntax_token`]
+/// as `super::typed_syntax_{node,token}`.
+use {typed_syntax, typed_syntax_node, typed_syntax_token};
+
+/// Represents a interface for typed AST tokens, akin to [`AstNode`].
 pub trait AstToken {
     /// Returns whether the passed [`SyntaxKind`] can be casted to this type of token or
     /// not.
@@ -84,7 +86,7 @@ pub trait AstToken {
     }
 }
 
-typed_syntax!(SyntaxNode[AstNode] { Root });
+typed_syntax_node!(Root);
 
 impl Root {
     /// Finds the (next) procedure in this root node.
