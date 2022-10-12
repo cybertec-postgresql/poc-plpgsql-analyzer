@@ -6,35 +6,7 @@
 //! Typed AST nodes for PL/SQL procedures.
 
 use crate::{syntax::SyntaxToken, AstNode, AstToken, SyntaxKind, SyntaxNode};
-
-/// Automatically generate `struct`s and implementation of the [`AstNode`] or [`AstToken`] trait for [`SyntaxKind`] variants.
-macro_rules! typed_syntax {
-    ($synty:ty [ $astty:ty ] { $( $name:ident ),+ $(,)? }) => {
-        $(
-            pub struct $name {
-                pub(crate) syntax: $synty,
-            }
-
-            impl $astty for $name {
-                fn can_cast(kind: SyntaxKind) -> bool {
-                    kind == SyntaxKind::$name
-                }
-
-                fn cast(syntax: $synty) -> Option<Self> {
-                    if Self::can_cast(syntax.kind()) {
-                        Some(Self { syntax })
-                    } else {
-                        None
-                    }
-                }
-
-                fn syntax(&self) -> &$synty {
-                    &self.syntax
-                }
-            }
-        )+
-    };
-}
+use super::typed_syntax;
 
 typed_syntax!(SyntaxNode[AstNode] { Procedure, ProcedureHeader, ProcedureBody });
 typed_syntax!(SyntaxToken[AstToken] { Ident });
