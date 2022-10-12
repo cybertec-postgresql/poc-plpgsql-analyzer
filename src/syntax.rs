@@ -45,6 +45,8 @@ pub enum SyntaxKind {
     Colon,
     /// An Assign operator `:=`
     Assign,
+    /// Any integer, positive and negative
+    Integer,
     /// A single quoted literal
     QuotedLiteral,
     /// A single Param node, consisting of name & type
@@ -112,12 +114,13 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::EndKw => SyntaxKind::Keyword,
             TokenKind::InKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
+            TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
+            TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
             TokenKind::Assign => SyntaxKind::Assign,
-            TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
