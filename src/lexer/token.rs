@@ -40,7 +40,8 @@ pub enum TokenKind {
     #[regex("[A-Za-z0-9_][A-Za-z0-9_$.]*")]
     Ident,
 
-    #[regex("'[A-Za-z0-9 ]+'")]
+    // TODO: Escaped characters, esp. \'
+    #[regex("'[^']*'")]
     QuotedLiteral,
 
     #[token(",")]
