@@ -61,7 +61,7 @@ macro_rules! typed_syntax_token {
 
 // Needed so that submodules can import [`typed_syntax_node`] and [`typed_syntax_token`]
 /// as `super::typed_syntax_{node,token}`.
-use {typed_syntax, typed_syntax_node, typed_syntax_token};
+pub(self) use {typed_syntax, typed_syntax_node, typed_syntax_token};
 
 /// Represents a interface for typed AST tokens, akin to [`AstNode`].
 pub trait AstToken {

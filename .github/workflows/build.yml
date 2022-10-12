@@ -7,11 +7,11 @@ on:
   pull_request:
 
 env:
-  # RUSTFLAGS: -D warnings
+  RUSTFLAGS: -D warnings
   CARGO_TERM_COLOR: always
 
 jobs:
-  test:
+  build:
     name: Format, build, clippy, test and doc
     runs-on: [self-hosted, Linux]
     container: debian:stable
