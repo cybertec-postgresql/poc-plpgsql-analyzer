@@ -94,25 +94,3 @@ impl Root {
         self.syntax.children().find_map(Procedure::cast)
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn check_root_ast_node() {
-        const INPUT: &str = r#"
-            CREATE OR REPLACE PROCEDURE multiple_parameters(
-                p1 VARCHAR2
-                , p2 VARCHAR2
-            )
-            IS
-            BEGIN
-                NULL;
-            END multiple_parameters;
-        "#;
-        let result = crate::parse(INPUT).unwrap();
-        let root = result.syntax();
-        assert!(Root::cast(root).is_some());
-    }
-}

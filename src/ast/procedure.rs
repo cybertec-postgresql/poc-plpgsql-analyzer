@@ -64,9 +64,14 @@ mod tests {
             END multiple_parameters;
         "#;
         let result = parse(INPUT).unwrap();
-        let root = Root::cast(result.syntax()).expect("Failed to get root");
-        assert!(root.procedure().is_some());
-        let procedure = root.procedure().unwrap();
-        assert_eq!(Some("multiple_parameters".to_string()), procedure.name());
+        let root = Root::cast(result.syntax());
+        assert!(root.is_some());
+
+        let procedure = root.unwrap().procedure();
+        assert!(procedure.is_some());
+        assert_eq!(
+            procedure.unwrap().name(),
+            Some("multiple_parameters".to_string())
+        );
     }
 }
