@@ -17,7 +17,7 @@ pub enum ParseError {
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
     /// A token could not be parsed by the lexer
-    #[error("Uknown token found: {0}")]
+    #[error("Unknown token found: {0}")]
     UnknownToken(String),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
