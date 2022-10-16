@@ -99,12 +99,12 @@ mod tests {
     use crate::grammar::procedure::{parse_body, parse_header, parse_param};
     use crate::lexer::Lexer;
     use crate::parser::{Parse, Parser};
-    use expect_test::expect;
+    use expect_test::{expect, Expect};
 
     use super::parse_ident;
 
     /// Helper function to compare the build syntax tree with the expected output.
-    fn check(parse: Parse, expected_tree: expect_test::Expect) {
+    fn check(parse: Parse, expected_tree: Expect) {
         expected_tree.assert_eq(parse.tree().as_str())
     }
 
