@@ -65,7 +65,7 @@ mod tests {
                 NULL;
             END multiple_parameters;
         "#;
-        let result = crate::parse(INPUT).unwrap();
+        let result = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(result.syntax());
         assert!(root.is_some());
 

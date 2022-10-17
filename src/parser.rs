@@ -5,7 +5,7 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use crate::grammar::parse_procedure;
+use crate::grammar;
 use crate::lexer::{Lexer, Token, TokenKind};
 use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::{GreenNode, GreenNodeBuilder};
@@ -31,13 +31,13 @@ pub enum ParseError {
 }
 
 /// Main function to parse the input string.
-pub fn parse(input: &str) -> Result<Parse, ParseError> {
+pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut tokens = Lexer::new(input).collect::<Vec<_>>();
     tokens.reverse();
     let mut parser = Parser::new(tokens);
 
     // Expect a procedure
-    parse_procedure(&mut parser);
+    grammar::parse_procedure(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())

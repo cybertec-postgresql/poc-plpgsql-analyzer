@@ -53,7 +53,7 @@ impl From<ParseError> for AnalyzeError {
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        Type::Procedure => analyze_procedure(parse(sql)?),
+        Type::Procedure => analyze_procedure(parse_procedure(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
