@@ -4,6 +4,8 @@
 
 //! Implements rules for transpiling PL/SQL to PL/pgSQL.
 
+#![allow(dead_code)]
+
 pub mod procedure;
 
 use crate::ast::AstNode;
