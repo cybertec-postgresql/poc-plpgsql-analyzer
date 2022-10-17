@@ -22,6 +22,10 @@ impl Procedure {
             .name()
     }
 
+    pub fn header(&self) -> Option<ProcedureHeader> {
+        self.syntax.children().find_map(ProcedureHeader::cast)
+    }
+
     /// Returns the name of the procedure.
     pub fn body(&self) -> Option<ProcedureBody> {
         self.syntax.children().find_map(ProcedureBody::cast)

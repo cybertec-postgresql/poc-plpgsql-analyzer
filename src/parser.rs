@@ -30,6 +30,19 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
+pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
+    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+    tokens.reverse();
+    let mut parser = Parser::new(tokens);
+
+    while !parser.at(TokenKind::Eof) {
+        parser.bump_any();
+    }
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// Main function to parse the input string.
 pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut tokens = Lexer::new(input).collect::<Vec<_>>();
