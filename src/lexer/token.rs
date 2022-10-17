@@ -28,6 +28,12 @@ pub enum TokenKind {
     #[token("is", ignore(case))]
     IsKw,
 
+    #[token("as", ignore(case))]
+    AsKw,
+
+    #[token("$$")]
+    DollarQuote,
+
     #[token("end", ignore(case))]
     EndKw,
 
