@@ -7,7 +7,7 @@
 
 use super::{typed_syntax_node, typed_syntax_token};
 use crate::ast::{AstNode, AstToken};
-use crate::syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 typed_syntax_token!(Ident);
@@ -38,7 +38,7 @@ impl ProcedureHeader {
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
-            .filter_map(|it| it.into_token())
+            .filter_map(SyntaxElement::into_token)
             .find_map(Ident::cast)
             .map(|ident| ident.name())
     }

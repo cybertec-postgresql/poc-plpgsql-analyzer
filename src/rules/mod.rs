@@ -60,7 +60,7 @@ where
     let index = node
         .syntax()
         .children_with_tokens()
-        .filter_map(|it| it.into_token())
+        .filter_map(SyntaxElement::into_token)
         .find(token_pred)
         .map(|t| t.index())
         .ok_or_else(|| token_err.to_owned())?;
