@@ -57,14 +57,20 @@ pub enum SyntaxKind {
     Param,
     /// A node that consists of multiple parameters
     ParamList,
-    /// A node that marks a full PROCEDURE block
+    /// A node that marks a full CREATE [..] PROCEDURE block
     Procedure,
     /// A node that marks a PROCEDURE header with params
     ProcedureHeader,
     /// A node that marks the `IS` or `AS $$` prologue of a procedure
     ProcedurePrologue,
-    /// A node that marks a PROCEDURE body block, between `IS BEGIN` & `END;`
+    /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` & `END;`
     ProcedureBody,
+    /// A node that marks a full CREATE [..] FUNCTION block
+    Function,
+    /// A node that marks a FUNCTION header with params and return type
+    FunctionHeader,
+    /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` & `END;`
+    FunctionBody,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -114,6 +120,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::CreateKw => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
+            TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::OrReplaceKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::IsKw => SyntaxKind::Keyword,
@@ -122,7 +129,10 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::EndKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
             TokenKind::InKw => SyntaxKind::Keyword,
+            TokenKind::ReturnKw => SyntaxKind::Keyword,
+            TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
+            TokenKind::NumberTy => SyntaxKind::TypeName,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,

@@ -60,6 +60,19 @@ pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
+/// Tries to parse a function from a string.
+pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
+    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+    tokens.reverse();
+    let mut parser = Parser::new(tokens);
+
+    // Expect a function
+    grammar::parse_function(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// The struct holds the parsed / built green syntax tree with
 /// a list of parse errors.
 #[derive(Debug)]

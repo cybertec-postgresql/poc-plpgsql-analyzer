@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-use poc_plpgsql_analyzer::parse_procedure;
+use poc_plpgsql_analyzer::{parse_function, parse_procedure};
 use std::fs;
 use std::path::Path;
 

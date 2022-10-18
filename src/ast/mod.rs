@@ -5,9 +5,11 @@
 
 //! Implements a typed AST for PL/SQL.
 
+mod function;
 mod procedure;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
+pub use function::*;
 pub use procedure::*;
 pub use rowan::ast::AstNode;
 
@@ -91,6 +93,11 @@ typed_syntax_node!(Root);
 typed_syntax_token!(Ident);
 
 impl Root {
+    /// Finds the (next) function in this root node.
+    pub fn function(&self) -> Option<Function> {
+        self.syntax.children().find_map(Function::cast)
+    }
+
     /// Finds the (next) procedure in this root node.
     pub fn procedure(&self) -> Option<Procedure> {
         self.syntax.children().find_map(Procedure::cast)

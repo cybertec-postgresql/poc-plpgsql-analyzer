@@ -53,6 +53,7 @@ impl From<ParseError> for AnalyzeError {
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
+        Type::Function => analyze_function(parse_function(sql)?),
         Type::Procedure => analyze_procedure(parse_procedure(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
@@ -72,6 +73,18 @@ pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
 #[wasm_bindgen(js_name = "analyze")]
 pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
     analyze(typ, sql).map_err(Into::into)
+}
+
+fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+    let body = Root::cast(parse.syntax())
+        .and_then(|p| p.function())
+        .and_then(|p| p.body())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find function body".to_owned()))?;
+
+    Ok(DboMetaData {
+        lines_of_code: body.syntax().text().to_string().matches('\n').count(),
+        sql_statements: vec![()],
+    })
 }
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {

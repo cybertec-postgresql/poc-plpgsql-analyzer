@@ -5,8 +5,10 @@
 
 //! Implements grammar parsing of the token tree from the lexer.
 
+mod function;
 mod procedure;
 
+pub use function::parse_function;
 pub use procedure::parse_procedure;
 
 use crate::lexer::TokenKind;
