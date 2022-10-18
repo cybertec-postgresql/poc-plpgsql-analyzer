@@ -11,7 +11,7 @@ use crate::ast::{AstNode, AstToken};
 typed_syntax_node!(Function, FunctionHeader, FunctionBody);
 
 impl Function {
-    /// Returns the name of the procedure.
+    /// Returns the name of the function.
     #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
@@ -20,21 +20,26 @@ impl Function {
             .name()
     }
 
-    /// Returns the name of the procedure.
+    /// Returns the name of the function.
     pub fn body(&self) -> Option<FunctionBody> {
         self.syntax.children().find_map(FunctionBody::cast)
     }
 }
 
 impl FunctionHeader {
-    /// Returns the name of the procedure.
-    #[allow(unused)]
+    /// Returns the name of the function.
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
             .filter_map(|it| it.into_token())
             .find_map(Ident::cast)
             .map(|ident| ident.name())
+    }
+}
+
+impl FunctionBody {
+    pub fn text(&self) -> String {
+        self.syntax.text().to_string()
     }
 }
 
