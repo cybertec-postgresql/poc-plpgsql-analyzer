@@ -22,6 +22,9 @@ pub enum ParseError {
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
+    /// The parser expected one of many tokens, but found neither of them.
+    #[error("Expected one of tokens: '{0:?}")]
+    ExpectedOneOfTokens(Vec<TokenKind>),
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
@@ -173,6 +176,18 @@ impl<'a> Parser<'a> {
             return true;
         }
         self.error(ParseError::ExpectedToken(token_kind));
+        false
+    }
+
+    /// Expect one of the following tokens, ignore all white spaces inbetween.
+    pub fn expect_one_of(&mut self, token_kinds: &[TokenKind]) -> bool {
+        for tk in token_kinds {
+            if self.eat(*tk) {
+                return true;
+            }
+        }
+
+        self.error(ParseError::ExpectedOneOfTokens(token_kinds.to_vec()));
         false
     }
 
