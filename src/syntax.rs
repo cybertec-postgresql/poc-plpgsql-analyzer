@@ -35,6 +35,8 @@ pub enum SyntaxKind {
     Keyword,
     /// An identifier, e.g. secure_dml or parameter name
     Ident,
+    /// A type name
+    TypeName,
     /// A single dot
     Dot,
     /// A single comma
@@ -118,8 +120,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AsKw => SyntaxKind::Keyword,
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,
             TokenKind::EndKw => SyntaxKind::Keyword,
-            TokenKind::InKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
+            TokenKind::InKw => SyntaxKind::Keyword,
+            TokenKind::TypeKw => SyntaxKind::Keyword,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,

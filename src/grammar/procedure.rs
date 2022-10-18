@@ -281,7 +281,7 @@ Root@0..146
         Whitespace@49..59 "          "
         Ident@59..82 "job_history.employee_id"
         Percentage@82..83 "%"
-        Ident@83..87 "type"
+        Keyword@83..87 "type"
         Whitespace@87..93 "\n     "
       Comma@93..94 ","
       Whitespace@94..95 " "
@@ -290,7 +290,7 @@ Root@0..146
         Whitespace@107..113 "      "
         Ident@113..135 "job_history.start_date"
         Percentage@135..136 "%"
-        Ident@136..140 "type"
+        Keyword@136..140 "type"
         Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],

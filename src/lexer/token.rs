@@ -43,6 +43,9 @@ pub enum TokenKind {
     #[token("out", ignore(case))]
     OutKw,
 
+    #[token("type", ignore(case))]
+    TypeKw,
+
     #[regex("-?[0-9]+", priority = 2)]
     Integer,
 
