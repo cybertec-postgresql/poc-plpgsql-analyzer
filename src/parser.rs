@@ -33,6 +33,7 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
+/// Tries to parse any string of SQL tokens.
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     let mut tokens = Lexer::new(input).collect::<Vec<_>>();
     tokens.reverse();
@@ -46,7 +47,7 @@ pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
-/// Main function to parse the input string.
+/// Tries to parse a procedure from a string.
 pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut tokens = Lexer::new(input).collect::<Vec<_>>();
     tokens.reverse();
