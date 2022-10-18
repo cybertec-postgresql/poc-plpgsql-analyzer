@@ -28,6 +28,7 @@ fn parse_header(p: &mut Parser) {
     p.expect(TokenKind::FunctionKw);
 
     parse_ident(p);
+    parse_param_list(p);
     parse_return_type(p);
     parse_attributes(p);
     parse_param_list(p);
