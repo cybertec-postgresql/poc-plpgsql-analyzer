@@ -25,10 +25,9 @@ pub fn parse_procedure(p: &mut Parser) {
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
     p.expect(TokenKind::CreateKw);
-    if p.at(TokenKind::OrReplaceKw) {
-        p.bump(TokenKind::OrReplaceKw);
-    }
+    p.eat(TokenKind::OrReplaceKw);
     p.expect(TokenKind::ProcedureKw);
+
     parse_ident(p);
     parse_param_list(p);
     p.finish();
