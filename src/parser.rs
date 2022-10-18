@@ -181,10 +181,9 @@ impl<'a> Parser<'a> {
 
     /// Expect one of the following tokens, ignore all white spaces inbetween.
     pub fn expect_one_of(&mut self, token_kinds: &[TokenKind]) -> bool {
-        for tk in token_kinds {
-            if self.eat(*tk) {
-                return true;
-            }
+        if token_kinds.contains(&self.current()) {
+            self.do_bump();
+            return true;
         }
 
         self.error(ParseError::ExpectedOneOfTokens(token_kinds.to_vec()));
