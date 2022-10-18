@@ -7,7 +7,7 @@
 
 mod procedure;
 
-use crate::syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxKind, SyntaxToken};
 pub use procedure::*;
 pub use rowan::ast::AstNode;
 
@@ -21,8 +21,8 @@ macro_rules! typed_syntax {
         impl $astty for $name {
             $( $( $additional )+ )?
 
-            fn can_cast(kind: SyntaxKind) -> bool {
-                kind == SyntaxKind::$name
+            fn can_cast(kind: crate::syntax::SyntaxKind) -> bool {
+                kind == crate::syntax::SyntaxKind::$name
             }
 
             fn cast(syntax: $synty) -> Option<Self> {
@@ -45,7 +45,7 @@ macro_rules! typed_syntax {
 macro_rules! typed_syntax_node {
     ($( $name:ident ),+ $(,)?) => {
         $(
-            crate::ast::typed_syntax!(SyntaxNode, AstNode, $name; {
+            crate::ast::typed_syntax!(crate::syntax::SyntaxNode, crate::ast::AstNode, $name; {
                 type Language = crate::syntax::SqlProcedureLang;
             });
         )+
@@ -56,7 +56,7 @@ macro_rules! typed_syntax_node {
 /// for [`SyntaxKind`] variants.
 macro_rules! typed_syntax_token {
     ($( $name:ident ),+ $(,)?) => {
-        $( crate::ast::typed_syntax!(SyntaxToken, AstToken, $name); )+
+        $( crate::ast::typed_syntax!(crate::syntax::SyntaxToken, crate::ast::AstToken, $name); )+
     };
 }
 
@@ -88,10 +88,19 @@ pub trait AstToken {
 }
 
 typed_syntax_node!(Root);
+typed_syntax_token!(Ident);
 
 impl Root {
     /// Finds the (next) procedure in this root node.
     pub fn procedure(&self) -> Option<Procedure> {
         self.syntax.children().find_map(Procedure::cast)
+    }
+}
+
+impl Ident {
+    /// Returns the identifier name itself.
+    #[allow(unused)]
+    pub fn name(&self) -> String {
+        self.syntax.text().to_string()
     }
 }
