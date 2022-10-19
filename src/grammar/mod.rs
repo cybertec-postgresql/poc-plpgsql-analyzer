@@ -62,8 +62,8 @@ fn parse_ident(p: &mut Parser) {
 
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
-    if p.at(TokenKind::NumberTy) {
-        p.eat(TokenKind::NumberTy);
+    if p.at(TokenKind::NumberKw) {
+        p.eat(TokenKind::NumberKw);
     } else {
         p.expect(TokenKind::Ident);
         p.expect(TokenKind::Percentage);

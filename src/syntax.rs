@@ -33,7 +33,7 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml or parameter name
+    /// An identifier, e.g. secure_dml or parameter name, potentially schema-qualified
     Ident,
     /// A type name
     TypeName,
@@ -43,6 +43,10 @@ pub enum SyntaxKind {
     Comma,
     /// A semi colon
     SemiColon,
+    /// An asterisk `*`
+    Asterisk,
+    /// An equals operator `=`
+    Equals,
     /// A colon token
     Colon,
     /// An Assign operator `:=`
@@ -71,6 +75,16 @@ pub enum SyntaxKind {
     FunctionHeader,
     /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` & `END;`
     FunctionBody,
+    /// A node that marks a full SELECT statement
+    Select,
+    /// A single column expression
+    ColumnExpr,
+    /// A node that consists of multiple column expressions
+    ColumnExprList,
+    /// Holds a list of [`SyntaxKind::WhereClause`] nodes
+    WhereClauseList,
+    /// Represent a single `WHERE` clause expression
+    WhereClause,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -104,6 +118,8 @@ impl SyntaxKind {
                 | Self::Comma
                 | Self::SemiColon
                 | Self::Colon
+                | Self::Asterisk
+                | Self::Equals
         )
     }
 }
@@ -132,13 +148,19 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ReturnKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
-            TokenKind::NumberTy => SyntaxKind::TypeName,
+            TokenKind::NumberKw => SyntaxKind::TypeName,
+            TokenKind::SelectKw => SyntaxKind::Keyword,
+            TokenKind::FromKw => SyntaxKind::Keyword,
+            TokenKind::WhereKw => SyntaxKind::Keyword,
+            TokenKind::OracleJoin => SyntaxKind::Keyword,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
+            TokenKind::Asterisk => SyntaxKind::Asterisk,
+            TokenKind::Equals => SyntaxKind::Equals,
             TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,

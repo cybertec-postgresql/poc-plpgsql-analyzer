@@ -56,7 +56,19 @@ pub enum TokenKind {
     TypeKw,
 
     #[token("number", ignore(case))]
-    NumberTy,
+    NumberKw,
+
+    #[token("select", ignore(case))]
+    SelectKw,
+
+    #[token("from", ignore(case))]
+    FromKw,
+
+    #[token("where", ignore(case))]
+    WhereKw,
+
+    #[token("(+)")]
+    OracleJoin,
 
     #[regex("-?[0-9]+", priority = 2)]
     Integer,
@@ -76,6 +88,12 @@ pub enum TokenKind {
 
     #[token(";")]
     SemiColon,
+
+    #[token("*")]
+    Asterisk,
+
+    #[token("=")]
+    Equals,
 
     #[token(":=")]
     Assign,
