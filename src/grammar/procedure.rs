@@ -11,7 +11,7 @@ use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 /// Parses a complete procedure.
-pub fn parse_procedure(p: &mut Parser) {
+pub(crate) fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     parse_header(p);
     parse_body(p);

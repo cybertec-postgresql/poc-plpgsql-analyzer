@@ -8,8 +8,8 @@
 mod function;
 mod procedure;
 
-pub use function::parse_function;
-pub use procedure::parse_procedure;
+pub(crate) use function::*;
+pub(crate) use procedure::*;
 
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
