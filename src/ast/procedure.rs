@@ -42,6 +42,12 @@ impl ProcedureHeader {
             .find_map(Ident::cast)
             .map(|ident| ident.name())
     }
+
+    pub fn has_param_list(&self) -> bool {
+        self.syntax
+            .children()
+            .any(|n| n.kind() == SyntaxKind::ParamList)
+    }
 }
 
 impl Ident {

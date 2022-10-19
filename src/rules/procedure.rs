@@ -47,7 +47,9 @@ pub fn fix_header(root: &Root) -> Result<RuleChanges, RuleError> {
 
     if let Some(procedure) = replacement.procedure() {
         if let Some(header) = procedure.header() {
-            hints.push(add_paramlist_parens(&header)?);
+            if !header.has_param_list() {
+                hints.push(add_paramlist_parens(&header)?);
+            }
         }
 
         hints.push(replace_procedure_prologue(&procedure)?);
@@ -100,6 +102,37 @@ mod tests {
             change.hints,
             vec![
                 RuleHint::new(5..5, "Add parameter parentheses"),
+                RuleHint::new(1..2, "Replace procedure prologue"),
+                RuleHint::new(7..9, "Replace procedure epilogue"),
+            ]
+        );
+    }
+
+    #[test]
+    fn dont_add_second_pair_of_parentheses_for_procedure() {
+        const INPUT: &str = include_str!("../../tests/fixtures/empty_parameter_list.sql");
+
+        let parse = crate::parse_procedure(INPUT).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap();
+        let change = fix_header(&root);
+        assert!(change.is_ok());
+
+        let change = change.unwrap();
+        check(
+            change.replacement,
+            expect![[r#"
+                CREATE PROCEDURE example()
+                AS $$
+                BEGIN
+                    NULL;
+                END;
+                $$ LANGUAGE plpgsql;
+            "#]],
+        );
+
+        assert_eq!(
+            change.hints,
+            vec![
                 RuleHint::new(1..2, "Replace procedure prologue"),
                 RuleHint::new(7..9, "Replace procedure epilogue"),
             ]
