@@ -6,8 +6,10 @@
 //! Implements grammar parsing of the token tree from the lexer.
 
 mod function;
+mod dql;
 mod procedure;
 
+pub(crate) use dql::*;
 pub(crate) use function::*;
 pub(crate) use procedure::*;
 
@@ -69,6 +71,16 @@ fn parse_typename(p: &mut Parser) {
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
     }
+}
+
+fn parse_qual_ident(p: &mut Parser) {
+    p.start(SyntaxKind::Ident);
+    p.expect(TokenKind::Ident);
+
+    if p.eat(TokenKind::Dot) {
+        p.expect(TokenKind::Ident);
+    }
+    p.finish();
 }
 
 #[cfg(test)]

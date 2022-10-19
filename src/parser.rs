@@ -45,6 +45,17 @@ pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
+/// Tries to parse a function from a string.
+pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a function
+    grammar::parse_function(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// Tries to parse a procedure from a string.
 pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
@@ -56,12 +67,12 @@ pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
-/// Tries to parse a function from a string.
-pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
+/// Parses a SQL SELECT statement.
+pub fn parse_select(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
-    // Expect a function
-    grammar::parse_function(&mut parser);
+    // Expect a `SELECT` query
+    grammar::parse_select(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())
