@@ -22,7 +22,10 @@ fn add_paramlist_parens(header: &ProcedureHeader) -> Result<RuleHint, RuleError>
 fn replace_procedure_prologue(procedure: &Procedure) -> Result<RuleHint, RuleError> {
     define_rule(
         procedure,
-        |t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "is",
+        |t| {
+            t.kind() == SyntaxKind::Keyword
+                && ["is", "as"].contains(&t.text().to_lowercase().as_str())
+        },
         "Failed to find procedure prologue",
         "AS $$",
         0..1,
@@ -133,6 +136,39 @@ mod tests {
         assert_eq!(
             change.hints,
             vec![
+                RuleHint::new(1..2, "Replace procedure prologue"),
+                RuleHint::new(7..9, "Replace procedure epilogue"),
+            ]
+        );
+    }
+
+    #[test]
+    fn accept_either_is_or_as_in_procedure_prologue() {
+        const INPUT: &str = include_str!("../../tests/procedure/heading/procedure_as.ora.sql");
+
+        let parse = crate::parse_procedure(INPUT).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap();
+        let change = fix_header(&root);
+        assert!(change.is_ok());
+
+        let change = change.unwrap();
+        check(
+            change.replacement,
+            expect![[r#"
+                -- test: use of AS instead of IS
+                CREATE OR REPLACE PROCEDURE procedure_as()
+                AS $$
+                BEGIN
+                    NULL;
+                END;
+                $$ LANGUAGE plpgsql;
+            "#]],
+        );
+
+        assert_eq!(
+            change.hints,
+            vec![
+                RuleHint::new(9..9, "Add parameter parentheses"),
                 RuleHint::new(1..2, "Replace procedure prologue"),
                 RuleHint::new(7..9, "Replace procedure epilogue"),
             ]
