@@ -7,7 +7,7 @@
 
 use super::{typed_syntax_node, typed_syntax_token};
 use crate::ast::{AstNode, AstToken};
-use crate::syntax::{SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 typed_syntax_token!(Ident);
@@ -22,6 +22,10 @@ impl Procedure {
             .name()
     }
 
+    pub fn header(&self) -> Option<ProcedureHeader> {
+        self.syntax.children().find_map(ProcedureHeader::cast)
+    }
+
     /// Returns the name of the procedure.
     pub fn body(&self) -> Option<ProcedureBody> {
         self.syntax.children().find_map(ProcedureBody::cast)
@@ -34,9 +38,15 @@ impl ProcedureHeader {
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
-            .filter_map(|it| it.into_token())
+            .filter_map(SyntaxElement::into_token)
             .find_map(Ident::cast)
             .map(|ident| ident.name())
+    }
+
+    pub fn has_param_list(&self) -> bool {
+        self.syntax
+            .children()
+            .any(|n| n.kind() == SyntaxKind::ParamList)
     }
 }
 
@@ -65,7 +75,7 @@ mod tests {
                 NULL;
             END multiple_parameters;
         "#;
-        let result = crate::parse(INPUT).unwrap();
+        let result = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(result.syntax());
         assert!(root.is_some());
 

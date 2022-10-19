@@ -28,26 +28,36 @@ pub enum TokenKind {
     #[token("is", ignore(case))]
     IsKw,
 
+    #[token("as", ignore(case))]
+    AsKw,
+
+    #[token("$$")]
+    DollarQuote,
+
     #[token("end", ignore(case))]
     EndKw,
-
-    #[token("out", ignore(case))]
-    OutKw,
 
     #[token("in", ignore(case))]
     InKw,
 
+    #[token("out", ignore(case))]
+    OutKw,
+
+    #[regex("-?[0-9]+", priority = 2)]
+    Integer,
+
     #[regex("[A-Za-z0-9_][A-Za-z0-9_$.]*")]
     Ident,
 
-    #[regex("'[A-Za-z0-9 ]+'")]
+    // TODO: Escaped characters, esp. \'
+    #[regex("'[^']*'")]
     QuotedLiteral,
-
-    #[token(",")]
-    Comma,
 
     #[token(".")]
     Dot,
+
+    #[token(",")]
+    Comma,
 
     #[token(";")]
     SemiColon,
@@ -70,11 +80,11 @@ pub enum TokenKind {
     #[regex("--.*")]
     Comment,
 
-    /// Marker token to indicate end of input, not used by lexer directly.
-    Eof,
-
     #[error]
     Error,
+
+    /// Marker token to indicate end of input, not used by lexer directly.
+    Eof,
 }
 
 impl TokenKind {

@@ -13,6 +13,7 @@ pub use rowan::ast::AstNode;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
+        #[derive(Debug)]
         pub struct $name {
             pub(crate) syntax: $synty,
         }

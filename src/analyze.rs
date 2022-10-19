@@ -53,7 +53,7 @@ impl From<ParseError> for AnalyzeError {
 /// Main entry point into the analyzer.
 pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        Type::Procedure => analyze_procedure(parse(sql)?),
+        Type::Procedure => analyze_procedure(parse_procedure(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -71,7 +71,7 @@ pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
 /// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
 #[wasm_bindgen(js_name = "analyze")]
 pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
-    analyze(typ, sql).map_err(|err| err.into())
+    analyze(typ, sql).map_err(Into::into)
 }
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {

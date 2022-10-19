@@ -5,7 +5,7 @@
 
 //! Implements parsers for different SQL language constructs.
 
-use crate::grammar::parse_procedure;
+use crate::grammar;
 use crate::lexer::{Lexer, Token, TokenKind};
 use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::{GreenNode, GreenNodeBuilder};
@@ -17,11 +17,14 @@ pub enum ParseError {
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
     /// A token could not be parsed by the lexer
-    #[error("Uknown token found: {0}")]
+    #[error("Unknown token found: {0}")]
     UnknownToken(String),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
+    /// The parser expected one of many tokens, but found neither of them.
+    #[error("Expected one of tokens: '{0:?}")]
+    ExpectedOneOfTokens(Vec<TokenKind>),
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
@@ -30,14 +33,27 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
+pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
+    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
+    tokens.reverse();
+    let mut parser = Parser::new(tokens);
+
+    while !parser.at(TokenKind::Eof) {
+        parser.bump_any();
+    }
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// Main function to parse the input string.
-pub fn parse(input: &str) -> Result<Parse, ParseError> {
+pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut tokens = Lexer::new(input).collect::<Vec<_>>();
     tokens.reverse();
     let mut parser = Parser::new(tokens);
 
     // Expect a procedure
-    parse_procedure(&mut parser);
+    grammar::parse_procedure(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())
@@ -160,6 +176,17 @@ impl<'a> Parser<'a> {
             return true;
         }
         self.error(ParseError::ExpectedToken(token_kind));
+        false
+    }
+
+    /// Expect one of the following tokens, ignore all white spaces inbetween.
+    pub fn expect_one_of(&mut self, token_kinds: &[TokenKind]) -> bool {
+        if token_kinds.contains(&self.current()) {
+            self.do_bump();
+            return true;
+        }
+
+        self.error(ParseError::ExpectedOneOfTokens(token_kinds.to_vec()));
         false
     }
 

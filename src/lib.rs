@@ -9,7 +9,8 @@ mod ast;
 mod grammar;
 mod lexer;
 mod parser;
+mod rules;
 mod syntax;
 
 pub use analyze::*;
-pub use parser::parse;
+pub use parser::parse_procedure;
