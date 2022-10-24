@@ -150,15 +150,31 @@ mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
-    /// Automatically created code by extracting PL/SQL trigger body into a
-    /// PL/pgSQL function. Meaning, this is neither valid PL/SQL nor PL/pgSQL
-    /// code.
-    const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
-    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
+    #[test]
+    fn test_analyze_function() {
+        const INPUT: &str =
+            include_str!("../tests/function/heading/function_heading_example.ora.sql");
+
+        let result = analyze(DboType::Function, INPUT);
+        assert!(result.is_ok(), "{:#?}", result);
+        let result = result.unwrap();
+
+        match result {
+            DboMetaData::Function {
+                name,
+                lines_of_code,
+                ..
+            } => {
+                assert_eq!(name, "function_heading_example");
+                assert_eq!(lines_of_code, 1);
+            }
+            _ => unreachable!(),
+        }
+    }
 
     #[test]
     fn test_analyze_procedure() {
+        const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
         let result = analyze(DboType::Procedure, ADD_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
@@ -175,6 +191,7 @@ mod tests {
             _ => unreachable!(),
         }
 
+        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
         let result = analyze(DboType::Procedure, SECURE_DML);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
@@ -193,24 +210,15 @@ mod tests {
     }
 
     #[test]
-    fn test_analyze_function() {
-        const INPUT: &str =
-            include_str!("../tests/function/heading/function_heading_example.ora.sql");
-
-        let result = analyze(DboType::Function, INPUT);
+    fn test_analyze_query() {
+        const INPUT: &str = include_str!("../tests/dql/select_left_join.ora.sql");
+        let result = analyze(DboType::Query, INPUT);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Function {
-                name,
-                body,
-                lines_of_code,
-                ..
-            } => {
-                println!("{:?}", body);
-                assert_eq!(name, "function_heading_example");
-                assert_eq!(lines_of_code, 1);
+            DboMetaData::Query { outer_joins, .. } => {
+                assert_eq!(outer_joins, 1);
             }
             _ => unreachable!(),
         }
@@ -219,6 +227,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_triggerbody_lines_of_code() {
+        const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
         let result = analyze(DboType::TriggerBody, UPDATE_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
         unreachable!();
