@@ -63,9 +63,9 @@ fn parse_body(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::{check, parse};
-    use super::*;
     use expect_test::expect;
+    use super::*;
+    use super::super::tests::{check, parse};
 
     #[test]
     fn test_parse_header_without_replace() {

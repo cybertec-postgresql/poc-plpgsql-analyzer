@@ -7,7 +7,7 @@
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use super::*;
+use super::parse_ident;
 
 pub(crate) fn parse_select(p: &mut Parser) {
     p.start(SyntaxKind::Select);
@@ -71,20 +71,20 @@ fn parse_where_clause(p: &mut Parser) {
 
 fn parse_where_expr(p: &mut Parser) {
     p.start(SyntaxKind::WhereClause);
-    parse_qual_ident(p);
+    parse_ident(p);
 
     p.eat(TokenKind::OracleJoin);
     p.expect(TokenKind::Equals);
-    parse_qual_ident(p);
+    parse_ident(p);
 
     p.finish();
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::{check, parse};
-    use super::*;
     use expect_test::expect;
+    use super::*;
+    use super::super::tests::{check, parse};
 
     #[test]
     fn test_parse_simple_select() {
@@ -127,17 +127,15 @@ Root@0..328
     WhereClauseList@30..93
       Keyword@30..35 "WHERE"
       WhereClause@35..93
-        Ident@35..77
-          Whitespace@35..38 "\n  "
-          Comment@38..58 "-- LEFT (OUTER) JOIN"
-          Whitespace@58..61 "\n  "
-          Ident@61..77 "places.person_id"
+        Whitespace@35..38 "\n  "
+        Comment@38..58 "-- LEFT (OUTER) JOIN"
+        Whitespace@58..61 "\n  "
+        Ident@61..77 "places.person_id"
         Keyword@77..80 "(+)"
         Whitespace@80..81 " "
         Equals@81..82 "="
-        Ident@82..93
-          Whitespace@82..83 " "
-          Ident@83..93 "persons.id"
+        Whitespace@82..83 " "
+        Ident@83..93 "persons.id"
     SemiColon@93..94 ";"
   Whitespace@94..97 "\n  "
   Comment@97..131 "-- Can be switched, s ..."

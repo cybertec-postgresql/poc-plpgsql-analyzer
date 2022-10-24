@@ -5,10 +5,10 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use super::{parse_ident, parse_param_list};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+use super::{parse_ident, parse_param_list};
 
 /// Parses a complete procedure.
 pub(crate) fn parse_procedure(p: &mut Parser) {
@@ -51,9 +51,9 @@ fn parse_body(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
-    use super::super::tests::{check, parse};
-    use super::*;
     use expect_test::expect;
+    use super::*;
+    use super::super::tests::{check, parse};
 
     #[test]
     fn test_parse_header_without_replace() {
