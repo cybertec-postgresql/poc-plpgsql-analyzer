@@ -73,7 +73,7 @@ pub enum TokenKind {
     #[regex("-?[0-9]+", priority = 2)]
     Integer,
 
-    #[regex("[A-Za-z0-9_][A-Za-z0-9_$.]*")]
+    #[regex(r"[A-Za-z0-9_][A-Za-z0-9_$]*(\.[A-Za-z0-9_][A-Za-z0-9_$]*)?")]
     Ident,
 
     // TODO: Escaped characters, esp. \'
