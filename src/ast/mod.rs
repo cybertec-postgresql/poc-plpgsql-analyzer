@@ -15,7 +15,7 @@ pub use rowan::ast::AstNode;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
-        #[derive(Debug)]
+        #[derive(Debug, Eq, PartialEq)]
         pub struct $name {
             pub(crate) syntax: $synty,
         }
@@ -70,7 +70,7 @@ pub(self) use {typed_syntax, typed_syntax_node, typed_syntax_token};
 pub trait AstToken {
     /// Returns whether the passed [`SyntaxKind`] can be casted to this type of token or
     /// not.
-    fn can_cast(token: SyntaxKind) -> bool
+    fn can_cast(kind: SyntaxKind) -> bool
     where
         Self: Sized;
 
@@ -92,6 +92,11 @@ pub trait AstToken {
 typed_syntax_node!(Root);
 typed_syntax_token!(Ident);
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct Operator {
+    pub(crate) syntax: SyntaxToken,
+}
+
 impl Root {
     /// Finds the (next) function in this root node.
     pub fn function(&self) -> Option<Function> {
@@ -106,8 +111,26 @@ impl Root {
 
 impl Ident {
     /// Returns the identifier name itself.
-    #[allow(unused)]
     pub fn name(&self) -> String {
         self.syntax.text().to_string()
+    }
+}
+
+impl AstToken for Operator {
+    fn can_cast(kind: SyntaxKind) -> bool {
+        // Add additional operator token as needed
+        kind == SyntaxKind::Equals
+    }
+
+    fn cast(syntax: SyntaxToken) -> Option<Self> {
+        if Self::can_cast(syntax.kind()) {
+            Some(Self { syntax })
+        } else {
+            None
+        }
+    }
+
+    fn syntax(&self) -> &SyntaxToken {
+        &self.syntax
     }
 }

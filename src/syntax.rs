@@ -192,7 +192,6 @@ impl rowan::Language for SqlProcedureLang {
 /// Typed [`SyntaxNode`] with our [`SqlProcedureLang`] language definition.
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
 /// Typed [`SyntaxToken`] with our [`SqlProcedureLang`] language definition.
-#[allow(unused)]
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
 /// Typed [`SyntaxElement`] with our [`SqlProcedureLang`] language definition.
 #[allow(unused)]
