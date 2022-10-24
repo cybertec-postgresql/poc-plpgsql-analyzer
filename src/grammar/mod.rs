@@ -5,13 +5,13 @@
 
 //! Implements grammar parsing of the token tree from the lexer.
 
-mod dql;
 mod function;
 mod procedure;
+mod query;
 
-pub(crate) use dql::*;
 pub(crate) use function::*;
 pub(crate) use procedure::*;
+pub(crate) use query::*;
 
 use crate::lexer::TokenKind;
 use crate::parser::Parser;

@@ -4,13 +4,13 @@
 
 //! Implements parsing of procedures from a token tree.
 
+use super::parse_ident;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use super::parse_ident;
 
-pub(crate) fn parse_select(p: &mut Parser) {
-    p.start(SyntaxKind::Select);
+pub(crate) fn parse_query(p: &mut Parser) {
+    p.start(SyntaxKind::SelectStmt);
     p.expect(TokenKind::SelectKw);
     parse_column_expr(p);
     p.expect(TokenKind::FromKw);
@@ -89,10 +89,10 @@ mod tests {
     #[test]
     fn test_parse_simple_select() {
         check(
-            parse("SELECT * FROM table", parse_select),
+            parse("SELECT * FROM table", parse_query),
             expect![[r#"
 Root@0..19
-  Select@0..19
+  SelectStmt@0..19
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
     Asterisk@7..8 "*"
@@ -109,10 +109,10 @@ Root@0..19
         const INPUT: &str = include_str!("../../tests/dql/select_left_join.ora.sql");
 
         check(
-            parse(INPUT, parse_select),
+            parse(INPUT, parse_query),
             expect![[r#"
 Root@0..328
-  Select@0..94
+  SelectStmt@0..94
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
     Asterisk@7..8 "*"
@@ -150,7 +150,7 @@ Root@0..328
   Whitespace@288..291 "\n  "
   Comment@291..327 "-- places.person_id ( ..."
   Whitespace@327..328 "\n"
-"#]]
+"#]],
         );
     }
 }

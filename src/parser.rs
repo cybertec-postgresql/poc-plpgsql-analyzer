@@ -67,12 +67,11 @@ pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
-/// Parses a SQL SELECT statement.
-pub fn parse_select(input: &str) -> Result<Parse, ParseError> {
+pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
-    // Expect a `SELECT` query
-    grammar::parse_select(&mut parser);
+    // Expect a query `SELECT`
+    grammar::parse_query(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())

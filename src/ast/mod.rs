@@ -7,10 +7,12 @@
 
 mod function;
 mod procedure;
+mod query;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
 pub use function::*;
 pub use procedure::*;
+pub use query::*;
 pub use rowan::ast::AstNode;
 
 macro_rules! typed_syntax {
@@ -106,6 +108,11 @@ impl Root {
     /// Finds the (next) procedure in this root node.
     pub fn procedure(&self) -> Option<Procedure> {
         self.syntax.children().find_map(Procedure::cast)
+    }
+
+    /// Finds the (next) `SELECT` query in this root node.
+    pub fn query(&self) -> Option<SelectStmt> {
+        self.syntax.children().find_map(SelectStmt::cast)
     }
 }
 

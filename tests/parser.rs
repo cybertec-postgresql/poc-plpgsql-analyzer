@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-use poc_plpgsql_analyzer::{parse_function, parse_procedure, parse_select};
+use poc_plpgsql_analyzer::{parse_function, parse_procedure, parse_query};
 use std::fs;
 use std::path::Path;
 
@@ -36,7 +36,7 @@ fn test_parse_function_coverage(path: &Path) -> datatest_stable::Result<()> {
 
 fn test_parse_dql_select_coverage(path: &Path) -> datatest_stable::Result<()> {
     let input = fs::read_to_string(path)?;
-    let result = parse_select(&input);
+    let result = parse_query(&input);
     assert!(result.is_ok(), "{:#?}", result);
     let parse = result.unwrap();
     assert!(

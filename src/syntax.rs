@@ -76,7 +76,7 @@ pub enum SyntaxKind {
     /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` & `END;`
     FunctionBody,
     /// A node that marks a full SELECT statement
-    Select,
+    SelectStmt,
     /// A single column expression
     ColumnExpr,
     /// A node that consists of multiple column expressions
