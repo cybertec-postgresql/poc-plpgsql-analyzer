@@ -21,10 +21,11 @@ pub enum DboType {
     DefaultExpr,
     Function,
     IndexExpr,
+    Package,
     Procedure,
+    Query,
     TriggerBody,
     View,
-    Package,
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
@@ -39,6 +40,9 @@ pub enum DboMetaData {
         name: String,
         body: String,
         lines_of_code: usize,
+    },
+    Query {
+        outer_joins: usize, // For now, we only report how many OUTER JOINs there are, but not any other info about them yet.
     },
 }
 
@@ -63,6 +67,7 @@ pub fn analyze(typ: DboType, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
         DboType::Function => analyze_function(parse_function(sql)?),
         DboType::Procedure => analyze_procedure(parse_procedure(sql)?),
+        DboType::Query => analyze_query(parse_query(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -108,7 +113,7 @@ fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
     let procedure = Root::cast(parse.syntax())
-        .and_then(|p| p.procedure())
+        .and_then(|r| r.procedure())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
 
     let body = procedure
@@ -123,6 +128,20 @@ fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
         name,
         body,
         lines_of_code,
+    })
+}
+
+fn analyze_query(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+    let query = Root::cast(parse.syntax())
+        .and_then(|r| r.query())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
+
+    Ok(DboMetaData::Query {
+        outer_joins: query
+            .where_clauses()
+            .into_iter()
+            .filter(|wc| wc.is_outer_join())
+            .count(),
     })
 }
 
