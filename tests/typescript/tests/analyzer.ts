@@ -75,7 +75,7 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
     expect(result.query).toEqual(expect.anything());
   });
 
-  it('should return the correct function name', () => {
+  it('should return the correct amount of outer joins', () => {
     const content = fs.readFileSync('../dql/select_left_join.ora.sql', 'utf8');
 
     const metaData = analyze(DboType.Query, content);
