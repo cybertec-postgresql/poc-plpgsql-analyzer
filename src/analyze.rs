@@ -46,7 +46,9 @@ pub enum DboMetaData {
     },
     #[serde(rename_all = "camelCase")]
     Query {
-        outer_joins: usize, // For now, we only report how many OUTER JOINs there are, but not any other info about them yet.
+        // For now, we only report how many OUTER JOINs there are, but not any other info about
+        // them yet.
+        outer_joins: usize,
     },
 }
 

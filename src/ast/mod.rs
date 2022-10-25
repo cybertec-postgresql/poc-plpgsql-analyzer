@@ -56,28 +56,30 @@ macro_rules! typed_syntax_node {
     };
 }
 
-/// Automatically generate `struct`s and implementation of the [`AstToken`] trait
-/// for [`SyntaxKind`] variants.
+/// Automatically generate `struct`s and implementation of the [`AstToken`]
+/// trait for [`SyntaxKind`] variants.
 macro_rules! typed_syntax_token {
     ($( $name:ident ),+ $(,)?) => {
         $( crate::ast::typed_syntax!(crate::syntax::SyntaxToken, crate::ast::AstToken, $name); )+
     };
 }
 
-// Needed so that submodules can import [`typed_syntax_node`] and [`typed_syntax_token`]
+// Needed so that submodules can import [`typed_syntax_node`] and
+// [`typed_syntax_token`]
 /// as `super::typed_syntax_{node,token}`.
 pub(self) use {typed_syntax, typed_syntax_node, typed_syntax_token};
 
 /// Represents a interface for typed AST tokens, akin to [`AstNode`].
 pub trait AstToken {
-    /// Returns whether the passed [`SyntaxKind`] can be casted to this type of token or
-    /// not.
+    /// Returns whether the passed [`SyntaxKind`] can be casted to this type of
+    /// token or not.
     fn can_cast(kind: SyntaxKind) -> bool
     where
         Self: Sized;
 
     /// Tries to cast the passed (generic) token to a typed token. Might
-    /// fail if the syntax kind is not compatible (see [`can_cast()`](Self::can_cast())).
+    /// fail if the syntax kind is not compatible (see
+    /// [`can_cast()`](Self::can_cast())).
     fn cast(token: SyntaxToken) -> Option<Self>
     where
         Self: Sized;

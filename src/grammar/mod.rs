@@ -75,14 +75,9 @@ fn parse_ident(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::parser::{Parse, Parser};
     use expect_test::{expect, Expect};
-    use super::*;
-
-    /// Helper function to compare the build syntax tree with the expected output.
-    pub fn check(parse: Parse, expected_tree: Expect) {
-        expected_tree.assert_eq(parse.tree().as_str())
-    }
 
     /// A helper to allow to call the different parse functions.
     pub fn parse<F>(input: &str, f: F) -> Parse
@@ -92,6 +87,12 @@ mod tests {
         let mut parser = Parser::new(input);
         f(&mut parser);
         parser.build()
+    }
+
+    /// Helper function to compare the build syntax tree with the expected
+    /// output.
+    pub fn check(parse: Parse, expected_tree: Expect) {
+        expected_tree.assert_eq(parse.tree().as_str())
     }
 
     #[test]

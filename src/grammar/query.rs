@@ -82,9 +82,9 @@ fn parse_where_expr(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::expect;
-    use super::*;
     use super::super::tests::{check, parse};
+    use super::*;
+    use expect_test::expect;
 
     #[test]
     fn test_parse_simple_select() {

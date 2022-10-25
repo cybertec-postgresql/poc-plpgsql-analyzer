@@ -15,7 +15,6 @@ use num_traits::{FromPrimitive, ToPrimitive};
 /// * <https://blog.kiranshila.com/blog/easy_cst.md>
 /// * <https://arzg.github.io/lang/10/>
 /// * <https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs>
-///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
@@ -33,7 +32,8 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml or parameter name, potentially schema-qualified
+    /// An identifier, e.g. secure_dml or parameter name, potentially
+    /// schema-qualified
     Ident,
     /// A type name
     TypeName,
