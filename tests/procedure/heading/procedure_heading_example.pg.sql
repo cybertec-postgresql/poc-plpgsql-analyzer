@@ -8,8 +8,8 @@ CREATE OR REPLACE PROCEDURE procedure_heading_example (
     , p_4 INOUT timestamp DEFAULT NULL
     , p_5 foo.bar%TYPE DEFAULT NULL
 )
-AS $body$
+AS $$
 BEGIN
     NULL;
 END;
-$body$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;

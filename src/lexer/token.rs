@@ -19,6 +19,9 @@ pub enum TokenKind {
     #[token("procedure", ignore(case))]
     ProcedureKw,
 
+    #[token("function", ignore(case))]
+    FunctionKw,
+
     #[token("or replace", ignore(case))]
     OrReplaceKw,
 
@@ -42,6 +45,18 @@ pub enum TokenKind {
 
     #[token("out", ignore(case))]
     OutKw,
+
+    #[token("return", ignore(case))]
+    ReturnKw,
+
+    #[token("deterministic", ignore(case))]
+    DeterministicKw,
+
+    #[token("type", ignore(case))]
+    TypeKw,
+
+    #[token("number", ignore(case))]
+    NumberTy,
 
     #[regex("-?[0-9]+", priority = 2)]
     Integer,
@@ -95,7 +110,7 @@ impl TokenKind {
 
 impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

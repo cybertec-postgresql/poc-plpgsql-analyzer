@@ -6,15 +6,17 @@
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
+use serde::Serialize;
 use wasm_bindgen::prelude::*;
+use wasm_typescript_definition::TypescriptDefinition;
 
 /// Different types the analyzer can possibly examine.
 ///
 /// Some types may be only available for specific frontends, e.g.
 /// [`Package`][`Type::Package`] is only available for Oracle databases.
+#[derive(Debug, Eq, PartialEq, Serialize)]
 #[wasm_bindgen]
-#[derive(Debug, Eq, PartialEq)]
-pub enum Type {
+pub enum DboType {
     CheckConstraint,
     DefaultExpr,
     Function,
@@ -26,18 +28,25 @@ pub enum Type {
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
-#[wasm_bindgen]
-#[derive(Debug, Eq, PartialEq)]
-pub struct DboMetaData {
-    pub lines_of_code: usize,
-    sql_statements: Vec<()>,
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+pub enum DboMetaData {
+    Function {
+        name: String,
+        body: String,
+        lines_of_code: usize,
+    },
+    Procedure {
+        name: String,
+        body: String,
+        lines_of_code: usize,
+    },
 }
 
 /// Possible errors that might occur during analyzing.
-#[derive(Debug, Eq, thiserror::Error, PartialEq)]
+#[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
 pub enum AnalyzeError {
-    #[error("Language construct not yet unsupported: {0:?}")]
-    Unsupported(Type),
+    #[error("Language construct unsupported: {0:?}")]
+    Unsupported(DboType),
     #[error("Error during parsing: {0}")]
     ParseError(String),
     #[error("Expected {0} node, got {1}")]
@@ -50,10 +59,10 @@ impl From<ParseError> for AnalyzeError {
     }
 }
 
-/// Main entry point into the analyzer.
-pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
+pub fn analyze(typ: DboType, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        Type::Procedure => analyze_procedure(parse_procedure(sql)?),
+        DboType::Function => analyze_function(parse_function(sql)?),
+        DboType::Procedure => analyze_procedure(parse_procedure(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -70,19 +79,50 @@ pub fn analyze(typ: Type, sql: &str) -> Result<DboMetaData, AnalyzeError> {
 /// [`JsError`][`wasm_bindgen::JsError`] doesn't implement the
 /// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
 #[wasm_bindgen(js_name = "analyze")]
-pub fn analyze_js(typ: Type, sql: &str) -> Result<DboMetaData, JsError> {
-    analyze(typ, sql).map_err(Into::into)
+pub fn analyze_js(typ: DboType, sql: &str) -> Result<JsValue, JsValue> {
+    match analyze(typ, sql) {
+        Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
+        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
+    }
+}
+
+fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+    let function = Root::cast(parse.syntax())
+        .and_then(|p| p.function())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
+
+    let body = function
+        .body()
+        .map(|b| b.text())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find function body".to_owned()))?;
+
+    let name = function.name().unwrap_or_else(|| "<unknown>".to_string());
+    let lines_of_code = body.matches('\n').count();
+
+    Ok(DboMetaData::Function {
+        name,
+        body,
+        lines_of_code,
+    })
 }
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
-    let body = Root::cast(parse.syntax())
+    let procedure = Root::cast(parse.syntax())
         .and_then(|p| p.procedure())
-        .and_then(|p| p.body())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
+
+    let body = procedure
+        .body()
+        .map(|b| b.text())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure body".to_owned()))?;
 
-    Ok(DboMetaData {
-        lines_of_code: body.syntax().text().to_string().matches('\n').count(),
-        sql_statements: vec![()],
+    let name = procedure.name().unwrap_or_else(|| "<unknown>".to_string());
+    let lines_of_code = body.matches('\n').count();
+
+    Ok(DboMetaData::Procedure {
+        name,
+        body,
+        lines_of_code,
     })
 }
 
@@ -99,28 +139,69 @@ mod tests {
     const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
 
     #[test]
-    fn test_procedure_lines_of_code() {
-        let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
+    fn test_analyze_procedure() {
+        let result = analyze(DboType::Procedure, ADD_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
-        assert_eq!(result.unwrap().lines_of_code, 3);
+        let result = result.unwrap();
 
-        let result = analyze(Type::Procedure, SECURE_DML);
+        match result {
+            DboMetaData::Procedure {
+                name,
+                lines_of_code,
+                ..
+            } => {
+                assert_eq!(name, "add_job_history");
+                assert_eq!(lines_of_code, 3);
+            }
+            _ => unreachable!(),
+        }
+
+        let result = analyze(DboType::Procedure, SECURE_DML);
         assert!(result.is_ok(), "{:#?}", result);
-        assert_eq!(result.unwrap().lines_of_code, 5);
+        let result = result.unwrap();
+
+        match result {
+            DboMetaData::Procedure {
+                name,
+                lines_of_code,
+                ..
+            } => {
+                assert_eq!(name, "secure_dml");
+                assert_eq!(lines_of_code, 5);
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    #[test]
+    fn test_analyze_function() {
+        const INPUT: &str =
+            include_str!("../tests/function/heading/function_heading_example.ora.sql");
+
+        let result = analyze(DboType::Function, INPUT);
+        assert!(result.is_ok(), "{:#?}", result);
+        let result = result.unwrap();
+
+        match result {
+            DboMetaData::Function {
+                name,
+                body,
+                lines_of_code,
+                ..
+            } => {
+                println!("{:?}", body);
+                assert_eq!(name, "function_heading_example");
+                assert_eq!(lines_of_code, 1);
+            }
+            _ => unreachable!(),
+        }
     }
 
     #[test]
     #[ignore]
     fn test_triggerbody_lines_of_code() {
-        let result = analyze(Type::TriggerBody, UPDATE_JOB_HISTORY);
+        let result = analyze(DboType::TriggerBody, UPDATE_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
-        assert_eq!(result.unwrap().lines_of_code, 2);
-    }
-
-    #[test]
-    fn test_number_of_statements() {
-        let result = analyze(Type::Procedure, ADD_JOB_HISTORY);
-        assert!(result.is_ok(), "{:#?}", result);
-        assert_eq!(result.unwrap().sql_statements.len(), 1);
+        unreachable!();
     }
 }

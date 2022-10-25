@@ -33,10 +33,9 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
+/// Tries to parse any string of SQL tokens.
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
-    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
-    tokens.reverse();
-    let mut parser = Parser::new(tokens);
+    let mut parser = Parser::new(input);
 
     while !parser.at(TokenKind::Eof) {
         parser.bump_any();
@@ -46,14 +45,23 @@ pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
-/// Main function to parse the input string.
+/// Tries to parse a procedure from a string.
 pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
-    let mut tokens = Lexer::new(input).collect::<Vec<_>>();
-    tokens.reverse();
-    let mut parser = Parser::new(tokens);
+    let mut parser = Parser::new(input);
 
     // Expect a procedure
     grammar::parse_procedure(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+/// Tries to parse a function from a string.
+pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a function
+    grammar::parse_function(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())
@@ -94,7 +102,13 @@ pub struct Parser<'a> {
 }
 
 impl<'a> Parser<'a> {
-    pub fn new(tokens: Vec<Token<'a>>) -> Self {
+    pub fn new(input: &'a str) -> Self {
+        let tokens = Lexer::new(input).collect::<Vec<_>>();
+        Self::from_tokens(tokens)
+    }
+
+    pub fn from_tokens(mut tokens: Vec<Token<'a>>) -> Self {
+        tokens.reverse();
         let mut parser = Parser {
             tokens,
             builder: GreenNodeBuilder::new(),

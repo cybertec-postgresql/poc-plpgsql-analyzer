@@ -1,5 +1,5 @@
--- test: example for procedure heading
-CREATE OR REPLACE PROCEDURE procedure_heading_example (
+-- test: example for function heading
+CREATE OR REPLACE FUNCTION function_heading_example (
     -- no support for OUT paramaters for PROCEDURE prior of PostgreSQL 14 (use INOUT)
     p_1 OUT VARCHAR2
     , p_2 NUMBER
@@ -8,7 +8,8 @@ CREATE OR REPLACE PROCEDURE procedure_heading_example (
     , p_4 IN OUT NOCOPY DATE
     , p_5 foo.bar%TYPE
 )
+RETURN NUMBER
 IS
 BEGIN
-    NULL;
-END procedure_heading_example;
+    RETURN 1;
+END function_heading_example;

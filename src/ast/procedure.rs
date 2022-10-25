@@ -5,16 +5,15 @@
 
 //! Typed AST nodes for PL/SQL procedures.
 
-use super::{typed_syntax_node, typed_syntax_token};
+use super::typed_syntax_node;
+use super::Ident;
 use crate::ast::{AstNode, AstToken};
-use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxElement, SyntaxKind};
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
-typed_syntax_token!(Ident);
 
 impl Procedure {
     /// Returns the name of the procedure.
-    #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children()
@@ -34,7 +33,6 @@ impl Procedure {
 
 impl ProcedureHeader {
     /// Returns the name of the procedure.
-    #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
@@ -50,10 +48,8 @@ impl ProcedureHeader {
     }
 }
 
-impl Ident {
-    /// Returns the identifier name itself.
-    #[allow(unused)]
-    pub fn name(&self) -> String {
+impl ProcedureBody {
+    pub fn text(&self) -> String {
         self.syntax.text().to_string()
     }
 }

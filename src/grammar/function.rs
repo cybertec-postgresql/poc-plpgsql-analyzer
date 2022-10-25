@@ -1,18 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
-// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
-//! Implements parsing of procedures from a token tree.
+//! Implements parsing of functions from a token tree.
 
-use super::{parse_ident, parse_param_list};
+use super::{parse_ident, parse_param_list, parse_typename};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
-/// Parses a complete procedure.
-pub fn parse_procedure(p: &mut Parser) {
-    p.start(SyntaxKind::Procedure);
+/// Parses a complete function.
+pub fn parse_function(p: &mut Parser) {
+    p.start(SyntaxKind::Function);
     parse_header(p);
     parse_body(p);
     while !p.at(TokenKind::Eof) {
@@ -21,25 +20,38 @@ pub fn parse_procedure(p: &mut Parser) {
     p.finish();
 }
 
-/// Parses the header of a procedure.
+/// Parses the header of a function.
 fn parse_header(p: &mut Parser) {
-    p.start(SyntaxKind::ProcedureHeader);
+    p.start(SyntaxKind::FunctionHeader);
     p.expect(TokenKind::CreateKw);
     p.eat(TokenKind::OrReplaceKw);
-    p.expect(TokenKind::ProcedureKw);
+    p.expect(TokenKind::FunctionKw);
 
     parse_ident(p);
+    parse_param_list(p);
+    parse_return_type(p);
+    parse_attributes(p);
     parse_param_list(p);
     p.finish();
 }
 
-/// Parses the body of a procedure.
+fn parse_return_type(p: &mut Parser) {
+    if p.eat(TokenKind::ReturnKw) {
+        parse_typename(p);
+    }
+}
+
+fn parse_attributes(p: &mut Parser) {
+    p.eat(TokenKind::DeterministicKw);
+}
+
+/// Parses the body of a function.
 fn parse_body(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
+    p.expect(TokenKind::IsKw);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
 
-    p.start(SyntaxKind::ProcedureBody);
+    p.start(SyntaxKind::FunctionBody);
     p.until_last(TokenKind::EndKw);
     p.finish();
 
@@ -58,50 +70,34 @@ mod tests {
     #[test]
     fn test_parse_header_without_replace() {
         check(
-            parse("CREATE PROCEDURE hello", parse_header),
+            parse("CREATE FUNCTION hello", parse_header),
             expect![[r#"
-Root@0..22
-  ProcedureHeader@0..22
+Root@0..21
+  FunctionHeader@0..21
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
-    Keyword@7..16 "PROCEDURE"
-    Whitespace@16..17 " "
-    Ident@17..22 "hello"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_parse_invalid_header() {
-        check(
-            parse("CREATE hello", parse_header),
-            expect![[r#"
-Root@0..40
-  ProcedureHeader@0..40
-    Keyword@0..6 "CREATE"
-    Whitespace@6..7 " "
-    Error@7..35
-      Text@7..35 "Expected token 'Proce ..."
-    Ident@35..40 "hello"
+    Keyword@7..15 "FUNCTION"
+    Whitespace@15..16 " "
+    Ident@16..21 "hello"
 "#]],
         );
     }
 
     #[test]
     fn test_parse_header_without_params() {
-        const INPUT: &str = "CREATE OR REPLACE PROCEDURE test";
+        const INPUT: &str = "CREATE OR REPLACE FUNCTION test";
         check(
             parse(INPUT, parse_header),
             expect![[r#"
-Root@0..32
-  ProcedureHeader@0..32
+Root@0..31
+  FunctionHeader@0..31
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
     Keyword@7..17 "OR REPLACE"
     Whitespace@17..18 " "
-    Keyword@18..27 "PROCEDURE"
-    Whitespace@27..28 " "
-    Ident@28..32 "test"
+    Keyword@18..26 "FUNCTION"
+    Whitespace@26..27 " "
+    Ident@27..31 "test"
 "#]],
         );
     }
@@ -109,42 +105,42 @@ Root@0..32
     #[test]
     fn test_parse_header_with_params() {
         const INPUT: &str = r#"
-CREATE PROCEDURE add_job_history
+CREATE FUNCTION add_job_history
     (  p_emp_id          job_history.employee_id%type
      , p_start_date      job_history.start_date%type
     )"#;
         check(
             parse(INPUT, parse_header),
             expect![[r#"
-Root@0..146
-  ProcedureHeader@0..146
+Root@0..145
+  FunctionHeader@0..145
     Whitespace@0..1 "\n"
     Keyword@1..7 "CREATE"
     Whitespace@7..8 " "
-    Keyword@8..17 "PROCEDURE"
-    Whitespace@17..18 " "
-    Ident@18..33 "add_job_history"
-    Whitespace@33..38 "\n    "
-    ParamList@38..146
-      LParen@38..39 "("
-      Whitespace@39..41 "  "
-      Param@41..93
-        Ident@41..49 "p_emp_id"
-        Whitespace@49..59 "          "
-        Ident@59..82 "job_history.employee_id"
-        Percentage@82..83 "%"
-        Keyword@83..87 "type"
-        Whitespace@87..93 "\n     "
-      Comma@93..94 ","
-      Whitespace@94..95 " "
-      Param@95..145
-        Ident@95..107 "p_start_date"
-        Whitespace@107..113 "      "
-        Ident@113..135 "job_history.start_date"
-        Percentage@135..136 "%"
-        Keyword@136..140 "type"
-        Whitespace@140..145 "\n    "
-      RParen@145..146 ")"
+    Keyword@8..16 "FUNCTION"
+    Whitespace@16..17 " "
+    Ident@17..32 "add_job_history"
+    Whitespace@32..37 "\n    "
+    ParamList@37..145
+      LParen@37..38 "("
+      Whitespace@38..40 "  "
+      Param@40..92
+        Ident@40..48 "p_emp_id"
+        Whitespace@48..58 "          "
+        Ident@58..81 "job_history.employee_id"
+        Percentage@81..82 "%"
+        Keyword@82..86 "type"
+        Whitespace@86..92 "\n     "
+      Comma@92..93 ","
+      Whitespace@93..94 " "
+      Param@94..144
+        Ident@94..106 "p_start_date"
+        Whitespace@106..112 "      "
+        Ident@112..134 "job_history.start_date"
+        Percentage@134..135 "%"
+        Keyword@135..139 "type"
+        Whitespace@139..144 "\n    "
+      RParen@144..145 ")"
 "#]],
         );
     }
@@ -166,7 +162,7 @@ Root@0..31
   Whitespace@3..4 "\n"
   Keyword@4..9 "BEGIN"
   Whitespace@9..14 "\n    "
-  ProcedureBody@14..20
+  FunctionBody@14..20
     Ident@14..18 "NULL"
     SemiColon@18..19 ";"
     Whitespace@19..20 "\n"
