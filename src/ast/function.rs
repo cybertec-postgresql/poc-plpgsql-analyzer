@@ -12,7 +12,6 @@ typed_syntax_node!(Function, FunctionHeader, FunctionBody);
 
 impl Function {
     /// Returns the name of the function.
-    #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children()
@@ -20,7 +19,7 @@ impl Function {
             .name()
     }
 
-    /// Returns the name of the function.
+    /// Returns the body of the function.
     pub fn body(&self) -> Option<FunctionBody> {
         self.syntax.children().find_map(FunctionBody::cast)
     }

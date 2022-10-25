@@ -14,7 +14,6 @@ typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 
 impl Procedure {
     /// Returns the name of the procedure.
-    #[allow(unused)]
     pub fn name(&self) -> Option<String> {
         self.syntax
             .children()
