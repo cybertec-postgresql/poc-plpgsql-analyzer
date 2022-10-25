@@ -75,7 +75,6 @@ fn parse_typename(p: &mut Parser) {
 mod tests {
     use super::*;
     use crate::grammar::parse_param;
-    use crate::lexer::Lexer;
     use crate::parser::{Parse, Parser};
     use expect_test::{expect, Expect};
 
@@ -84,19 +83,12 @@ mod tests {
         expected_tree.assert_eq(parse.tree().as_str())
     }
 
-    /// Creates a new parser by lexing the input first.
-    fn build_parser(input: &str) -> Parser {
-        let mut tokens = Lexer::new(input).collect::<Vec<_>>();
-        tokens.reverse();
-        Parser::new(tokens)
-    }
-
     /// A helper to allow to call the different parse functions.
     pub fn parse<F>(input: &str, f: F) -> Parse
     where
         F: Fn(&mut Parser),
     {
-        let mut parser = build_parser(input);
+        let mut parser = Parser::new(input);
         f(&mut parser);
         parser.build()
     }
