@@ -45,7 +45,7 @@ pub enum DboMetaData {
 /// Possible errors that might occur during analyzing.
 #[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
 pub enum AnalyzeError {
-    #[error("Language construct not yet unsupported: {0:?}")]
+    #[error("Language construct unsupported: {0:?}")]
     Unsupported(DboType),
     #[error("Error during parsing: {0}")]
     ParseError(String),
