@@ -18,21 +18,21 @@ describe('try to parse and analyze Oracle function', () => {
     const content = fs.readFileSync(path, 'utf8');
     const result = analyze(DboType.Function, content);
 
-    expect(result.Function).toEqual(expect.anything());
+    expect(result.function).toEqual(expect.anything());
   });
 
   it('should return the correct function name', () => {
     const content = fs.readFileSync('../function/heading/function_heading_example.ora.sql', 'utf8');
 
     const metaData = analyze(DboType.Function, content);
-    expect(metaData.Function.name).toEqual('function_heading_example');
+    expect(metaData.function.name).toEqual('function_heading_example');
   });
 
   it('should count the lines of code correctly', () => {
     const content = fs.readFileSync('../function/heading/function_heading_example.ora.sql', 'utf8');
 
     const metaData = analyze(DboType.Function, content);
-    expect(metaData.Function.lines_of_code).toEqual(1);
+    expect(metaData.function.linesOfCode).toEqual(1);
   });
 });
 
@@ -45,21 +45,21 @@ describe('try to parse and analyze Oracle procedures', () => {
     const content = fs.readFileSync(path, 'utf8');
     const result = analyze(DboType.Procedure, content);
 
-    expect(result.Procedure).toEqual(expect.anything());
+    expect(result.procedure).toEqual(expect.anything());
   });
 
   it('should return the correct procedure name', () => {
     const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
 
     const metaData = analyze(DboType.Procedure, content);
-    expect(metaData.Procedure.name).toEqual('add_job_history');
+    expect(metaData.procedure.name).toEqual('add_job_history');
   });
 
   it('should count the lines of code correctly', () => {
     const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
 
     const metaData = analyze(DboType.Procedure, content);
-    expect(metaData.Procedure.lines_of_code).toEqual(3);
+    expect(metaData.procedure.linesOfCode).toEqual(3);
   });
 });
 
@@ -72,13 +72,13 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
     const content = fs.readFileSync(path, 'utf8');
     const result = analyze(DboType.Query, content);
 
-    expect(result.Query).toEqual(expect.anything());
+    expect(result.query).toEqual(expect.anything());
   });
 
   it('should return the correct function name', () => {
     const content = fs.readFileSync('../dql/select_left_join.ora.sql', 'utf8');
 
     const metaData = analyze(DboType.Query, content);
-    expect(metaData.Query.outer_joins).toEqual(1);
+    expect(metaData.query.outerJoins).toEqual(1);
   });
 });

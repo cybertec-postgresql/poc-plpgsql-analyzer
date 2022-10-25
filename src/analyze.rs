@@ -30,17 +30,21 @@ pub enum DboType {
 
 /// The result of parsing and analyzing a piece of SQL code.
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
 pub enum DboMetaData {
+    #[serde(rename_all = "camelCase")]
     Function {
         name: String,
         body: String,
         lines_of_code: usize,
     },
+    #[serde(rename_all = "camelCase")]
     Procedure {
         name: String,
         body: String,
         lines_of_code: usize,
     },
+    #[serde(rename_all = "camelCase")]
     Query {
         outer_joins: usize, // For now, we only report how many OUTER JOINs there are, but not any other info about them yet.
     },
@@ -48,6 +52,7 @@ pub enum DboMetaData {
 
 /// Possible errors that might occur during analyzing.
 #[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
 pub enum AnalyzeError {
     #[error("Language construct unsupported: {0:?}")]
     Unsupported(DboType),
