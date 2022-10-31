@@ -14,8 +14,8 @@ jobs:
   test:
     name: Build and test TypeScript interface
     runs-on: [self-hosted, Linux]
-    container: node:18-bullseye
-    timeout-minutes: 8
+    container: registry.dc1.cybertec.at/docker-hub-proxy/library/node:18-bullseye
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v3
@@ -28,19 +28,21 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
+          profile: minimal
           toolchain: stable
           override: true
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v3
-        continue-on-error: false
+      - name: Install rust-std wasm32-unknown-unknown
+        uses: actions-rs/toolchain@v1
         with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          profile: minimal
+          toolchain: stable
+          target: wasm32-unknown-unknown
+          override: true
+          components: rust-std
+
+      - name: Run rust-cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Cache npm test dependencies
         uses: actions/cache@v3
@@ -52,10 +54,10 @@ jobs:
           restore-keys: ${{ runner.os }}-npm-
 
       - name: Install wasm-pack
-        uses: actions-rs/cargo@v1
+        uses: baptiste0928/cargo-install@v1
         with:
-          command: install
-          args: wasm-pack
+          crate: wasm-pack
+          version: "0.10.3"
 
       - name: Install npm test dependencies
         if: steps.cache-npm-test-deps.outputs.cache-hit != 'true'
