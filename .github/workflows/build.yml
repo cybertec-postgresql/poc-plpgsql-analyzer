@@ -121,7 +121,10 @@ jobs:
           crate: wasm-pack
           version: "0.10.3"
 
-      - name: Build using wasm-pack
+      - name: Run rust-cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build using wasm-pack 
         run: wasm-pack build --release --target nodejs
 
       - uses: actions/upload-artifact@v3
