@@ -41,16 +41,8 @@ jobs:
           override: true
           components: rust-std
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+      - name: Run rust-cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Cache npm test dependencies
         uses: actions/cache@v3

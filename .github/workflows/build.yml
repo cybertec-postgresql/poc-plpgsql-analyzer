@@ -37,15 +37,8 @@ jobs:
           components: clippy, rustfmt
           override: true
 
-      - uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+      - name: Run rust-cache
+        uses: Swatinem/rust-cache@v2
 
       - name: Run rustfmt check
         uses: actions-rs/cargo@v1
@@ -104,16 +97,6 @@ jobs:
           target: wasm32-unknown-unknown
           override: true
           components: rust-std
-
-      - uses: actions/cache@v3
-        continue-on-error: false
-        with:
-          path: |
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
 
       - name: Install wasm-pack
         uses: baptiste0928/cargo-install@v1
