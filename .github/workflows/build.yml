@@ -14,7 +14,7 @@ jobs:
   build:
     name: Format, build, clippy, test and doc
     runs-on: [self-hosted, Linux]
-    container: debian:stable
+    container: registry.dc1.cybertec.at/docker-hub-proxy/library/debian:stable
     timeout-minutes: 30
     strategy:
       matrix:
@@ -78,7 +78,7 @@ jobs:
   build-wasm:
     name: Build WASM library
     runs-on: [self-hosted, Linux]
-    container: debian:stable
+    container: registry.dc1.cybertec.at/docker-hub-proxy/library/debian:stable
     timeout-minutes: 30
 
     steps:
@@ -106,10 +106,10 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-
 
       - name: Install wasm-pack
-        uses: actions-rs/cargo@v1
+        uses: baptiste0928/cargo-install@v1
         with:
-          command: install
-          args: wasm-pack
+          crate: wasm-pack
+          version: "0.10.3"
 
       - name: Build using wasm-pack
         run: wasm-pack build --release --target nodejs
