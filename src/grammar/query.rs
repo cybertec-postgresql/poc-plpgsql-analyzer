@@ -130,4 +130,61 @@ Root@0..328
 "#]],
         );
     }
+
+    #[test]
+    fn test_parse_complex_where_clause() {
+        const INPUT: &str = include_str!("../../tests/dql/multiple_where_conditions.ora.sql");
+
+        check(
+            parse(INPUT, parse_query),
+            expect![[r#"
+Root@0..72
+  SelectStmt@0..71
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 "\n"
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    Ident@14..15 "a"
+    Comma@15..16 ","
+    Whitespace@16..17 " "
+    Ident@17..18 "b"
+    Comma@18..19 ","
+    Whitespace@19..20 " "
+    Ident@20..21 "c"
+    Whitespace@21..22 "\n"
+    WhereClause@22..70
+      Keyword@22..27 "WHERE"
+      Expression@27..70
+        Whitespace@27..28 " "
+        Integer@28..31 "100"
+        Whitespace@31..32 " "
+        ComparisonOp@32..33 "<"
+        Whitespace@33..34 " "
+        Ident@34..35 "a"
+        Whitespace@35..38 "\n  "
+        Keyword@38..41 "AND"
+        Whitespace@41..42 " "
+        LParen@42..43 "("
+        Ident@43..44 "b"
+        Whitespace@44..45 " "
+        ComparisonOp@45..47 "<="
+        Whitespace@47..48 " "
+        Integer@48..50 "50"
+        Whitespace@50..51 " "
+        Keyword@51..53 "OR"
+        Whitespace@53..54 " "
+        Ident@54..55 "c"
+        Whitespace@55..56 " "
+        ComparisonOp@56..60 "LIKE"
+        Whitespace@60..61 " "
+        QuotedLiteral@61..68 "'%foo%'"
+        RParen@68..69 ")"
+        Whitespace@69..70 "\n"
+    SemiColon@70..71 ";"
+  Whitespace@71..72 "\n"
+"#]],
+        );
+    }
 }

@@ -57,5 +57,5 @@ datatest_stable::harness!(
     r"^(.*).ora\.sql$",
     test_parse_dql_select_coverage,
     "tests/dql",
-    r"select_(.*).ora\.sql$"
+    r"(.*).ora\.sql$"
 );
