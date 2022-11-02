@@ -22,8 +22,8 @@ pub enum TokenKind {
     #[token("function", ignore(case))]
     FunctionKw,
 
-    #[token("or replace", ignore(case))]
-    OrReplaceKw,
+    #[token("replace", ignore(case))]
+    ReplaceKw,
 
     #[token("begin", ignore(case))]
     BeginKw,
@@ -66,6 +66,9 @@ pub enum TokenKind {
 
     #[token("where", ignore(case))]
     WhereKw,
+
+    #[token("or", priority = 100, ignore(case))]
+    OrKw,
 
     #[token("(+)")]
     OracleJoin,
