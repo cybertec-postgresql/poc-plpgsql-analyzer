@@ -5,10 +5,12 @@
 
 //! Implements grammar parsing of the token tree from the lexer.
 
+mod expressions;
 mod function;
 mod procedure;
 mod query;
 
+pub(crate) use expressions::*;
 pub(crate) use function::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;

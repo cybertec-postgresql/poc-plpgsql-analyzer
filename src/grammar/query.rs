@@ -4,7 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use super::parse_ident;
+use super::parse_expr;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -31,7 +31,7 @@ fn parse_column_expr(p: &mut Parser) {
 
     p.start(SyntaxKind::ColumnExprList);
 
-    while !p.at(TokenKind::FromKw) {
+    while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::ColumnExpr);
 
         if !p.eat(TokenKind::Ident) {
@@ -45,37 +45,14 @@ fn parse_column_expr(p: &mut Parser) {
 }
 
 fn parse_from_list(p: &mut Parser) {
-    loop {
-        p.expect(TokenKind::Ident);
-
-        if !p.eat(TokenKind::Comma) {
-            break;
-        }
-    }
+    while p.expect(TokenKind::Ident) && p.eat(TokenKind::Comma) {}
 }
 
 fn parse_where_clause(p: &mut Parser) {
-    p.start(SyntaxKind::WhereClauseList);
+    p.start(SyntaxKind::WhereClause);
     p.expect(TokenKind::WhereKw);
 
-    loop {
-        parse_where_expr(p);
-
-        if !p.eat(TokenKind::Comma) {
-            break;
-        }
-    }
-
-    p.finish();
-}
-
-fn parse_where_expr(p: &mut Parser) {
-    p.start(SyntaxKind::WhereClause);
-    parse_ident(p);
-
-    p.eat(TokenKind::OracleJoin);
-    p.expect(TokenKind::Equals);
-    parse_ident(p);
+    parse_expr(p);
 
     p.finish();
 }
@@ -124,16 +101,16 @@ Root@0..328
     Whitespace@22..23 " "
     Ident@23..29 "places"
     Whitespace@29..30 "\n"
-    WhereClauseList@30..93
+    WhereClause@30..93
       Keyword@30..35 "WHERE"
-      WhereClause@35..93
+      Expression@35..93
         Whitespace@35..38 "\n  "
         Comment@38..58 "-- LEFT (OUTER) JOIN"
         Whitespace@58..61 "\n  "
         Ident@61..77 "places.person_id"
         Keyword@77..80 "(+)"
         Whitespace@80..81 " "
-        Equals@81..82 "="
+        ComparisonOp@81..82 "="
         Whitespace@82..83 " "
         Ident@83..93 "persons.id"
     SemiColon@93..94 ";"

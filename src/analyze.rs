@@ -6,6 +6,7 @@
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
+use crate::syntax::SyntaxKind;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
@@ -143,13 +144,16 @@ fn analyze_query(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
         .and_then(|r| r.query())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
 
-    Ok(DboMetaData::Query {
-        outer_joins: query
-            .where_clauses()
-            .into_iter()
-            .filter(|wc| wc.is_outer_join())
-            .count(),
-    })
+    let outer_joins = query
+        .where_clause()
+        .and_then(|wc| wc.expression())
+        .map(|expr| {
+            expr.filter_tokens(|t| t.kind() == SyntaxKind::Keyword && t.text() == "(+)")
+                .count()
+        })
+        .unwrap_or(0);
+
+    Ok(DboMetaData::Query { outer_joins })
 }
 
 #[cfg(test)]

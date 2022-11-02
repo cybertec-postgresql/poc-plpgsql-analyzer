@@ -5,11 +5,13 @@
 
 //! Implements a typed AST for PL/SQL.
 
+mod expressions;
 mod function;
 mod procedure;
 mod query;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
+pub use expressions::*;
 pub use function::*;
 pub use procedure::*;
 pub use query::*;
@@ -94,12 +96,7 @@ pub trait AstToken {
 }
 
 typed_syntax_node!(Root);
-typed_syntax_token!(Ident);
-
-#[derive(Debug, Eq, PartialEq)]
-pub struct Operator {
-    pub(crate) syntax: SyntaxToken,
-}
+typed_syntax_token!(Ident, ComparisonOp);
 
 impl Root {
     /// Finds the (next) function in this root node.
@@ -122,24 +119,5 @@ impl Ident {
     /// Returns the identifier name itself.
     pub fn name(&self) -> String {
         self.syntax.text().to_string()
-    }
-}
-
-impl AstToken for Operator {
-    fn can_cast(kind: SyntaxKind) -> bool {
-        // Add additional operator token as needed
-        kind == SyntaxKind::Equals
-    }
-
-    fn cast(syntax: SyntaxToken) -> Option<Self> {
-        if Self::can_cast(syntax.kind()) {
-            Some(Self { syntax })
-        } else {
-            None
-        }
-    }
-
-    fn syntax(&self) -> &SyntaxToken {
-        &self.syntax
     }
 }

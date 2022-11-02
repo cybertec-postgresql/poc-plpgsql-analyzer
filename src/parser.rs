@@ -25,6 +25,9 @@ pub enum ParseError {
     /// The parser expected one of many tokens, but found neither of them.
     #[error("Expected one of tokens: '{0:?}")]
     ExpectedOneOfTokens(Vec<TokenKind>),
+    /// The parser stumbled upon an unbalanced pair of parentheses.
+    #[error("Unbalanced pair of parentheses found")]
+    UnbalancedParens,
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
@@ -165,6 +168,15 @@ impl<'a> Parser<'a> {
         true
     }
 
+    /// Consumes the next token if `kind` matches.
+    pub fn eat_one_of(&mut self, kinds: &[TokenKind]) -> bool {
+        if !kinds.contains(&self.current()) {
+            return false;
+        }
+        self.do_bump();
+        true
+    }
+
     /// Consumes the current token as it is
     pub fn bump(&mut self, kind: TokenKind) {
         assert!(self.eat(kind));
@@ -172,10 +184,9 @@ impl<'a> Parser<'a> {
 
     /// Consumes the next token, advances by one token
     pub fn bump_any(&mut self) {
-        if self.current() == TokenKind::Eof {
-            return;
+        if self.current() != TokenKind::Eof {
+            self.do_bump();
         }
-        self.do_bump();
     }
 
     /// Consumes all tokens until the last searched token is found.
@@ -240,6 +251,15 @@ impl<'a> Parser<'a> {
         self.eat_ws();
     }
 
+    /// Mark the given error.
+    pub(crate) fn error(&mut self, error: ParseError) {
+        self.start(SyntaxKind::Error);
+        self.builder
+            .token(SyntaxKind::Text.into(), error.to_string().as_str());
+        self.errors.push(error);
+        self.finish();
+    }
+
     /// Function to consume the next token, regardless of any [`TokenKind`]
     fn do_bump(&mut self) {
         assert!(!self.tokens.is_empty());
@@ -249,14 +269,5 @@ impl<'a> Parser<'a> {
         }
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
-    }
-
-    /// Mark the given error.
-    fn error(&mut self, error: ParseError) {
-        self.start(SyntaxKind::Error);
-        self.builder
-            .token(SyntaxKind::Text.into(), error.to_string().as_str());
-        self.errors.push(error);
-        self.finish();
     }
 }

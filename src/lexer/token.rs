@@ -67,16 +67,22 @@ pub enum TokenKind {
     #[token("where", ignore(case))]
     WhereKw,
 
+    #[token("and", ignore(case))]
+    AndKw,
+
     #[token("or", priority = 100, ignore(case))]
     OrKw,
 
-    #[token("(+)")]
-    OracleJoin,
+    #[regex(r"(?i)i?like")]
+    LikeKw,
 
-    #[regex("-?[0-9]+", priority = 2)]
+    #[token("(+)")]
+    OracleJoinKw,
+
+    #[regex("-?[0-9]+")]
     Integer,
 
-    #[regex(r"[A-Za-z0-9_][A-Za-z0-9_$]*(\.[A-Za-z0-9_][A-Za-z0-9_$]*)?")]
+    #[regex(r"(?i)[a-z_][a-z0-9_$]*(\.[a-z_][a-z0-9_$]*)?", priority = 1)]
     Ident,
 
     // TODO: Escaped characters, esp. \'
@@ -95,9 +101,6 @@ pub enum TokenKind {
     #[token("*")]
     Asterisk,
 
-    #[token("=")]
-    Equals,
-
     #[token(":=")]
     Assign,
 
@@ -112,6 +115,9 @@ pub enum TokenKind {
 
     #[token("/")]
     Slash,
+
+    #[regex("=|<>|<|>|<=|>=")]
+    ComparisonOp,
 
     #[regex("--.*")]
     Comment,

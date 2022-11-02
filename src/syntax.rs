@@ -45,8 +45,6 @@ pub enum SyntaxKind {
     SemiColon,
     /// An asterisk `*`
     Asterisk,
-    /// An equals operator `=`
-    Equals,
     /// A colon token
     Colon,
     /// An Assign operator `:=`
@@ -81,10 +79,13 @@ pub enum SyntaxKind {
     ColumnExpr,
     /// A node that consists of multiple column expressions
     ColumnExprList,
-    /// Holds a list of [`SyntaxKind::WhereClause`] nodes
-    WhereClauseList,
-    /// Represent a single `WHERE` clause expression
+    /// Represent a complete `WHERE` clause expression
     WhereClause,
+    /// Holds a generic SQL logic/arithmetic expression
+    Expression,
+    /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
+    /// or other types of comparison operators of SQL (ilike, like)
+    ComparisonOp,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -119,7 +120,7 @@ impl SyntaxKind {
                 | Self::SemiColon
                 | Self::Colon
                 | Self::Asterisk
-                | Self::Equals
+                | Self::ComparisonOp
         )
     }
 }
@@ -152,8 +153,10 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
-            TokenKind::OracleJoin => SyntaxKind::Keyword,
+            TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::LikeKw => SyntaxKind::ComparisonOp,
+            TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
@@ -161,12 +164,12 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
             TokenKind::Asterisk => SyntaxKind::Asterisk,
-            TokenKind::Equals => SyntaxKind::Equals,
             TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Slash => SyntaxKind::Slash,
+            TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
             TokenKind::Eof => unreachable!(),
