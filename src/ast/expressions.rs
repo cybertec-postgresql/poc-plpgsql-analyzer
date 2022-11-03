@@ -18,6 +18,8 @@ pub enum ComparisonOpType {
     LessThanOrEqual,
     GreaterThan,
     GreaterThanOrEqual,
+    Like,
+    ILike,
 }
 
 impl Expression {
@@ -36,13 +38,15 @@ impl FromStr for ComparisonOpType {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
+        match s.to_lowercase().as_str() {
             "=" => Ok(Self::Equal),
             "<>" => Ok(Self::NotEqual),
             "<" => Ok(Self::LessThan),
             "<=" => Ok(Self::LessThanOrEqual),
             ">" => Ok(Self::GreaterThan),
             ">=" => Ok(Self::GreaterThanOrEqual),
+            "like" => Ok(Self::Like),
+            "ilike" => Ok(Self::ILike),
             _ => Err(()),
         }
     }
