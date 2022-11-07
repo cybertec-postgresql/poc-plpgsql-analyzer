@@ -50,7 +50,7 @@ fn parse_attributes(p: &mut Parser) {
 
 /// Parses the body of a function.
 fn parse_body(p: &mut Parser) {
-    p.expect(TokenKind::IsKw);
+    p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
 
