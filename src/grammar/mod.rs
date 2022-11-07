@@ -93,9 +93,7 @@ fn parse_ident(p: &mut Parser) {
 
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
-    if p.at(TokenKind::NumberKw) {
-        p.eat(TokenKind::NumberKw);
-    } else {
+    if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
         p.expect(TokenKind::Ident);
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
@@ -165,7 +163,7 @@ Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
     Whitespace@3..4 " "
-    Ident@4..12 "VARCHAR2"
+    TypeName@4..12 "VARCHAR2"
 "#]],
         );
 
@@ -193,7 +191,7 @@ Root@0..26
   Param@0..26
     Ident@0..2 "p2"
     Whitespace@2..3 " "
-    Ident@3..11 "VARCHAR2"
+    TypeName@3..11 "VARCHAR2"
     Whitespace@11..12 " "
     Assign@12..14 ":="
     Whitespace@14..15 " "
