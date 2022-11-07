@@ -119,6 +119,9 @@ pub enum TokenKind {
     #[regex("=|<>|<|>|<=|>=")]
     ComparisonOp,
 
+    #[token("||")]
+    DoublePipe,
+
     #[regex("--.*")]
     Comment,
 

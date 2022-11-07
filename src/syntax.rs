@@ -49,6 +49,8 @@ pub enum SyntaxKind {
     Colon,
     /// An Assign operator `:=`
     Assign,
+    /// A concatination operator `||`
+    Concat,
     /// Any integer, positive and negative
     Integer,
     /// Single dollar quote `$$`
@@ -104,7 +106,7 @@ impl SyntaxKind {
     /// Returns true if the [`SyntaxKind`] is a keyword
     #[allow(unused)]
     pub(crate) fn is_keyword(self) -> bool {
-        matches!(self, SyntaxKind::Keyword,)
+        matches!(self, SyntaxKind::Keyword)
     }
 
     #[allow(unused)]
@@ -121,6 +123,7 @@ impl SyntaxKind {
                 | Self::Colon
                 | Self::Asterisk
                 | Self::ComparisonOp
+                | Self::Concat
         )
     }
 }
@@ -170,6 +173,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
+            TokenKind::DoublePipe => SyntaxKind::Concat,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
             TokenKind::Eof => unreachable!(),
