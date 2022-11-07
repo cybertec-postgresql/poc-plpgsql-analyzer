@@ -199,4 +199,40 @@ Root@0..26
 "#]],
         );
     }
+
+    #[test]
+    fn test_parse_variable_declaration_list() {
+        const INPUT: &str = "
+    l_total_sales NUMBER(15,2);
+    l_credit_limit NUMBER (10,0);
+    l_contact_name VARCHAR2(255);
+";
+
+        check(
+            parse(INPUT, parse_var_decl_list),
+            expect![[r#"
+Root@0..101
+  Whitespace@0..5 "\n    "
+  VariableDeclList@5..101
+    VariableDecl@5..31
+      Ident@5..18 "l_total_sales"
+      Whitespace@18..19 " "
+      TypeName@19..31 "NUMBER(15,2)"
+    SemiColon@31..32 ";"
+    Whitespace@32..37 "\n    "
+    VariableDecl@37..65
+      Ident@37..51 "l_credit_limit"
+      Whitespace@51..52 " "
+      TypeName@52..65 "NUMBER (10,0)"
+    SemiColon@65..66 ";"
+    Whitespace@66..71 "\n    "
+    VariableDecl@71..99
+      Ident@71..85 "l_contact_name"
+      Whitespace@85..86 " "
+      TypeName@86..99 "VARCHAR2(255)"
+    SemiColon@99..100 ";"
+    Whitespace@100..101 "\n"
+"#]],
+        );
+    }
 }
