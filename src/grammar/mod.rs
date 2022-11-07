@@ -59,6 +59,38 @@ fn parse_param(p: &mut Parser) {
     p.finish();
 }
 
+/// <https://docs.oracle.com/cd/B28359_01/appdev.111/b28370/block.htm#CJAIABJJ>
+fn parse_var_decl_list(p: &mut Parser) {
+    if p.at(TokenKind::BeginKw) {
+        return;
+    }
+
+    p.start(SyntaxKind::VariableDeclList);
+    while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
+        p.start(SyntaxKind::VariableDecl);
+
+        if !p.expect(TokenKind::Ident) {
+            break;
+        }
+
+        while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
+            p.bump_any();
+        }
+
+        p.finish();
+
+        if !p.eat(TokenKind::SemiColon) {
+            break;
+        }
+    }
+    p.finish();
+}
+
+/// Parses a single SQL identifier.
+fn parse_ident(p: &mut Parser) {
+    p.expect(TokenKind::Ident);
+}
+
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
     if p.at(TokenKind::NumberKw) {
@@ -68,11 +100,6 @@ fn parse_typename(p: &mut Parser) {
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
     }
-}
-
-/// Parses a SQL identifier.
-fn parse_ident(p: &mut Parser) {
-    p.expect(TokenKind::Ident);
 }
 
 #[cfg(test)]

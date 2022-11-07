@@ -5,7 +5,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use super::{parse_ident, parse_param_list};
+use super::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -39,6 +39,7 @@ fn parse_header(p: &mut Parser) {
 /// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
+    parse_var_decl_list(p);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
 

@@ -83,6 +83,10 @@ pub enum SyntaxKind {
     ColumnExprList,
     /// Represent a complete `WHERE` clause expression
     WhereClause,
+    /// A node that marks a variable declaration as part of a function or procedure
+    VariableDecl,
+    /// A node that marks a list of variable declarations of functions and procedures
+    VariableDeclList,
     /// Holds a generic SQL logic/arithmetic expression
     Expression,
     /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
