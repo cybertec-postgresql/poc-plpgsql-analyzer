@@ -7,8 +7,8 @@
 
 use super::typed_syntax_node;
 use super::Ident;
-use crate::ast::{AstNode, AstToken};
-use crate::syntax::{SyntaxElement, SyntaxKind};
+use crate::ast::{AstNode, AstToken, ParamList};
+use crate::syntax::SyntaxElement;
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 
@@ -41,10 +41,8 @@ impl ProcedureHeader {
             .map(|ident| ident.name())
     }
 
-    pub fn has_param_list(&self) -> bool {
-        self.syntax
-            .children()
-            .any(|n| n.kind() == SyntaxKind::ParamList)
+    pub fn param_list(&self) -> Option<ParamList> {
+        self.syntax.children().find_map(ParamList::cast)
     }
 }
 

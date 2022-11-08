@@ -95,8 +95,8 @@ pub trait AstToken {
     }
 }
 
-typed_syntax_node!(Root);
-typed_syntax_token!(Ident, ComparisonOp);
+typed_syntax_node!(Root, ParamList);
+typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
     /// Finds the (next) function in this root node.
