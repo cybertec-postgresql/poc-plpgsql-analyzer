@@ -176,8 +176,7 @@ Root@0..14
     Ident@2..5 "foo"
     Whitespace@5..6 " "
     Ident@6..9 "bar"
-    Percentage@9..10 "%"
-    Keyword@10..14 "type"
+    Keyword@9..14 "%type"
 "#]],
         );
     }

@@ -52,7 +52,7 @@ pub enum TokenKind {
     #[token("deterministic", ignore(case))]
     DeterministicKw,
 
-    #[token("type", ignore(case))]
+    #[token("%type", ignore(case))]
     TypeKw,
 
     #[token("select", ignore(case))]
