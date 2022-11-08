@@ -24,7 +24,10 @@ pub fn parse_function(p: &mut Parser) {
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::FunctionHeader);
     p.expect(TokenKind::CreateKw);
-    p.eat(TokenKind::OrReplaceKw);
+    if p.eat(TokenKind::OrKw) {
+        p.expect(TokenKind::ReplaceKw);
+    }
+
     p.expect(TokenKind::FunctionKw);
 
     parse_ident(p);
@@ -93,7 +96,9 @@ Root@0..31
   FunctionHeader@0..31
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
-    Keyword@7..17 "OR REPLACE"
+    Keyword@7..9 "OR"
+    Whitespace@9..10 " "
+    Keyword@10..17 "REPLACE"
     Whitespace@17..18 " "
     Keyword@18..26 "FUNCTION"
     Whitespace@26..27 " "

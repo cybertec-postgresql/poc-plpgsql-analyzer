@@ -13,4 +13,4 @@ mod rules;
 mod syntax;
 
 pub use analyze::*;
-pub use parser::{parse_function, parse_procedure};
+pub use parser::*;

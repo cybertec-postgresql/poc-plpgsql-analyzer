@@ -5,11 +5,15 @@
 
 //! Implements grammar parsing of the token tree from the lexer.
 
+mod expressions;
 mod function;
 mod procedure;
+mod query;
 
-pub use function::parse_function;
-pub use procedure::parse_procedure;
+pub(crate) use expressions::*;
+pub(crate) use function::*;
+pub(crate) use procedure::*;
+pub(crate) use query::*;
 
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
@@ -55,15 +59,10 @@ fn parse_param(p: &mut Parser) {
     p.finish();
 }
 
-/// Parses a single SQL identifier.
-fn parse_ident(p: &mut Parser) {
-    p.expect(TokenKind::Ident);
-}
-
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
-    if p.at(TokenKind::NumberTy) {
-        p.eat(TokenKind::NumberTy);
+    if p.at(TokenKind::NumberKw) {
+        p.eat(TokenKind::NumberKw);
     } else {
         p.expect(TokenKind::Ident);
         p.expect(TokenKind::Percentage);
@@ -71,17 +70,16 @@ fn parse_typename(p: &mut Parser) {
     }
 }
 
+/// Parses a SQL identifier.
+fn parse_ident(p: &mut Parser) {
+    p.expect(TokenKind::Ident);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grammar::parse_param;
     use crate::parser::{Parse, Parser};
     use expect_test::{expect, Expect};
-
-    /// Helper function to compare the build syntax tree with the expected output.
-    pub fn check(parse: Parse, expected_tree: Expect) {
-        expected_tree.assert_eq(parse.tree().as_str())
-    }
 
     /// A helper to allow to call the different parse functions.
     pub fn parse<F>(input: &str, f: F) -> Parse
@@ -93,6 +91,12 @@ mod tests {
         parser.build()
     }
 
+    /// Helper function to compare the build syntax tree with the expected
+    /// output.
+    pub fn check(parse: Parse, expected_tree: Expect) {
+        expected_tree.assert_eq(parse.tree().as_str())
+    }
+
     #[test]
     fn test_parse_ident() {
         check(
@@ -100,6 +104,21 @@ mod tests {
             expect![[r#"
 Root@0..5
   Ident@0..5 "hello"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_ident_with_trivia() {
+        const INPUT: &str = " -- hello\n  foo";
+        check(
+            parse(INPUT, parse_ident),
+            expect![[r#"
+Root@0..15
+  Whitespace@0..1 " "
+  Comment@1..9 "-- hello"
+  Whitespace@9..12 "\n  "
+  Ident@12..15 "foo"
 "#]],
         );
     }
@@ -152,21 +171,6 @@ Root@0..26
     Assign@12..14 ":="
     Whitespace@14..15 " "
     QuotedLiteral@15..26 "'not empty'"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_parse_ident_with_trivia() {
-        const INPUT: &str = " -- hello\n  foo";
-        check(
-            parse(INPUT, parse_ident),
-            expect![[r#"
-Root@0..15
-  Whitespace@0..1 " "
-  Comment@1..9 "-- hello"
-  Whitespace@9..12 "\n  "
-  Ident@12..15 "foo"
 "#]],
         );
     }

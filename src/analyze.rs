@@ -6,6 +6,7 @@
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
+use crate::syntax::SyntaxKind;
 use serde::Serialize;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
@@ -21,29 +22,40 @@ pub enum DboType {
     DefaultExpr,
     Function,
     IndexExpr,
+    Package,
     Procedure,
+    Query,
     TriggerBody,
     View,
-    Package,
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
 pub enum DboMetaData {
+    #[serde(rename_all = "camelCase")]
     Function {
         name: String,
         body: String,
         lines_of_code: usize,
     },
+    #[serde(rename_all = "camelCase")]
     Procedure {
         name: String,
         body: String,
         lines_of_code: usize,
     },
+    #[serde(rename_all = "camelCase")]
+    Query {
+        // For now, we only report how many OUTER JOINs there are, but not any other info about
+        // them yet.
+        outer_joins: usize,
+    },
 }
 
 /// Possible errors that might occur during analyzing.
 #[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
 pub enum AnalyzeError {
     #[error("Language construct unsupported: {0:?}")]
     Unsupported(DboType),
@@ -63,6 +75,7 @@ pub fn analyze(typ: DboType, sql: &str) -> Result<DboMetaData, AnalyzeError> {
     match typ {
         DboType::Function => analyze_function(parse_function(sql)?),
         DboType::Procedure => analyze_procedure(parse_procedure(sql)?),
+        DboType::Query => analyze_query(parse_query(sql)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -108,7 +121,7 @@ fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
 
 fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
     let procedure = Root::cast(parse.syntax())
-        .and_then(|p| p.procedure())
+        .and_then(|r| r.procedure())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
 
     let body = procedure
@@ -126,20 +139,53 @@ fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
     })
 }
 
+fn analyze_query(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+    let query = Root::cast(parse.syntax())
+        .and_then(|r| r.query())
+        .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
+
+    let outer_joins = query
+        .where_clause()
+        .and_then(|wc| wc.expression())
+        .map(|expr| {
+            expr.filter_tokens(|t| t.kind() == SyntaxKind::Keyword && t.text() == "(+)")
+                .count()
+        })
+        .unwrap_or(0);
+
+    Ok(DboMetaData::Query { outer_joins })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use pretty_assertions::assert_eq;
 
-    const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
-    /// Automatically created code by extracting PL/SQL trigger body into a
-    /// PL/pgSQL function. Meaning, this is neither valid PL/SQL nor PL/pgSQL
-    /// code.
-    const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
-    const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
+    #[test]
+    fn test_analyze_function() {
+        const INPUT: &str =
+            include_str!("../tests/function/heading/function_heading_example.ora.sql");
+
+        let result = analyze(DboType::Function, INPUT);
+        assert!(result.is_ok(), "{:#?}", result);
+        let result = result.unwrap();
+
+        match result {
+            DboMetaData::Function {
+                name,
+                lines_of_code,
+                ..
+            } => {
+                assert_eq!(name, "function_heading_example");
+                assert_eq!(lines_of_code, 1);
+            }
+            _ => unreachable!(),
+        }
+    }
 
     #[test]
     fn test_analyze_procedure() {
+        const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
         let result = analyze(DboType::Procedure, ADD_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
@@ -156,6 +202,7 @@ mod tests {
             _ => unreachable!(),
         }
 
+        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
         let result = analyze(DboType::Procedure, SECURE_DML);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
@@ -174,24 +221,15 @@ mod tests {
     }
 
     #[test]
-    fn test_analyze_function() {
-        const INPUT: &str =
-            include_str!("../tests/function/heading/function_heading_example.ora.sql");
-
-        let result = analyze(DboType::Function, INPUT);
+    fn test_analyze_query() {
+        const INPUT: &str = include_str!("../tests/dql/select_left_join.ora.sql");
+        let result = analyze(DboType::Query, INPUT);
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Function {
-                name,
-                body,
-                lines_of_code,
-                ..
-            } => {
-                println!("{:?}", body);
-                assert_eq!(name, "function_heading_example");
-                assert_eq!(lines_of_code, 1);
+            DboMetaData::Query { outer_joins, .. } => {
+                assert_eq!(outer_joins, 1);
             }
             _ => unreachable!(),
         }
@@ -200,6 +238,7 @@ mod tests {
     #[test]
     #[ignore]
     fn test_triggerbody_lines_of_code() {
+        const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
         let result = analyze(DboType::TriggerBody, UPDATE_JOB_HISTORY);
         assert!(result.is_ok(), "{:#?}", result);
         unreachable!();

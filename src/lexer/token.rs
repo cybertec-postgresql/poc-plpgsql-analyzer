@@ -22,8 +22,8 @@ pub enum TokenKind {
     #[token("function", ignore(case))]
     FunctionKw,
 
-    #[token("or replace", ignore(case))]
-    OrReplaceKw,
+    #[token("replace", ignore(case))]
+    ReplaceKw,
 
     #[token("begin", ignore(case))]
     BeginKw,
@@ -56,12 +56,33 @@ pub enum TokenKind {
     TypeKw,
 
     #[token("number", ignore(case))]
-    NumberTy,
+    NumberKw,
 
-    #[regex("-?[0-9]+", priority = 2)]
+    #[token("select", ignore(case))]
+    SelectKw,
+
+    #[token("from", ignore(case))]
+    FromKw,
+
+    #[token("where", ignore(case))]
+    WhereKw,
+
+    #[token("and", ignore(case))]
+    AndKw,
+
+    #[token("or", priority = 100, ignore(case))]
+    OrKw,
+
+    #[regex(r"(?i)i?like")]
+    LikeKw,
+
+    #[token("(+)")]
+    OracleJoinKw,
+
+    #[regex("-?[0-9]+")]
     Integer,
 
-    #[regex("[A-Za-z0-9_][A-Za-z0-9_$.]*")]
+    #[regex(r"(?i)[a-z_][a-z0-9_$]*(\.[a-z_][a-z0-9_$]*)?", priority = 1)]
     Ident,
 
     // TODO: Escaped characters, esp. \'
@@ -77,6 +98,9 @@ pub enum TokenKind {
     #[token(";")]
     SemiColon,
 
+    #[token("*")]
+    Asterisk,
+
     #[token(":=")]
     Assign,
 
@@ -91,6 +115,9 @@ pub enum TokenKind {
 
     #[token("/")]
     Slash,
+
+    #[regex("=|<>|<|>|<=|>=")]
+    ComparisonOp,
 
     #[regex("--.*")]
     Comment,

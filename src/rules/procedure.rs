@@ -168,7 +168,7 @@ mod tests {
         assert_eq!(
             change.hints,
             vec![
-                RuleHint::new(9..9, "Add parameter parentheses"),
+                RuleHint::new(11..11, "Add parameter parentheses"),
                 RuleHint::new(1..2, "Replace procedure prologue"),
                 RuleHint::new(7..9, "Replace procedure epilogue"),
             ]

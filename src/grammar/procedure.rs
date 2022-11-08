@@ -11,7 +11,7 @@ use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 /// Parses a complete procedure.
-pub fn parse_procedure(p: &mut Parser) {
+pub(crate) fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     parse_header(p);
     parse_body(p);
@@ -25,7 +25,10 @@ pub fn parse_procedure(p: &mut Parser) {
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
     p.expect(TokenKind::CreateKw);
-    p.eat(TokenKind::OrReplaceKw);
+    if p.eat(TokenKind::OrKw) {
+        p.expect(TokenKind::ReplaceKw);
+    }
+
     p.expect(TokenKind::ProcedureKw);
 
     parse_ident(p);
@@ -97,7 +100,9 @@ Root@0..32
   ProcedureHeader@0..32
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
-    Keyword@7..17 "OR REPLACE"
+    Keyword@7..9 "OR"
+    Whitespace@9..10 " "
+    Keyword@10..17 "REPLACE"
     Whitespace@17..18 " "
     Keyword@18..27 "PROCEDURE"
     Whitespace@27..28 " "

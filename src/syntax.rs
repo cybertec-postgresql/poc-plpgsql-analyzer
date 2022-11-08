@@ -15,7 +15,6 @@ use num_traits::{FromPrimitive, ToPrimitive};
 /// * <https://blog.kiranshila.com/blog/easy_cst.md>
 /// * <https://arzg.github.io/lang/10/>
 /// * <https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs>
-///
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
@@ -33,7 +32,8 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml or parameter name
+    /// An identifier, e.g. secure_dml or parameter name, potentially
+    /// schema-qualified
     Ident,
     /// A type name
     TypeName,
@@ -43,6 +43,8 @@ pub enum SyntaxKind {
     Comma,
     /// A semi colon
     SemiColon,
+    /// An asterisk `*`
+    Asterisk,
     /// A colon token
     Colon,
     /// An Assign operator `:=`
@@ -71,6 +73,19 @@ pub enum SyntaxKind {
     FunctionHeader,
     /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` & `END;`
     FunctionBody,
+    /// A node that marks a full SELECT statement
+    SelectStmt,
+    /// A single column expression
+    ColumnExpr,
+    /// A node that consists of multiple column expressions
+    ColumnExprList,
+    /// Represent a complete `WHERE` clause expression
+    WhereClause,
+    /// Holds a generic SQL logic/arithmetic expression
+    Expression,
+    /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
+    /// or other types of comparison operators of SQL (ilike, like)
+    ComparisonOp,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -104,6 +119,8 @@ impl SyntaxKind {
                 | Self::Comma
                 | Self::SemiColon
                 | Self::Colon
+                | Self::Asterisk
+                | Self::ComparisonOp
         )
     }
 }
@@ -121,7 +138,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CreateKw => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
-            TokenKind::OrReplaceKw => SyntaxKind::Keyword,
+            TokenKind::ReplaceKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::IsKw => SyntaxKind::Keyword,
             TokenKind::AsKw => SyntaxKind::Keyword,
@@ -132,18 +149,27 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ReturnKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
-            TokenKind::NumberTy => SyntaxKind::TypeName,
+            TokenKind::NumberKw => SyntaxKind::TypeName,
+            TokenKind::SelectKw => SyntaxKind::Keyword,
+            TokenKind::FromKw => SyntaxKind::Keyword,
+            TokenKind::WhereKw => SyntaxKind::Keyword,
+            TokenKind::AndKw => SyntaxKind::Keyword,
+            TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::LikeKw => SyntaxKind::ComparisonOp,
+            TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
+            TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Slash => SyntaxKind::Slash,
+            TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
             TokenKind::Eof => unreachable!(),
@@ -170,7 +196,6 @@ impl rowan::Language for SqlProcedureLang {
 /// Typed [`SyntaxNode`] with our [`SqlProcedureLang`] language definition.
 pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
 /// Typed [`SyntaxToken`] with our [`SqlProcedureLang`] language definition.
-#[allow(unused)]
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
 /// Typed [`SyntaxElement`] with our [`SqlProcedureLang`] language definition.
 #[allow(unused)]
