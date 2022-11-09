@@ -46,7 +46,7 @@ pub(crate) fn parse_expr(p: &mut Parser) {
     }
 
     if p.eat(TokenKind::RParen) ^ paren {
-        p.error(ParseError::UnbalancedParens)
+        p.error(ParseError::UnbalancedParens);
     }
 
     p.finish();
