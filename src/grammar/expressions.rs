@@ -11,43 +11,42 @@ use crate::syntax::SyntaxKind;
 pub(crate) fn parse_expr(p: &mut Parser) {
     p.start(SyntaxKind::Expression);
 
-    let mut nest_level = 0isize;
+    let paren = p.eat(TokenKind::LParen);
+
     while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
-        if p.eat(TokenKind::LParen) {
-            nest_level += 1;
-        }
-
-        if !p.expect_one_of(&[
-            TokenKind::Ident,
-            TokenKind::QuotedLiteral,
-            TokenKind::Integer,
-        ]) {
+        if p.at(TokenKind::LParen) {
+            parse_expr(p);
+        } else if p.at(TokenKind::RParen) {
             break;
-        }
+        } else {
+            if !p.expect_one_of(&[
+                TokenKind::Ident,
+                TokenKind::QuotedLiteral,
+                TokenKind::Integer,
+            ]) {
+                break;
+            }
 
-        p.eat(TokenKind::OracleJoinKw);
+            p.eat(TokenKind::OracleJoinKw);
 
-        if !p.expect_one_of(&[TokenKind::ComparisonOp, TokenKind::LikeKw]) {
-            break;
-        }
+            if !p.expect_one_of(&[TokenKind::ComparisonOp, TokenKind::LikeKw]) {
+                break;
+            }
 
-        if !p.expect_one_of(&[
-            TokenKind::Ident,
-            TokenKind::QuotedLiteral,
-            TokenKind::Integer,
-        ]) {
-            break;
-        }
-
-        if p.eat(TokenKind::RParen) {
-            nest_level -= 1;
+            if !p.expect_one_of(&[
+                TokenKind::Ident,
+                TokenKind::QuotedLiteral,
+                TokenKind::Integer,
+            ]) {
+                break;
+            }
         }
 
         p.eat_one_of(&[TokenKind::AndKw, TokenKind::OrKw]);
     }
 
-    if nest_level != 0 {
-        p.error(ParseError::UnbalancedParens);
+    if p.eat(TokenKind::RParen) ^ paren {
+        p.error(ParseError::UnbalancedParens)
     }
 
     p.finish();
