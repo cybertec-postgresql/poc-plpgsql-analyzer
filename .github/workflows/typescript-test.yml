@@ -14,7 +14,7 @@ jobs:
   test:
     name: Build and test TypeScript interface
     runs-on: [self-hosted, Linux]
-    container: registry.dc1.cybertec.at/docker-hub-proxy/library/node:18-bullseye
+    container: docker.io/node:18-bullseye
     timeout-minutes: 30
 
     steps:
