@@ -15,7 +15,7 @@ jobs:
     name: Build and test TypeScript interface
     runs-on: [self-hosted, Linux]
     container: docker.io/node:18-bullseye
-    timeout-minutes: 30
+    timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v3
