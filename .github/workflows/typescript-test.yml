@@ -26,22 +26,13 @@ jobs:
           && apt-get install --assume-yes \
             curl binaryen gcc libssl-dev make pkg-config
 
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
         with:
-          profile: minimal
-          toolchain: stable
-          override: true
-
-      - name: Install rust-std wasm32-unknown-unknown
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          target: wasm32-unknown-unknown
-          override: true
           components: rust-std
+          targets: wasm32-unknown-unknown
 
-      - name: Run rust-cache
+      - name: Cache Rust crates
         uses: Swatinem/rust-cache@v2
 
       - name: Cache npm test dependencies
