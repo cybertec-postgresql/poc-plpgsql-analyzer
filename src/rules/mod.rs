@@ -6,12 +6,14 @@
 
 #![allow(dead_code)]
 
+pub mod parameter;
 pub mod procedure;
 
-use crate::ast::AstNode;
+use crate::ast::{AstNode, ParamList, Root};
 use crate::parser::parse_any;
 use crate::parser::ParseError;
 use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
+use crate::DboAnalyzeContext;
 use rowan::TextRange;
 use std::ops::Range;
 
@@ -23,7 +25,7 @@ pub struct RuleHint {
     text: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct RuleChanges {
     replacement: SyntaxNode,
     hints: Vec<RuleHint>,
@@ -72,4 +74,40 @@ where
     );
 
     Ok(RuleHint::new(location, hint))
+}
+
+fn check_parameter_types(root: &Root, ctx: &DboAnalyzeContext) -> bool {
+    if let Some(params) = root
+        .procedure()
+        .and_then(|p| p.header())
+        .and_then(|p| p.param_list())
+    {
+        return check_parameter_types_lower(&params, ctx);
+    }
+
+    if let Some(params) = root
+        .function()
+        .and_then(|f| f.header())
+        .and_then(|f| f.param_list())
+    {
+        return check_parameter_types_lower(&params, ctx);
+    }
+
+    true
+}
+
+fn check_parameter_types_lower(params: &ParamList, ctx: &DboAnalyzeContext) -> bool {
+    for param in params.params() {
+        if let Some(ident) = param.type_reference() {
+            if let (Some(t), Some(c)) = (ident.qualifier(), ident.name()) {
+                if ctx.table_column(&t, &c).is_none() {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        }
+    }
+
+    true
 }

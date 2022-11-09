@@ -38,7 +38,7 @@ impl ProcedureHeader {
             .children_with_tokens()
             .filter_map(SyntaxElement::into_token)
             .find_map(Ident::cast)
-            .map(|ident| ident.name())
+            .map(|ident| ident.text())
     }
 
     pub fn param_list(&self) -> Option<ParamList> {

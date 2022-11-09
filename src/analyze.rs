@@ -7,7 +7,9 @@
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use crate::syntax::SyntaxKind;
+use crate::util::SqlIdent;
 use serde::Serialize;
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
 
@@ -51,6 +53,66 @@ pub enum DboMetaData {
         // other info about them yet.
         outer_joins: usize,
     },
+}
+
+/// List of possible datatypes for tuple fields.
+///
+/// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
+/// but furter extensible as needed. Keep alphabetically sorted.
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+pub enum DboColumnType {
+    BigInt,
+    Date,
+    DoublePrecision,
+    Integer,
+    Real,
+    SmallInt,
+    Text,
+    Time,
+    Timestamp,
+    TimestampWithTz,
+    TimeWithTz,
+}
+
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+pub struct DboTableColumn {
+    typ: DboColumnType,
+}
+
+impl DboTableColumn {
+    pub fn new(typ: DboColumnType) -> Self {
+        Self { typ }
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
+pub struct DboTable {
+    columns: HashMap<SqlIdent, DboTableColumn>,
+}
+
+impl DboTable {
+    pub fn new(columns: HashMap<SqlIdent, DboTableColumn>) -> Self {
+        Self { columns }
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
+pub struct DboAnalyzeContext {
+    tables: HashMap<SqlIdent, DboTable>,
+}
+
+impl DboAnalyzeContext {
+    pub fn new(tables: HashMap<SqlIdent, DboTable>) -> Self {
+        Self { tables }
+    }
+
+    pub(crate) fn table_column(
+        &self,
+        table: &SqlIdent,
+        column: &SqlIdent,
+    ) -> Option<&DboTableColumn> {
+        self.tables.get(table).and_then(|t| t.columns.get(column))
+    }
 }
 
 /// Possible errors that might occur during analyzing.
