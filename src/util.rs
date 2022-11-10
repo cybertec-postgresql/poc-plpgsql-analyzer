@@ -4,13 +4,10 @@
 
 //! Implements miscellaneous types and helper.
 
-use serde::Serialize;
 use std::fmt;
 use std::hash::{Hash, Hasher};
-use wasm_bindgen::prelude::*;
-use wasm_typescript_definition::TypescriptDefinition;
 
-#[derive(Clone, Debug, Eq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq)]
 pub struct SqlIdent {
     name: String,
     is_quoted: bool,
@@ -31,6 +28,13 @@ impl SqlIdent {
 impl From<&str> for SqlIdent {
     fn from(s: &str) -> Self {
         Self::new(s, s.starts_with('"') && s.ends_with('"'))
+    }
+}
+
+impl From<String> for SqlIdent {
+    fn from(s: String) -> Self {
+        let is_quoted = s.starts_with('"') && s.ends_with('"');
+        Self::new(s, is_quoted)
     }
 }
 
