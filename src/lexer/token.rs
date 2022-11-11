@@ -70,6 +70,9 @@ pub enum TokenKind {
     #[token("or", priority = 100, ignore(case))]
     OrKw,
 
+    #[token("not", ignore(case))]
+    NotKw,
+
     #[regex(r"(?i)i?like")]
     LikeKw,
 

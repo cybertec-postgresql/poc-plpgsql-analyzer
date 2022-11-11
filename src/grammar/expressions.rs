@@ -30,7 +30,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
                 p.error(ParseError::UnbalancedParens);
             }
         }
-        TokenKind::Plus | TokenKind::Minus => {
+        TokenKind::NotKw | TokenKind::Plus | TokenKind::Minus => {
             p.bump_any();
             let ((), r_bp) = prefix_bp(token);
 
@@ -74,22 +74,27 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
 fn prefix_bp(op: TokenKind) -> ((), u8) {
     match op {
-        TokenKind::Plus | TokenKind::Minus => ((), 5),
+        TokenKind::NotKw => ((), 5),
+        TokenKind::Plus | TokenKind::Minus => ((), 15),
         _ => panic!("bad op: {:?}", op),
     }
 }
 
 fn postfix_bp(op: TokenKind) -> Option<(u8, ())> {
     match op {
-        TokenKind::Exclam => Some((7, ())),
+        TokenKind::Exclam => Some((17, ())),
         _ => None,
     }
 }
 
 fn infix_bp(op: TokenKind) -> Option<(u8, u8)> {
     match op {
-        TokenKind::Plus | TokenKind::Minus => Some((1, 2)),
-        TokenKind::Asterisk | TokenKind::Slash => Some((3, 4)),
+        TokenKind::OrKw => Some((1, 2)),
+        TokenKind::AndKw => Some((3, 4)),
+        TokenKind::ComparisonOp => Some((7, 8)),
+        TokenKind::LikeKw => Some((9, 10)),
+        TokenKind::Plus | TokenKind::Minus => Some((11, 12)),
+        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => Some((13, 14)),
         _ => None,
     }
 }
@@ -148,6 +153,33 @@ Root@0..3
     Expression@1..3
       Ident@1..2 "a"
       Exclam@2..3 "!"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_not_precedence() {
+        check(
+            parse("NOT 1 > 2 AND NOT true", parse_expr),
+            expect![[r#"
+Root@0..22
+  Expression@0..22
+    Expression@0..10
+      Not@0..3 "NOT"
+      Expression@3..10
+        Whitespace@3..4 " "
+        Integer@4..5 "1"
+        Whitespace@5..6 " "
+        ComparisonOp@6..7 ">"
+        Whitespace@7..8 " "
+        Integer@8..9 "2"
+        Whitespace@9..10 " "
+    And@10..13 "AND"
+    Expression@13..22
+      Whitespace@13..14 " "
+      Not@14..17 "NOT"
+      Whitespace@17..18 " "
+      Ident@18..22 "true"
 "#]],
         );
     }
@@ -313,4 +345,107 @@ Root@0..17
         );
     }
 
+    #[test]
+    fn test_parse_nested_expr() {
+        check(
+            parse(
+                "a < 100 AND (10 <> b OR (c = 'foo' AND bar >= 42) AND foo ILIKE '%stonks%')",
+                parse_expr,
+            ),
+            expect![[r#"
+Root@0..75
+  Expression@0..75
+    Expression@0..8
+      Ident@0..1 "a"
+      Whitespace@1..2 " "
+      ComparisonOp@2..3 "<"
+      Whitespace@3..4 " "
+      Integer@4..7 "100"
+      Whitespace@7..8 " "
+    And@8..11 "AND"
+    Whitespace@11..12 " "
+    LParen@12..13 "("
+    Expression@13..74
+      Expression@13..21
+        Integer@13..15 "10"
+        Whitespace@15..16 " "
+        ComparisonOp@16..18 "<>"
+        Whitespace@18..19 " "
+        Ident@19..20 "b"
+        Whitespace@20..21 " "
+      Or@21..23 "OR"
+      Expression@23..74
+        Whitespace@23..24 " "
+        LParen@24..25 "("
+        Expression@25..48
+          Expression@25..35
+            Ident@25..26 "c"
+            Whitespace@26..27 " "
+            ComparisonOp@27..28 "="
+            Whitespace@28..29 " "
+            QuotedLiteral@29..34 "'foo'"
+            Whitespace@34..35 " "
+          And@35..38 "AND"
+          Expression@38..48
+            Whitespace@38..39 " "
+            Ident@39..42 "bar"
+            Whitespace@42..43 " "
+            ComparisonOp@43..45 ">="
+            Whitespace@45..46 " "
+            Integer@46..48 "42"
+        RParen@48..49 ")"
+        Whitespace@49..50 " "
+        And@50..53 "AND"
+        Expression@53..74
+          Whitespace@53..54 " "
+          Ident@54..57 "foo"
+          Whitespace@57..58 " "
+          ComparisonOp@58..63 "ILIKE"
+          Whitespace@63..64 " "
+          QuotedLiteral@64..74 "'%stonks%'"
+    RParen@74..75 ")"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_unbalanced_rparen() {
+        check(
+            parse("(a < 100))", parse_expr),
+            expect![[r#"
+Root@0..38
+  LParen@0..1 "("
+  Expression@1..8
+    Ident@1..2 "a"
+    Whitespace@2..3 " "
+    ComparisonOp@3..4 "<"
+    Whitespace@4..5 " "
+    Integer@5..8 "100"
+  RParen@8..9 ")"
+  Error@9..38
+    Text@9..38 "Incomplete input; unp ..."
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_unbalanced_lparen() {
+        check(
+            parse("(a < 100", parse_expr),
+            expect![[r#"
+Root@0..67
+  LParen@0..1 "("
+  Expression@1..8
+    Ident@1..2 "a"
+    Whitespace@2..3 " "
+    ComparisonOp@3..4 "<"
+    Whitespace@4..5 " "
+    Integer@5..8 "100"
+  Error@8..31
+    Text@8..31 "Expected token 'RParen'"
+  Error@31..67
+    Text@31..67 "Unbalanced pair of pa ..."
+"#]],
+        );
+    }
 }

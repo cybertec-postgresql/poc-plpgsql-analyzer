@@ -34,6 +34,12 @@ pub enum SyntaxKind {
     Asterisk,
     /// Slash char '/'
     Slash,
+    /// Logical operator AND
+    And,
+    /// Logical operator OR
+    Or,
+    /// Unary logical operator NOT
+    Not,
     /// Inline comment starting with '--'
     Comment,
     /// Any whitespace character
@@ -169,8 +175,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
-            TokenKind::AndKw => SyntaxKind::Keyword,
-            TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::AndKw => SyntaxKind::And,
+            TokenKind::OrKw => SyntaxKind::Or,
+            TokenKind::NotKw => SyntaxKind::Not,
             TokenKind::LikeKw => SyntaxKind::ComparisonOp,
             TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::NumberTyKw => SyntaxKind::TypeName,
