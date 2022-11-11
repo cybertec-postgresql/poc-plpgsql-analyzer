@@ -24,6 +24,14 @@ pub enum SyntaxKind {
     RParen,
     /// Percentage symbol
     Percentage,
+    /// An exclamation mark `!`
+    Exclam,
+    /// A plus `+`
+    Plus,
+    /// A minus `-`
+    Minus,
+    /// An asterisk `*`
+    Asterisk,
     /// Slash char '/'
     Slash,
     /// Inline comment starting with '--'
@@ -43,8 +51,6 @@ pub enum SyntaxKind {
     Comma,
     /// A semi colon
     SemiColon,
-    /// An asterisk `*`
-    Asterisk,
     /// A colon token
     Colon,
     /// An Assign operator `:=`
@@ -175,11 +181,14 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
-            TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
+            TokenKind::Exclam => SyntaxKind::Exclam,
+            TokenKind::Plus => SyntaxKind::Plus,
+            TokenKind::Minus => SyntaxKind::Minus,
+            TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::DoublePipe => SyntaxKind::Concat,

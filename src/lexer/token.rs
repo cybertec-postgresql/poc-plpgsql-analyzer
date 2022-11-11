@@ -108,9 +108,6 @@ pub enum TokenKind {
     #[token(";")]
     SemiColon,
 
-    #[token("*")]
-    Asterisk,
-
     #[token(":=")]
     Assign,
 
@@ -122,6 +119,18 @@ pub enum TokenKind {
 
     #[token("%")]
     Percentage,
+
+    #[token("!")]
+    Exclam,
+
+    #[token("+")]
+    Plus,
+
+    #[token("-")]
+    Minus,
+
+    #[token("*")]
+    Asterisk,
 
     #[token("/")]
     Slash,

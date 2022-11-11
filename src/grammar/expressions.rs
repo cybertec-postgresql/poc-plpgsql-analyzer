@@ -4,52 +4,94 @@
 
 //! Implements different logic/arithmetic SQL expression parser.
 
+//  Heavily inspired by
+//    https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+//    https://arzg.github.io/lang/10/
+
 use crate::lexer::TokenKind;
-use crate::parser::{ParseError, Parser};
+use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+use crate::ParseError;
 
 pub(crate) fn parse_expr(p: &mut Parser) {
-    p.start(SyntaxKind::Expression);
+    expr_bp(p, 0);
+}
 
-    let paren = p.eat(TokenKind::LParen);
+fn expr_bp(p: &mut Parser, min_bp: u8) {
+    let checkpoint = p.checkpoint();
 
-    while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
-        if p.at(TokenKind::LParen) {
-            parse_expr(p);
-        } else if p.at(TokenKind::RParen) {
-            break;
-        } else {
-            if !p.expect_one_of(&[
-                TokenKind::Ident,
-                TokenKind::QuotedLiteral,
-                TokenKind::Integer,
-            ]) {
-                break;
-            }
-
-            p.eat(TokenKind::OracleJoinKw);
-
-            if !p.expect_one_of(&[TokenKind::ComparisonOp, TokenKind::LikeKw]) {
-                break;
-            }
-
-            if !p.expect_one_of(&[
-                TokenKind::Ident,
-                TokenKind::QuotedLiteral,
-                TokenKind::Integer,
-            ]) {
-                break;
+    let token = p.current();
+    match token {
+        TokenKind::Ident | TokenKind::QuotedLiteral | TokenKind::Integer => p.bump_any(),
+        TokenKind::LParen => {
+            p.bump_any();
+            expr_bp(p, 0);
+            if !p.expect(TokenKind::RParen) {
+                p.error(ParseError::UnbalancedParens);
             }
         }
+        TokenKind::Plus | TokenKind::Minus => {
+            p.bump_any();
+            let ((), r_bp) = prefix_bp(token);
 
-        p.eat_one_of(&[TokenKind::AndKw, TokenKind::OrKw]);
+            p.start_node_at(checkpoint, SyntaxKind::Expression);
+            expr_bp(p, r_bp);
+            p.finish();
+        }
+        t => panic!("bad token: {:?}", t),
     }
 
-    if p.eat(TokenKind::RParen) ^ paren {
-        p.error(ParseError::UnbalancedParens);
-    }
+    while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
+        let op = p.current();
 
-    p.finish();
+        if let Some((l_bp, ())) = postfix_bp(op) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            p.bump_any();
+
+            p.start_node_at(checkpoint, SyntaxKind::Expression);
+            p.finish();
+            return;
+        }
+
+        if let Some((l_bp, r_bp)) = infix_bp(op) {
+            if l_bp < min_bp {
+                break;
+            }
+
+            p.bump_any();
+            p.start_node_at(checkpoint, SyntaxKind::Expression);
+            expr_bp(p, r_bp);
+            p.finish();
+            continue;
+        }
+
+        break;
+    }
+}
+
+fn prefix_bp(op: TokenKind) -> ((), u8) {
+    match op {
+        TokenKind::Plus | TokenKind::Minus => ((), 5),
+        _ => panic!("bad op: {:?}", op),
+    }
+}
+
+fn postfix_bp(op: TokenKind) -> Option<(u8, ())> {
+    match op {
+        TokenKind::Exclam => Some((7, ())),
+        _ => None,
+    }
+}
+
+fn infix_bp(op: TokenKind) -> Option<(u8, u8)> {
+    match op {
+        TokenKind::Plus | TokenKind::Minus => Some((1, 2)),
+        TokenKind::Asterisk | TokenKind::Slash => Some((3, 4)),
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -59,138 +101,216 @@ mod tests {
     use expect_test::expect;
 
     #[test]
+    fn test_parse_literal() {
+        check(
+            parse("1", parse_expr),
+            expect![[r#"
+Root@0..1
+  Integer@0..1 "1"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_prefix_expr() {
+        check(
+            parse("-a", parse_expr),
+            expect![[r#"
+Root@0..2
+  Expression@0..2
+    Minus@0..1 "-"
+    Ident@1..2 "a"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_postfix_expr() {
+        check(
+            parse("a!", parse_expr),
+            expect![[r#"
+Root@0..2
+  Expression@0..2
+    Ident@0..1 "a"
+    Exclam@1..2 "!"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_pre_and_postfix_expr() {
+        check(
+            parse("-a!", parse_expr),
+            expect![[r#"
+Root@0..3
+  Expression@0..3
+    Minus@0..1 "-"
+    Expression@1..3
+      Ident@1..2 "a"
+      Exclam@2..3 "!"
+"#]],
+        );
+    }
+
+    #[test]
     fn test_parse_simple_expr() {
         check(
-            parse("a < 100", parse_expr),
+            parse("1 + a", parse_expr),
+            expect![[r#"
+Root@0..5
+  Expression@0..5
+    Integer@0..1 "1"
+    Whitespace@1..2 " "
+    Plus@2..3 "+"
+    Whitespace@3..4 " "
+    Ident@4..5 "a"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_op_precedence() {
+        check(
+            parse("1 + a * 2", parse_expr),
+            expect![[r#"
+Root@0..9
+  Expression@0..9
+    Integer@0..1 "1"
+    Whitespace@1..2 " "
+    Plus@2..3 "+"
+    Expression@3..9
+      Whitespace@3..4 " "
+      Ident@4..5 "a"
+      Whitespace@5..6 " "
+      Asterisk@6..7 "*"
+      Whitespace@7..8 " "
+      Integer@8..9 "2"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_mirrored_op_precedence() {
+        check(
+            parse("1 + 2 * 3 / 4 - 5", parse_expr),
+            expect![[r#"
+Root@0..17
+  Expression@0..17
+    Expression@0..14
+      Integer@0..1 "1"
+      Whitespace@1..2 " "
+      Plus@2..3 "+"
+      Expression@3..14
+        Expression@3..10
+          Whitespace@3..4 " "
+          Integer@4..5 "2"
+          Whitespace@5..6 " "
+          Asterisk@6..7 "*"
+          Whitespace@7..8 " "
+          Integer@8..9 "3"
+          Whitespace@9..10 " "
+        Slash@10..11 "/"
+        Whitespace@11..12 " "
+        Integer@12..13 "4"
+        Whitespace@13..14 " "
+    Minus@14..15 "-"
+    Whitespace@15..16 " "
+    Integer@16..17 "5"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_simple_paren_expr() {
+        check(
+            parse("(1 + a)", parse_expr),
             expect![[r#"
 Root@0..7
-  Expression@0..7
-    Ident@0..1 "a"
-    Whitespace@1..2 " "
-    ComparisonOp@2..3 "<"
-    Whitespace@3..4 " "
-    Integer@4..7 "100"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_parse_nested_expr() {
-        check(
-            parse(
-                "a < 100 AND (10 <> b OR (c = 'foo' AND bar >= 42) AND foo ILIKE '%stonks%')",
-                parse_expr,
-            ),
-            expect![[r#"
-Root@0..75
-  Expression@0..75
-    Ident@0..1 "a"
-    Whitespace@1..2 " "
-    ComparisonOp@2..3 "<"
-    Whitespace@3..4 " "
-    Integer@4..7 "100"
-    Whitespace@7..8 " "
-    Keyword@8..11 "AND"
-    Whitespace@11..12 " "
-    Expression@12..75
-      LParen@12..13 "("
-      Integer@13..15 "10"
-      Whitespace@15..16 " "
-      ComparisonOp@16..18 "<>"
-      Whitespace@18..19 " "
-      Ident@19..20 "b"
-      Whitespace@20..21 " "
-      Keyword@21..23 "OR"
-      Whitespace@23..24 " "
-      Expression@24..49
-        LParen@24..25 "("
-        Ident@25..26 "c"
-        Whitespace@26..27 " "
-        ComparisonOp@27..28 "="
-        Whitespace@28..29 " "
-        QuotedLiteral@29..34 "'foo'"
-        Whitespace@34..35 " "
-        Keyword@35..38 "AND"
-        Whitespace@38..39 " "
-        Ident@39..42 "bar"
-        Whitespace@42..43 " "
-        ComparisonOp@43..45 ">="
-        Whitespace@45..46 " "
-        Integer@46..48 "42"
-        RParen@48..49 ")"
-      Whitespace@49..50 " "
-      Keyword@50..53 "AND"
-      Whitespace@53..54 " "
-      Ident@54..57 "foo"
-      Whitespace@57..58 " "
-      ComparisonOp@58..63 "ILIKE"
-      Whitespace@63..64 " "
-      QuotedLiteral@64..74 "'%stonks%'"
-      RParen@74..75 ")"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_parse_unbalanced_rparen() {
-        check(
-            parse("(a < 100))", parse_expr),
-            expect![[r#"
-Root@0..38
-  Expression@0..9
-    LParen@0..1 "("
-    Ident@1..2 "a"
+  LParen@0..1 "("
+  Expression@1..6
+    Integer@1..2 "1"
     Whitespace@2..3 " "
-    ComparisonOp@3..4 "<"
+    Plus@3..4 "+"
     Whitespace@4..5 " "
-    Integer@5..8 "100"
-    RParen@8..9 ")"
-  Error@9..38
-    Text@9..38 "Incomplete input; unp ..."
+    Ident@5..6 "a"
+  RParen@6..7 ")"
 "#]],
         );
     }
 
     #[test]
-    fn test_parse_unbalanced_lparen() {
+    fn test_redundant_parens() {
         check(
-            parse("(a < 100", parse_expr),
+            parse("(((1)))", parse_expr),
             expect![[r#"
-Root@0..44
-  Expression@0..44
-    LParen@0..1 "("
-    Ident@1..2 "a"
-    Whitespace@2..3 " "
-    ComparisonOp@3..4 "<"
-    Whitespace@4..5 " "
-    Integer@5..8 "100"
-    Error@8..44
-      Text@8..44 "Unbalanced pair of pa ..."
+Root@0..7
+  LParen@0..1 "("
+  LParen@1..2 "("
+  LParen@2..3 "("
+  Integer@3..4 "1"
+  RParen@4..5 ")"
+  RParen@5..6 ")"
+  RParen@6..7 ")"
 "#]],
         );
     }
 
     #[test]
-    fn test_parse_nested_paren() {
+    fn test_paren_precedence() {
         check(
-            parse("(((a < 100)))", parse_expr),
+            parse("a * (1 + 2) / b", parse_expr),
             expect![[r#"
-Root@0..13
-  Expression@0..13
-    LParen@0..1 "("
-    Expression@1..12
-      LParen@1..2 "("
-      Expression@2..11
-        LParen@2..3 "("
-        Ident@3..4 "a"
-        Whitespace@4..5 " "
-        ComparisonOp@5..6 "<"
+Root@0..15
+  Expression@0..15
+    Expression@0..12
+      Ident@0..1 "a"
+      Whitespace@1..2 " "
+      Asterisk@2..3 "*"
+      Whitespace@3..4 " "
+      LParen@4..5 "("
+      Expression@5..10
+        Integer@5..6 "1"
         Whitespace@6..7 " "
-        Integer@7..10 "100"
-        RParen@10..11 ")"
-      RParen@11..12 ")"
-    RParen@12..13 ")"
+        Plus@7..8 "+"
+        Whitespace@8..9 " "
+        Integer@9..10 "2"
+      RParen@10..11 ")"
+      Whitespace@11..12 " "
+    Slash@12..13 "/"
+    Whitespace@13..14 " "
+    Ident@14..15 "b"
 "#]],
         );
     }
+
+    #[test]
+    fn test_nested_paren() {
+        check(
+            parse("1 * (2 + (3 + 4))", parse_expr),
+            expect![[r#"
+Root@0..17
+  Expression@0..17
+    Integer@0..1 "1"
+    Whitespace@1..2 " "
+    Asterisk@2..3 "*"
+    Whitespace@3..4 " "
+    LParen@4..5 "("
+    Expression@5..16
+      Integer@5..6 "2"
+      Whitespace@6..7 " "
+      Plus@7..8 "+"
+      Whitespace@8..9 " "
+      LParen@9..10 "("
+      Expression@10..15
+        Integer@10..11 "3"
+        Whitespace@11..12 " "
+        Plus@12..13 "+"
+        Whitespace@13..14 " "
+        Integer@14..15 "4"
+      RParen@15..16 ")"
+    RParen@16..17 ")"
+"#]],
+        );
+    }
+
 }
