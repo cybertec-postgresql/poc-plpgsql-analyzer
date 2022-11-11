@@ -8,7 +8,7 @@
 use crate::grammar;
 use crate::lexer::{Lexer, Token, TokenKind};
 use crate::syntax::{SyntaxKind, SyntaxNode};
-use rowan::{GreenNode, GreenNodeBuilder};
+use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]
@@ -243,6 +243,15 @@ impl<'a> Parser<'a> {
     /// Start a new (nested) node
     pub(crate) fn start(&mut self, kind: SyntaxKind) {
         self.builder.start_node(kind.into());
+    }
+
+    /// Start a new (nested) node at a checkpoint
+    pub(crate) fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder.start_node_at(checkpoint, kind.into())
+    }
+
+    pub(crate) fn checkpoint(&self) -> Checkpoint {
+        self.builder.checkpoint()
     }
 
     /// Finish the current node
