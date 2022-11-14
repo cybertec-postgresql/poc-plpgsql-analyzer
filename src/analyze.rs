@@ -96,7 +96,7 @@ impl DboTableColumn {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Debug, Default, Deserialize, Eq, PartialEq)]
 pub struct DboTable {
     pub(crate) columns: HashMap<SqlIdent, DboTableColumn>,
 }
@@ -107,7 +107,7 @@ impl DboTable {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Debug, Default, Deserialize, Eq, PartialEq)]
 pub struct DboAnalyzeContext {
     pub(crate) tables: HashMap<SqlIdent, DboTable>,
 }
@@ -157,6 +157,30 @@ pub fn analyze(
         DboType::Procedure => analyze_procedure(parse_procedure(sql)?, ctx),
         DboType::Query => analyze_query(parse_query(sql)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
+    }
+}
+
+/// WASM export of [`analyze()`]. Should _never_ be called from other Rust code.
+///
+/// A second, WASM-specific function is needed here. Since the only allowed
+/// [`Result`] type to return to JS is a [`Result<T, JsValue>`], we just call
+/// the actual [`analyze()`] function and map the error type.
+///
+/// For one, the main [`analyze()`] function shouldn't return a
+/// [`JsValue`][`wasm_bindgen::JsValue`], since it should represent the "normal"
+/// entry point into the library (e.g. from other Rust code). And secondly,
+/// [`JsValue`][`wasm_bindgen::JsValue`] doesn't implement the
+/// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
+/// And secondly, we want to transparently parse
+/// [`DboAnalyzeContext`][`self::DboAnalyzeContext`] from the raw JS value
+/// and pass it on.
+#[wasm_bindgen(js_name = "analyze")]
+pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
+    let ctx = serde_wasm_bindgen::from_value::<DboAnalyzeContext>(ctx)?;
+
+    match analyze(typ, sql, &ctx) {
+        Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
+        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
 }
 

@@ -12,7 +12,6 @@ mod parser;
 mod rules;
 mod syntax;
 mod util;
-mod wasm_bindings;
 
 pub use analyze::*;
 pub use parser::*;
