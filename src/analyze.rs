@@ -31,28 +31,37 @@ pub enum DboType {
     View,
 }
 
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboFunctionMetaData {
+    name: String,
+    body: String,
+    lines_of_code: usize,
+}
+
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboProcedureMetaData {
+    name: String,
+    body: String,
+    lines_of_code: usize,
+}
+
+#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboQueryMetaData {
+    // For now, we only report how many OUTER JOINs there are, but not any
+    // other info about them yet.
+    outer_joins: usize,
+}
+
 /// The result of parsing and analyzing a piece of SQL code.
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
-pub enum DboMetaData {
-    #[serde(rename_all = "camelCase")]
-    Function {
-        name: String,
-        body: String,
-        lines_of_code: usize,
-    },
-    #[serde(rename_all = "camelCase")]
-    Procedure {
-        name: String,
-        body: String,
-        lines_of_code: usize,
-    },
-    #[serde(rename_all = "camelCase")]
-    Query {
-        // For now, we only report how many OUTER JOINs there are, but not any
-        // other info about them yet.
-        outer_joins: usize,
-    },
+pub struct DboMetaData {
+    function: Option<DboFunctionMetaData>,
+    procedure: Option<DboProcedureMetaData>,
+    query: Option<DboQueryMetaData>,
 }
 
 /// List of possible datatypes for tuple fields.
@@ -164,10 +173,14 @@ fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDat
     let name = function.name().unwrap_or_else(|| "<unknown>".to_string());
     let lines_of_code = body.matches('\n').count();
 
-    Ok(DboMetaData::Function {
-        name,
-        body,
-        lines_of_code,
+    Ok(DboMetaData {
+        function: Some(DboFunctionMetaData {
+            name,
+            body,
+            lines_of_code,
+        }),
+        procedure: None,
+        query: None,
     })
 }
 
@@ -184,10 +197,14 @@ fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDa
     let name = procedure.name().unwrap_or_else(|| "<unknown>".to_string());
     let lines_of_code = body.matches('\n').count();
 
-    Ok(DboMetaData::Procedure {
-        name,
-        body,
-        lines_of_code,
+    Ok(DboMetaData {
+        function: None,
+        procedure: Some(DboProcedureMetaData {
+            name,
+            body,
+            lines_of_code,
+        }),
+        query: None,
     })
 }
 
@@ -205,7 +222,11 @@ fn analyze_query(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, 
         })
         .unwrap_or(0);
 
-    Ok(DboMetaData::Query { outer_joins })
+    Ok(DboMetaData {
+        function: None,
+        procedure: None,
+        query: Some(DboQueryMetaData { outer_joins }),
+    })
 }
 
 #[cfg(test)]
@@ -223,11 +244,13 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Function {
-                name,
-                lines_of_code,
-                ..
+            DboMetaData {
+                function: Some(DboFunctionMetaData { name, lines_of_code, .. }),
+                procedure,
+                query,
             } => {
+                assert_eq!(procedure, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "function_heading_example");
                 assert_eq!(lines_of_code, 1);
             }
@@ -247,11 +270,13 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Procedure {
-                name,
-                lines_of_code,
-                ..
+            DboMetaData {
+                function,
+                procedure: Some(DboProcedureMetaData { name, lines_of_code, .. }),
+                query,
             } => {
+                assert_eq!(function, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "add_job_history");
                 assert_eq!(lines_of_code, 3);
             }
@@ -268,11 +293,13 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Procedure {
-                name,
-                lines_of_code,
-                ..
+            DboMetaData {
+                function,
+                procedure: Some(DboProcedureMetaData { name, lines_of_code, .. }),
+                query,
             } => {
+                assert_eq!(function, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "secure_dml");
                 assert_eq!(lines_of_code, 5);
             }
@@ -288,7 +315,13 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Query { outer_joins, .. } => {
+            DboMetaData {
+                function,
+                procedure,
+                query: Some(DboQueryMetaData { outer_joins, .. }),
+            } => {
+                assert_eq!(function, None);
+                assert_eq!(procedure, None);
                 assert_eq!(outer_joins, 1);
             }
             _ => unreachable!(),
