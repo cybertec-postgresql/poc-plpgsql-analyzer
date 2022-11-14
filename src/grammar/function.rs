@@ -4,7 +4,7 @@
 
 //! Implements parsing of functions from a token tree.
 
-use super::{parse_ident, parse_param_list, parse_typename};
+use super::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -50,7 +50,8 @@ fn parse_attributes(p: &mut Parser) {
 
 /// Parses the body of a function.
 fn parse_body(p: &mut Parser) {
-    p.expect(TokenKind::IsKw);
+    p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
+    parse_var_decl_list(p);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
 
@@ -133,8 +134,7 @@ Root@0..145
         Ident@40..48 "p_emp_id"
         Whitespace@48..58 "          "
         Ident@58..81 "job_history.employee_id"
-        Percentage@81..82 "%"
-        Keyword@82..86 "type"
+        Keyword@81..86 "%type"
         Whitespace@86..92 "\n     "
       Comma@92..93 ","
       Whitespace@93..94 " "
@@ -142,8 +142,7 @@ Root@0..145
         Ident@94..106 "p_start_date"
         Whitespace@106..112 "      "
         Ident@112..134 "job_history.start_date"
-        Percentage@134..135 "%"
-        Keyword@135..139 "type"
+        Keyword@134..139 "%type"
         Whitespace@139..144 "\n    "
       RParen@144..145 ")"
 "#]],

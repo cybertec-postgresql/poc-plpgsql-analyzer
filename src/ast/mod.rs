@@ -11,11 +11,13 @@ mod procedure;
 mod query;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
+use crate::util::SqlIdent;
 pub use expressions::*;
 pub use function::*;
 pub use procedure::*;
 pub use query::*;
 pub use rowan::ast::AstNode;
+use rowan::Direction;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
@@ -95,8 +97,8 @@ pub trait AstToken {
     }
 }
 
-typed_syntax_node!(Root);
-typed_syntax_token!(Ident, ComparisonOp);
+typed_syntax_node!(Root, ParamList, Param);
+typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
     /// Finds the (next) function in this root node.
@@ -116,8 +118,48 @@ impl Root {
 }
 
 impl Ident {
-    /// Returns the identifier name itself.
-    pub fn name(&self) -> String {
+    /// Returns the full identifier name itself.
+    pub fn text(&self) -> String {
         self.syntax.text().to_string()
+    }
+
+    /// TODO: Implement proper handling of escaped identifiers and such
+    pub fn name(&self) -> Option<SqlIdent> {
+        self.text().split_once('.').map(|(_, name)| name.into())
+    }
+
+    /// TODO: Implement proper handling of escaped identifiers and such
+    pub fn qualifier(&self) -> Option<SqlIdent> {
+        self.text().split_once('.').map(|(qual, _)| qual.into())
+    }
+}
+
+impl ParamList {
+    pub fn params(&self) -> Vec<Param> {
+        self.syntax.children().filter_map(Param::cast).collect()
+    }
+}
+
+impl Param {
+    #[allow(unused)]
+    pub fn name(&self) -> Option<String> {
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|it| it.into_token())
+            .find_map(Ident::cast)
+            .map(|id| id.text())
+    }
+
+    pub fn type_reference(&self) -> Option<Ident> {
+        let type_kw = self
+            .syntax
+            .children_with_tokens()
+            .filter_map(|it| it.into_token())
+            .find(|t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "%type")?;
+
+        type_kw
+            .siblings_with_tokens(Direction::Prev)
+            .filter_map(|it| it.into_token())
+            .find_map(Ident::cast)
     }
 }

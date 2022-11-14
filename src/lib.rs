@@ -11,6 +11,8 @@ mod lexer;
 mod parser;
 mod rules;
 mod syntax;
+mod util;
 
 pub use analyze::*;
 pub use parser::*;
+pub use util::SqlIdent;

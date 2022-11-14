@@ -6,7 +6,7 @@
 
 use super::typed_syntax_node;
 use super::Ident;
-use crate::ast::{AstNode, AstToken};
+use crate::ast::{AstNode, AstToken, ParamList};
 
 typed_syntax_node!(Function, FunctionHeader, FunctionBody);
 
@@ -17,6 +17,10 @@ impl Function {
             .children()
             .find_map(FunctionHeader::cast)?
             .name()
+    }
+
+    pub fn header(&self) -> Option<FunctionHeader> {
+        self.syntax.children().find_map(FunctionHeader::cast)
     }
 
     /// Returns the body of the function.
@@ -32,7 +36,11 @@ impl FunctionHeader {
             .children_with_tokens()
             .filter_map(|it| it.into_token())
             .find_map(Ident::cast)
-            .map(|ident| ident.name())
+            .map(|ident| ident.text())
+    }
+
+    pub fn param_list(&self) -> Option<ParamList> {
+        self.syntax.children().find_map(ParamList::cast)
     }
 }
 

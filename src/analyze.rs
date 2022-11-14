@@ -7,7 +7,9 @@
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use crate::syntax::SyntaxKind;
-use serde::Serialize;
+use crate::util::SqlIdent;
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
 
@@ -47,10 +49,108 @@ pub enum DboMetaData {
     },
     #[serde(rename_all = "camelCase")]
     Query {
-        // For now, we only report how many OUTER JOINs there are, but not any other info about
-        // them yet.
+        // For now, we only report how many OUTER JOINs there are, but not any
+        // other info about them yet.
         outer_joins: usize,
     },
+}
+
+/// List of possible datatypes for tuple fields.
+///
+/// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
+/// but furter extensible as needed. Keep alphabetically sorted.
+#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[wasm_bindgen]
+pub enum DboColumnType {
+    BigInt,
+    Date,
+    DoublePrecision,
+    Integer,
+    Real,
+    SmallInt,
+    Text,
+    Time,
+    Timestamp,
+    TimestampWithTz,
+    TimeWithTz,
+}
+
+#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboTableColumn {
+    typ: DboColumnType,
+}
+
+impl DboTableColumn {
+    pub fn new(typ: DboColumnType) -> Self {
+        Self { typ }
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq)]
+pub struct DboTable {
+    columns: HashMap<SqlIdent, DboTableColumn>,
+}
+
+impl DboTable {
+    pub fn new(columns: HashMap<SqlIdent, DboTableColumn>) -> Self {
+        Self { columns }
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct JsDboTable {
+    columns: HashMap<String, DboTableColumn>,
+}
+
+impl From<JsDboTable> for DboTable {
+    fn from(from: JsDboTable) -> Self {
+        let mut columns = HashMap::new();
+
+        for (k, v) in from.columns {
+            columns.insert(k.into(), v);
+        }
+
+        Self { columns }
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq)]
+pub struct DboAnalyzeContext {
+    tables: HashMap<SqlIdent, DboTable>,
+}
+
+impl DboAnalyzeContext {
+    pub fn new(tables: HashMap<SqlIdent, DboTable>) -> Self {
+        Self { tables }
+    }
+
+    pub(crate) fn table_column(
+        &self,
+        table: &SqlIdent,
+        column: &SqlIdent,
+    ) -> Option<&DboTableColumn> {
+        self.tables.get(table).and_then(|t| t.columns.get(column))
+    }
+}
+
+#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct JsDboAnalyzeContext {
+    tables: HashMap<String, JsDboTable>,
+}
+
+impl From<JsDboAnalyzeContext> for DboAnalyzeContext {
+    fn from(from: JsDboAnalyzeContext) -> Self {
+        let mut tables = HashMap::new();
+
+        for (k, v) in from.tables {
+            tables.insert(k.into(), v.into());
+        }
+
+        Self { tables }
+    }
 }
 
 /// Possible errors that might occur during analyzing.
@@ -63,6 +163,9 @@ pub enum AnalyzeError {
     ParseError(String),
     #[error("Expected {0} node, got {1}")]
     NodeError(String, String),
+    #[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
+    #[error("Failed to deserialize DBO context: {0}")]
+    InvalidContext(String),
 }
 
 impl From<ParseError> for AnalyzeError {
@@ -71,11 +174,15 @@ impl From<ParseError> for AnalyzeError {
     }
 }
 
-pub fn analyze(typ: DboType, sql: &str) -> Result<DboMetaData, AnalyzeError> {
+pub fn analyze(
+    typ: DboType,
+    sql: &str,
+    ctx: &DboAnalyzeContext,
+) -> Result<DboMetaData, AnalyzeError> {
     match typ {
-        DboType::Function => analyze_function(parse_function(sql)?),
-        DboType::Procedure => analyze_procedure(parse_procedure(sql)?),
-        DboType::Query => analyze_query(parse_query(sql)?),
+        DboType::Function => analyze_function(parse_function(sql)?, ctx),
+        DboType::Procedure => analyze_procedure(parse_procedure(sql)?, ctx),
+        DboType::Query => analyze_query(parse_query(sql)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -91,15 +198,18 @@ pub fn analyze(typ: DboType, sql: &str) -> Result<DboMetaData, AnalyzeError> {
 /// entry point into the library (e.g. from other Rust code). And secondly,
 /// [`JsError`][`wasm_bindgen::JsError`] doesn't implement the
 /// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
+#[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
 #[wasm_bindgen(js_name = "analyze")]
-pub fn analyze_js(typ: DboType, sql: &str) -> Result<JsValue, JsValue> {
-    match analyze(typ, sql) {
+pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
+    let ctx = serde_wasm_bindgen::from_value::<JsDboAnalyzeContext>(ctx)?;
+
+    match analyze(typ, sql, &ctx.into()) {
         Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
         Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
 }
 
-fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let function = Root::cast(parse.syntax())
         .and_then(|p| p.function())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
@@ -119,7 +229,7 @@ fn analyze_function(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
     })
 }
 
-fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let procedure = Root::cast(parse.syntax())
         .and_then(|r| r.procedure())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
@@ -139,7 +249,7 @@ fn analyze_procedure(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
     })
 }
 
-fn analyze_query(parse: Parse) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_query(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let query = Root::cast(parse.syntax())
         .and_then(|r| r.query())
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
@@ -166,7 +276,7 @@ mod tests {
         const INPUT: &str =
             include_str!("../tests/function/heading/function_heading_example.ora.sql");
 
-        let result = analyze(DboType::Function, INPUT);
+        let result = analyze(DboType::Function, INPUT, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
@@ -186,7 +296,11 @@ mod tests {
     #[test]
     fn test_analyze_procedure() {
         const ADD_JOB_HISTORY: &str = include_str!("../tests/fixtures/add_job_history.sql");
-        let result = analyze(DboType::Procedure, ADD_JOB_HISTORY);
+        let result = analyze(
+            DboType::Procedure,
+            ADD_JOB_HISTORY,
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
@@ -203,7 +317,11 @@ mod tests {
         }
 
         const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
-        let result = analyze(DboType::Procedure, SECURE_DML);
+        let result = analyze(
+            DboType::Procedure,
+            SECURE_DML,
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
@@ -223,7 +341,7 @@ mod tests {
     #[test]
     fn test_analyze_query() {
         const INPUT: &str = include_str!("../tests/dql/select_left_join.ora.sql");
-        let result = analyze(DboType::Query, INPUT);
+        let result = analyze(DboType::Query, INPUT, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
         let result = result.unwrap();
 
@@ -239,7 +357,11 @@ mod tests {
     #[ignore]
     fn test_triggerbody_lines_of_code() {
         const UPDATE_JOB_HISTORY: &str = include_str!("../tests/fixtures/update_job_history.sql");
-        let result = analyze(DboType::TriggerBody, UPDATE_JOB_HISTORY);
+        let result = analyze(
+            DboType::TriggerBody,
+            UPDATE_JOB_HISTORY,
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
         unreachable!();
     }

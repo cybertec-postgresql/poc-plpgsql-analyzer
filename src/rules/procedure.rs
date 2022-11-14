@@ -50,7 +50,7 @@ pub fn fix_header(root: &Root) -> Result<RuleChanges, RuleError> {
 
     if let Some(procedure) = replacement.procedure() {
         if let Some(header) = procedure.header() {
-            if !header.has_param_list() {
+            if header.param_list().is_none() {
                 hints.push(add_paramlist_parens(&header)?);
             }
         }

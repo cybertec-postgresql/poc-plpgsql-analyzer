@@ -52,11 +52,8 @@ pub enum TokenKind {
     #[token("deterministic", ignore(case))]
     DeterministicKw,
 
-    #[token("type", ignore(case))]
+    #[token("%type", ignore(case))]
     TypeKw,
-
-    #[token("number", ignore(case))]
-    NumberKw,
 
     #[token("select", ignore(case))]
     SelectKw,
@@ -79,7 +76,20 @@ pub enum TokenKind {
     #[token("(+)")]
     OracleJoinKw,
 
-    #[regex("-?[0-9]+")]
+    #[regex(r"number(\s*\(\s*\d+\s*(\s*,\d+\s*)?\s*\))?", ignore(case))]
+    NumberTyKw,
+
+    // TODO: Although the correct variant (note the extra `\s*` at the beginning
+    // of the matching group), this seems to match more whitespace than it should.
+    // E.g. with the first one below, `p2 VARCHAR2 := ...` will produce
+    // `TypeName@3..12 "VARCHAR2 "`, which obviously is _wrong_.
+    // Seems to be a bug in the `logos` crate, should probably be reported to
+    // the project.
+    // #[regex(r"varchar2?(\s*\(\s*\d+\s*\))?", ignore(case))]
+    #[regex(r"varchar2?(\(\s*\d+\s*\))?", ignore(case))]
+    VarcharTyKw,
+
+    #[regex(r"-?\d+", priority = 2)]
     Integer,
 
     #[regex(r"(?i)[a-z_][a-z0-9_$]*(\.[a-z_][a-z0-9_$]*)?", priority = 1)]
@@ -118,6 +128,9 @@ pub enum TokenKind {
 
     #[regex("=|<>|<|>|<=|>=")]
     ComparisonOp,
+
+    #[token("||")]
+    DoublePipe,
 
     #[regex("--.*")]
     Comment,

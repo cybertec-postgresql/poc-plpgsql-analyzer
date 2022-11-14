@@ -59,20 +59,45 @@ fn parse_param(p: &mut Parser) {
     p.finish();
 }
 
+/// <https://docs.oracle.com/cd/B28359_01/appdev.111/b28370/block.htm#CJAIABJJ>
+fn parse_var_decl_list(p: &mut Parser) {
+    if p.at(TokenKind::BeginKw) {
+        return;
+    }
+
+    p.start(SyntaxKind::VariableDeclList);
+    while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
+        p.start(SyntaxKind::VariableDecl);
+
+        if !p.expect(TokenKind::Ident) {
+            break;
+        }
+
+        while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
+            p.bump_any();
+        }
+
+        p.finish();
+
+        if !p.eat(TokenKind::SemiColon) {
+            break;
+        }
+    }
+    p.finish();
+}
+
+/// Parses a single SQL identifier.
+fn parse_ident(p: &mut Parser) {
+    p.expect(TokenKind::Ident);
+}
+
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
-    if p.at(TokenKind::NumberKw) {
-        p.eat(TokenKind::NumberKw);
-    } else {
+    if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
         p.expect(TokenKind::Ident);
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
     }
-}
-
-/// Parses a SQL identifier.
-fn parse_ident(p: &mut Parser) {
-    p.expect(TokenKind::Ident);
 }
 
 #[cfg(test)]
@@ -138,7 +163,7 @@ Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
     Whitespace@3..4 " "
-    Ident@4..12 "VARCHAR2"
+    TypeName@4..12 "VARCHAR2"
 "#]],
         );
 
@@ -151,8 +176,7 @@ Root@0..14
     Ident@2..5 "foo"
     Whitespace@5..6 " "
     Ident@6..9 "bar"
-    Percentage@9..10 "%"
-    Keyword@10..14 "type"
+    Keyword@9..14 "%type"
 "#]],
         );
     }
@@ -166,11 +190,47 @@ Root@0..26
   Param@0..26
     Ident@0..2 "p2"
     Whitespace@2..3 " "
-    Ident@3..11 "VARCHAR2"
+    TypeName@3..11 "VARCHAR2"
     Whitespace@11..12 " "
     Assign@12..14 ":="
     Whitespace@14..15 " "
     QuotedLiteral@15..26 "'not empty'"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_variable_declaration_list() {
+        const INPUT: &str = "
+    l_total_sales NUMBER(15,2);
+    l_credit_limit NUMBER (10,0);
+    l_contact_name VARCHAR2(255);
+";
+
+        check(
+            parse(INPUT, parse_var_decl_list),
+            expect![[r#"
+Root@0..101
+  Whitespace@0..5 "\n    "
+  VariableDeclList@5..101
+    VariableDecl@5..31
+      Ident@5..18 "l_total_sales"
+      Whitespace@18..19 " "
+      TypeName@19..31 "NUMBER(15,2)"
+    SemiColon@31..32 ";"
+    Whitespace@32..37 "\n    "
+    VariableDecl@37..65
+      Ident@37..51 "l_credit_limit"
+      Whitespace@51..52 " "
+      TypeName@52..65 "NUMBER (10,0)"
+    SemiColon@65..66 ";"
+    Whitespace@66..71 "\n    "
+    VariableDecl@71..99
+      Ident@71..85 "l_contact_name"
+      Whitespace@85..86 " "
+      TypeName@86..99 "VARCHAR2(255)"
+    SemiColon@99..100 ";"
+    Whitespace@100..101 "\n"
 "#]],
         );
     }

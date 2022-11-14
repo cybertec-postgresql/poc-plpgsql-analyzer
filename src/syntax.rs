@@ -49,6 +49,8 @@ pub enum SyntaxKind {
     Colon,
     /// An Assign operator `:=`
     Assign,
+    /// A concatination operator `||`
+    Concat,
     /// Any integer, positive and negative
     Integer,
     /// Single dollar quote `$$`
@@ -65,13 +67,15 @@ pub enum SyntaxKind {
     ProcedureHeader,
     /// A node that marks the `IS` or `AS $$` prologue of a procedure
     ProcedurePrologue,
-    /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` & `END;`
+    /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` &
+    /// `END;`
     ProcedureBody,
     /// A node that marks a full CREATE [..] FUNCTION block
     Function,
     /// A node that marks a FUNCTION header with params and return type
     FunctionHeader,
-    /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` & `END;`
+    /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` &
+    /// `END;`
     FunctionBody,
     /// A node that marks a full SELECT statement
     SelectStmt,
@@ -81,6 +85,12 @@ pub enum SyntaxKind {
     ColumnExprList,
     /// Represent a complete `WHERE` clause expression
     WhereClause,
+    /// A node that marks a variable declaration as part of a function or
+    /// procedure
+    VariableDecl,
+    /// A node that marks a list of variable declarations of functions and
+    /// procedures
+    VariableDeclList,
     /// Holds a generic SQL logic/arithmetic expression
     Expression,
     /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
@@ -104,7 +114,7 @@ impl SyntaxKind {
     /// Returns true if the [`SyntaxKind`] is a keyword
     #[allow(unused)]
     pub(crate) fn is_keyword(self) -> bool {
-        matches!(self, SyntaxKind::Keyword,)
+        matches!(self, SyntaxKind::Keyword)
     }
 
     #[allow(unused)]
@@ -121,6 +131,7 @@ impl SyntaxKind {
                 | Self::Colon
                 | Self::Asterisk
                 | Self::ComparisonOp
+                | Self::Concat
         )
     }
 }
@@ -149,7 +160,6 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ReturnKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
-            TokenKind::NumberKw => SyntaxKind::TypeName,
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
@@ -157,6 +167,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::OrKw => SyntaxKind::Keyword,
             TokenKind::LikeKw => SyntaxKind::ComparisonOp,
             TokenKind::OracleJoinKw => SyntaxKind::Keyword,
+            TokenKind::NumberTyKw => SyntaxKind::TypeName,
+            TokenKind::VarcharTyKw => SyntaxKind::TypeName,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
@@ -170,6 +182,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
+            TokenKind::DoublePipe => SyntaxKind::Concat,
             TokenKind::Comment => SyntaxKind::Comment,
             TokenKind::Error => SyntaxKind::Error,
             TokenKind::Eof => unreachable!(),

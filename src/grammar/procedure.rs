@@ -5,7 +5,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use super::{parse_ident, parse_param_list};
+use super::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -39,6 +39,7 @@ fn parse_header(p: &mut Parser) {
 /// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
+    parse_var_decl_list(p);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
 
@@ -137,8 +138,7 @@ Root@0..146
         Ident@41..49 "p_emp_id"
         Whitespace@49..59 "          "
         Ident@59..82 "job_history.employee_id"
-        Percentage@82..83 "%"
-        Keyword@83..87 "type"
+        Keyword@82..87 "%type"
         Whitespace@87..93 "\n     "
       Comma@93..94 ","
       Whitespace@94..95 " "
@@ -146,8 +146,7 @@ Root@0..146
         Ident@95..107 "p_start_date"
         Whitespace@107..113 "      "
         Ident@113..135 "job_history.start_date"
-        Percentage@135..136 "%"
-        Keyword@136..140 "type"
+        Keyword@135..140 "%type"
         Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],
