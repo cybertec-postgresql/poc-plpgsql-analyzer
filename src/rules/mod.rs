@@ -9,7 +9,7 @@
 pub mod parameter;
 pub mod procedure;
 
-use crate::ast::{AstNode, ParamList, Root};
+use crate::ast::{AstNode, Param, Root};
 use crate::parser::parse_any;
 use crate::parser::ParseError;
 use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
@@ -82,7 +82,7 @@ fn check_parameter_types(root: &Root, ctx: &DboAnalyzeContext) -> bool {
         .and_then(|p| p.header())
         .and_then(|p| p.param_list())
     {
-        return check_parameter_types_lower(&params, ctx);
+        return check_parameter_types_lower(&params.params(), ctx);
     }
 
     if let Some(params) = root
@@ -90,14 +90,14 @@ fn check_parameter_types(root: &Root, ctx: &DboAnalyzeContext) -> bool {
         .and_then(|f| f.header())
         .and_then(|f| f.param_list())
     {
-        return check_parameter_types_lower(&params, ctx);
+        return check_parameter_types_lower(&params.params(), ctx);
     }
 
     true
 }
 
-fn check_parameter_types_lower(params: &ParamList, ctx: &DboAnalyzeContext) -> bool {
-    for param in params.params() {
+fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> bool {
+    for param in params {
         if let Some(ident) = param.type_reference() {
             if let (Some(t), Some(c)) = (ident.qualifier(), ident.name()) {
                 if ctx.table_column(&t, &c).is_none() {
