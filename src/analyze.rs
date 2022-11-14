@@ -89,7 +89,7 @@ impl DboTableColumn {
 
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct DboTable {
-    columns: HashMap<SqlIdent, DboTableColumn>,
+    pub(crate) columns: HashMap<SqlIdent, DboTableColumn>,
 }
 
 impl DboTable {
@@ -98,27 +98,9 @@ impl DboTable {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
-#[serde(rename_all = "camelCase")]
-pub struct JsDboTable {
-    columns: HashMap<String, DboTableColumn>,
-}
-
-impl From<JsDboTable> for DboTable {
-    fn from(from: JsDboTable) -> Self {
-        let mut columns = HashMap::new();
-
-        for (k, v) in from.columns {
-            columns.insert(k.into(), v);
-        }
-
-        Self { columns }
-    }
-}
-
 #[derive(Debug, Default, Eq, PartialEq)]
 pub struct DboAnalyzeContext {
-    tables: HashMap<SqlIdent, DboTable>,
+    pub(crate) tables: HashMap<SqlIdent, DboTable>,
 }
 
 impl DboAnalyzeContext {
@@ -132,24 +114,6 @@ impl DboAnalyzeContext {
         column: &SqlIdent,
     ) -> Option<&DboTableColumn> {
         self.tables.get(table).and_then(|t| t.columns.get(column))
-    }
-}
-
-#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
-#[serde(rename_all = "camelCase")]
-pub struct JsDboAnalyzeContext {
-    tables: HashMap<String, JsDboTable>,
-}
-
-impl From<JsDboAnalyzeContext> for DboAnalyzeContext {
-    fn from(from: JsDboAnalyzeContext) -> Self {
-        let mut tables = HashMap::new();
-
-        for (k, v) in from.tables {
-            tables.insert(k.into(), v.into());
-        }
-
-        Self { tables }
     }
 }
 
@@ -184,28 +148,6 @@ pub fn analyze(
         DboType::Procedure => analyze_procedure(parse_procedure(sql)?, ctx),
         DboType::Query => analyze_query(parse_query(sql)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
-    }
-}
-
-/// WASM export of [`analyze()`]. Should _never_ be called from other Rust code.
-///
-/// A second, WASM-specific function is needed here. Since the only allowed
-/// [`Result`] type to return to JS is a [`Result<T, JsError>`], we just call
-/// the actual [`analyze()`] function and map the error type.
-///
-/// For one, the main [`analyze()`] function shouldn't return a
-/// [`JsError`][`wasm_bindgen::JsError`], since it should represent the "normal"
-/// entry point into the library (e.g. from other Rust code). And secondly,
-/// [`JsError`][`wasm_bindgen::JsError`] doesn't implement the
-/// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
-#[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
-#[wasm_bindgen(js_name = "analyze")]
-pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
-    let ctx = serde_wasm_bindgen::from_value::<JsDboAnalyzeContext>(ctx)?;
-
-    match analyze(typ, sql, &ctx.into()) {
-        Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
-        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
 }
 
