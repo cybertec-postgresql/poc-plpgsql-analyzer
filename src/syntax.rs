@@ -197,10 +197,12 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Exclam => SyntaxKind::Exclam,
+            // Used in `SELECT *` or as an arithmetic op
+            // Mapping to arithmetic op happens in `grammar/expressions.rs`
+            TokenKind::Asterisk => SyntaxKind::Asterisk,
+            TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::Plus => SyntaxKind::ArithmeticOp,
             TokenKind::Minus => SyntaxKind::ArithmeticOp,
-            TokenKind::Asterisk => SyntaxKind::ArithmeticOp,
-            TokenKind::Slash => SyntaxKind::ArithmeticOp,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::DoublePipe => SyntaxKind::Concat,
             TokenKind::Comment => SyntaxKind::Comment,

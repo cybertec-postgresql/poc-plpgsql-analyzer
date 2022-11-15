@@ -117,7 +117,9 @@ fn infix_bp(op: TokenKind) -> Option<((u8, u8), Option<SyntaxKind>)> {
         TokenKind::ComparisonOp => Some(((7, 8), None)),
         TokenKind::LikeKw => Some(((9, 10), None)),
         TokenKind::Plus | TokenKind::Minus => Some(((11, 12), None)),
-        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => Some(((13, 14), None)),
+        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
+            Some(((13, 14), Some(SyntaxKind::ArithmeticOp)))
+        }
         _ => None,
     }
 }

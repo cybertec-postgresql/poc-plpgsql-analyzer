@@ -72,7 +72,7 @@ Root@0..19
   SelectStmt@0..19
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
-    ArithmeticOp@7..8 "*"
+    Asterisk@7..8 "*"
     Whitespace@8..9 " "
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
@@ -142,7 +142,7 @@ Root@0..72
   SelectStmt@0..71
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
-    ArithmeticOp@7..8 "*"
+    Asterisk@7..8 "*"
     Whitespace@8..9 "\n"
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
