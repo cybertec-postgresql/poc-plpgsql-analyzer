@@ -96,7 +96,7 @@ impl DboTableColumn {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboTable {
     pub(crate) columns: HashMap<SqlIdent, DboTableColumn>,
 }
@@ -107,7 +107,7 @@ impl DboTable {
     }
 }
 
-#[derive(Debug, Default, Deserialize, Eq, PartialEq)]
+#[derive(Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboAnalyzeContext {
     pub(crate) tables: HashMap<SqlIdent, DboTable>,
 }
@@ -152,10 +152,15 @@ pub fn analyze(
     sql: &str,
     ctx: &DboAnalyzeContext,
 ) -> Result<DboMetaData, AnalyzeError> {
+    let cast_to_root = |p: Parse| {
+        Root::cast(p.syntax())
+            .ok_or_else(|| AnalyzeError::ParseError("failed to find root node".to_owned()))
+    };
+
     match typ {
-        DboType::Function => analyze_function(parse_function(sql)?, ctx),
-        DboType::Procedure => analyze_procedure(parse_procedure(sql)?, ctx),
-        DboType::Query => analyze_query(parse_query(sql)?, ctx),
+        DboType::Function => analyze_function(cast_to_root(parse_function(sql)?)?, ctx),
+        DboType::Procedure => analyze_procedure(cast_to_root(parse_procedure(sql)?)?, ctx),
+        DboType::Query => analyze_query(cast_to_root(parse_query(sql)?)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -184,9 +189,9 @@ pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsVa
     }
 }
 
-fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let function = Root::cast(parse.syntax())
-        .and_then(|p| p.function())
+fn analyze_function(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let function = root
+        .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
 
     let body = function
@@ -208,9 +213,9 @@ fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDat
     })
 }
 
-fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let procedure = Root::cast(parse.syntax())
-        .and_then(|r| r.procedure())
+fn analyze_procedure(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let procedure = root
+        .procedure()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
 
     let body = procedure
@@ -232,9 +237,9 @@ fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDa
     })
 }
 
-fn analyze_query(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let query = Root::cast(parse.syntax())
-        .and_then(|r| r.query())
+fn analyze_query(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let query = root
+        .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
 
     let outer_joins = query
@@ -269,9 +274,15 @@ mod tests {
 
         match result {
             DboMetaData {
-                function: Some(DboFunctionMetaData { name, lines_of_code, .. }),
+                function:
+                    Some(DboFunctionMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
                 procedure,
                 query,
+                ..
             } => {
                 assert_eq!(procedure, None);
                 assert_eq!(query, None);
@@ -296,8 +307,14 @@ mod tests {
         match result {
             DboMetaData {
                 function,
-                procedure: Some(DboProcedureMetaData { name, lines_of_code, .. }),
+                procedure:
+                    Some(DboProcedureMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
                 query,
+                ..
             } => {
                 assert_eq!(function, None);
                 assert_eq!(query, None);
@@ -319,8 +336,14 @@ mod tests {
         match result {
             DboMetaData {
                 function,
-                procedure: Some(DboProcedureMetaData { name, lines_of_code, .. }),
+                procedure:
+                    Some(DboProcedureMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
                 query,
+                ..
             } => {
                 assert_eq!(function, None);
                 assert_eq!(query, None);
@@ -343,6 +366,7 @@ mod tests {
                 function,
                 procedure,
                 query: Some(DboQueryMetaData { outer_joins, .. }),
+                ..
             } => {
                 assert_eq!(function, None);
                 assert_eq!(procedure, None);
