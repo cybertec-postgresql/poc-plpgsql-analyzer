@@ -8,6 +8,8 @@
 //    https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 //    https://arzg.github.io/lang/10/
 
+use rowan::Checkpoint;
+
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -31,12 +33,9 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
         }
         TokenKind::NotKw | TokenKind::Plus | TokenKind::Minus => {
-            p.bump_any();
             let ((), r_bp) = prefix_bp(token);
-
-            p.start_node_at(checkpoint, SyntaxKind::Expression);
-            expr_bp(p, r_bp);
-            p.finish();
+            p.bump_any();
+            add_expr_node(p, checkpoint, Some(r_bp));
         }
         t => panic!("bad token: {:?}", t),
     }
@@ -50,9 +49,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
 
             p.bump_any();
-
-            p.start_node_at(checkpoint, SyntaxKind::Expression);
-            p.finish();
+            add_expr_node(p, checkpoint, None);
             return;
         }
 
@@ -62,14 +59,23 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
 
             p.bump_any();
-            p.start_node_at(checkpoint, SyntaxKind::Expression);
-            expr_bp(p, r_bp);
-            p.finish();
+            add_expr_node(p, checkpoint, Some(r_bp));
             continue;
         }
 
         break;
     }
+}
+
+fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
+    p.start_node_at(checkpoint, SyntaxKind::Expression);
+
+    match sub_expr {
+        Some(min_bp) => expr_bp(p, min_bp),
+        None => {}
+    }
+
+    p.finish();
 }
 
 fn prefix_bp(op: TokenKind) -> ((), u8) {
@@ -101,9 +107,10 @@ fn infix_bp(op: TokenKind) -> Option<(u8, u8)> {
 
 #[cfg(test)]
 mod tests {
+    use expect_test::expect;
+
     use super::super::tests::{check, parse};
     use super::*;
-    use expect_test::expect;
 
     #[test]
     fn test_parse_literal() {
@@ -153,6 +160,30 @@ Root@0..3
     Expression@1..3
       Ident@1..2 "a"
       Exclam@2..3 "!"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_unary_op_in_paren() {
+        check(
+            parse("((-a)!) + 2", parse_expr),
+            expect![[r#"
+Root@0..11
+  Expression@0..11
+    LParen@0..1 "("
+    Expression@1..6
+      LParen@1..2 "("
+      Expression@2..4
+        Minus@2..3 "-"
+        Ident@3..4 "a"
+      RParen@4..5 ")"
+      Exclam@5..6 "!"
+    RParen@6..7 ")"
+    Whitespace@7..8 " "
+    Plus@8..9 "+"
+    Whitespace@9..10 " "
+    Integer@10..11 "2"
 "#]],
         );
     }
