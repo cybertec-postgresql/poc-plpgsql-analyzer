@@ -29,6 +29,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             if min_bp == 0 && (p.at(TokenKind::SemiColon) || p.at(TokenKind::Eof)) {
                 add_expr_node(p, checkpoint, None);
             }
+            p.eat(TokenKind::OracleJoinKw);
         }
         TokenKind::LParen => {
             p.bump_any();
