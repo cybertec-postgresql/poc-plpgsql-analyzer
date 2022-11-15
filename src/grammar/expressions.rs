@@ -87,10 +87,9 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
     p.start_node_at(checkpoint, SyntaxKind::Expression);
 
-    match sub_expr {
-        Some(min_bp) => expr_bp(p, min_bp),
-        None => {}
-    }
+    if let Some(min_bp) = sub_expr {
+        expr_bp(p, min_bp)
+    };
 
     p.finish();
 }
