@@ -17,7 +17,7 @@ use wasm_typescript_definition::TypescriptDefinition;
 /// Different types the analyzer can possibly examine.
 ///
 /// Some types may be only available for specific frontends, e.g.
-/// [`Package`][`Type::Package`] is only available for Oracle databases.
+/// [`Package`][`DboType::Package`] is only available for Oracle databases.
 #[derive(Debug, Eq, PartialEq, Serialize)]
 #[wasm_bindgen]
 pub enum DboType {
