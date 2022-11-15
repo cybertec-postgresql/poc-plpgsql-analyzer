@@ -6,6 +6,7 @@
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
+use crate::rules::{find_applicable_rules, RuleHint};
 use crate::syntax::SyntaxKind;
 use crate::util::SqlIdent;
 use serde::{Deserialize, Serialize};
@@ -59,6 +60,7 @@ pub struct DboQueryMetaData {
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboMetaData {
+    rules: Vec<RuleHint>,
     function: Option<DboFunctionMetaData>,
     procedure: Option<DboProcedureMetaData>,
     query: Option<DboQueryMetaData>,
@@ -189,7 +191,7 @@ pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsVa
     }
 }
 
-fn analyze_function(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let function = root
         .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
@@ -203,6 +205,7 @@ fn analyze_function(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData,
     let lines_of_code = body.matches('\n').count();
 
     Ok(DboMetaData {
+        rules: find_applicable_rules(&root, ctx),
         function: Some(DboFunctionMetaData {
             name,
             body,
@@ -213,7 +216,7 @@ fn analyze_function(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData,
     })
 }
 
-fn analyze_procedure(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let procedure = root
         .procedure()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
@@ -227,6 +230,7 @@ fn analyze_procedure(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData
     let lines_of_code = body.matches('\n').count();
 
     Ok(DboMetaData {
+        rules: find_applicable_rules(&root, &ctx),
         function: None,
         procedure: Some(DboProcedureMetaData {
             name,
@@ -237,7 +241,7 @@ fn analyze_procedure(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData
     })
 }
 
-fn analyze_query(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let query = root
         .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
@@ -252,6 +256,7 @@ fn analyze_query(root: Root, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, An
         .unwrap_or(0);
 
     Ok(DboMetaData {
+        rules: find_applicable_rules(&root, &ctx),
         function: None,
         procedure: None,
         query: Some(DboQueryMetaData { outer_joins }),
