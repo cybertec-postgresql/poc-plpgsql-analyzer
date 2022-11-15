@@ -38,8 +38,11 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
         }
         TokenKind::NotKw | TokenKind::Plus | TokenKind::Minus => {
-            let ((), r_bp) = prefix_bp(token);
-            p.bump_any();
+            let (((), r_bp), syntax_kind) = prefix_bp(token);
+            match syntax_kind {
+                Some(syntax_kind) => p.bump_any_map(syntax_kind),
+                None => p.bump_any(),
+            }
             add_expr_node(p, checkpoint, Some(r_bp));
         }
         t => panic!("bad token: {:?}", t),
@@ -48,22 +51,30 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
     while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
         let op = p.current();
 
-        if let Some((l_bp, ())) = postfix_bp(op) {
+        if let Some(((l_bp, ()), syntax_kind)) = postfix_bp(op) {
             if l_bp < min_bp {
                 break;
             }
 
-            p.bump_any();
+            match syntax_kind {
+                Some(syntax_kind) => p.bump_any_map(syntax_kind),
+                None => p.bump_any(),
+            }
+
             add_expr_node(p, checkpoint, None);
             return;
         }
 
-        if let Some((l_bp, r_bp)) = infix_bp(op) {
+        if let Some(((l_bp, r_bp), syntax_kind)) = infix_bp(op) {
             if l_bp < min_bp {
                 break;
             }
 
-            p.bump_any();
+            match syntax_kind {
+                Some(syntax_kind) => p.bump_any_map(syntax_kind),
+                None => p.bump_any(),
+            }
+
             add_expr_node(p, checkpoint, Some(r_bp));
             continue;
         }
@@ -83,29 +94,29 @@ fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
     p.finish();
 }
 
-fn prefix_bp(op: TokenKind) -> ((), u8) {
+fn prefix_bp(op: TokenKind) -> (((), u8), Option<SyntaxKind>) {
     match op {
-        TokenKind::NotKw => ((), 5),
-        TokenKind::Plus | TokenKind::Minus => ((), 15),
+        TokenKind::NotKw => (((), 5), Some(SyntaxKind::LogicOp)),
+        TokenKind::Plus | TokenKind::Minus => (((), 15), None),
         _ => panic!("bad op: {:?}", op),
     }
 }
 
-fn postfix_bp(op: TokenKind) -> Option<(u8, ())> {
+fn postfix_bp(op: TokenKind) -> Option<((u8, ()), Option<SyntaxKind>)> {
     match op {
-        TokenKind::Exclam => Some((17, ())),
+        TokenKind::Exclam => Some(((17, ()), None)),
         _ => None,
     }
 }
 
-fn infix_bp(op: TokenKind) -> Option<(u8, u8)> {
+fn infix_bp(op: TokenKind) -> Option<((u8, u8), Option<SyntaxKind>)> {
     match op {
-        TokenKind::OrKw => Some((1, 2)),
-        TokenKind::AndKw => Some((3, 4)),
-        TokenKind::ComparisonOp => Some((7, 8)),
-        TokenKind::LikeKw => Some((9, 10)),
-        TokenKind::Plus | TokenKind::Minus => Some((11, 12)),
-        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => Some((13, 14)),
+        TokenKind::OrKw => Some(((1, 2), Some(SyntaxKind::LogicOp))),
+        TokenKind::AndKw => Some(((3, 4), Some(SyntaxKind::LogicOp))),
+        TokenKind::ComparisonOp => Some(((7, 8), None)),
+        TokenKind::LikeKw => Some(((9, 10), None)),
+        TokenKind::Plus | TokenKind::Minus => Some(((11, 12), None)),
+        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => Some(((13, 14), None)),
         _ => None,
     }
 }
@@ -136,7 +147,7 @@ Root@0..1
             expect![[r#"
 Root@0..2
   Expression@0..2
-    Minus@0..1 "-"
+    ArithmeticOp@0..1 "-"
     Ident@1..2 "a"
 "#]],
         );
@@ -162,7 +173,7 @@ Root@0..2
             expect![[r#"
 Root@0..3
   Expression@0..3
-    Minus@0..1 "-"
+    ArithmeticOp@0..1 "-"
     Expression@1..3
       Ident@1..2 "a"
       Exclam@2..3 "!"
@@ -181,13 +192,13 @@ Root@0..11
     Expression@1..6
       LParen@1..2 "("
       Expression@2..4
-        Minus@2..3 "-"
+        ArithmeticOp@2..3 "-"
         Ident@3..4 "a"
       RParen@4..5 ")"
       Exclam@5..6 "!"
     RParen@6..7 ")"
     Whitespace@7..8 " "
-    Plus@8..9 "+"
+    ArithmeticOp@8..9 "+"
     Whitespace@9..10 " "
     Integer@10..11 "2"
 "#]],
@@ -202,7 +213,7 @@ Root@0..11
 Root@0..22
   Expression@0..22
     Expression@0..10
-      Not@0..3 "NOT"
+      LogicOp@0..3 "NOT"
       Expression@3..10
         Whitespace@3..4 " "
         Integer@4..5 "1"
@@ -211,10 +222,10 @@ Root@0..22
         Whitespace@7..8 " "
         Integer@8..9 "2"
         Whitespace@9..10 " "
-    And@10..13 "AND"
+    LogicOp@10..13 "AND"
     Expression@13..22
       Whitespace@13..14 " "
-      Not@14..17 "NOT"
+      LogicOp@14..17 "NOT"
       Whitespace@17..18 " "
       Ident@18..22 "true"
 "#]],
@@ -230,7 +241,7 @@ Root@0..5
   Expression@0..5
     Integer@0..1 "1"
     Whitespace@1..2 " "
-    Plus@2..3 "+"
+    ArithmeticOp@2..3 "+"
     Whitespace@3..4 " "
     Ident@4..5 "a"
 "#]],
@@ -246,12 +257,12 @@ Root@0..9
   Expression@0..9
     Integer@0..1 "1"
     Whitespace@1..2 " "
-    Plus@2..3 "+"
+    ArithmeticOp@2..3 "+"
     Expression@3..9
       Whitespace@3..4 " "
       Ident@4..5 "a"
       Whitespace@5..6 " "
-      Asterisk@6..7 "*"
+      ArithmeticOp@6..7 "*"
       Whitespace@7..8 " "
       Integer@8..9 "2"
 "#]],
@@ -268,21 +279,21 @@ Root@0..17
     Expression@0..14
       Integer@0..1 "1"
       Whitespace@1..2 " "
-      Plus@2..3 "+"
+      ArithmeticOp@2..3 "+"
       Expression@3..14
         Expression@3..10
           Whitespace@3..4 " "
           Integer@4..5 "2"
           Whitespace@5..6 " "
-          Asterisk@6..7 "*"
+          ArithmeticOp@6..7 "*"
           Whitespace@7..8 " "
           Integer@8..9 "3"
           Whitespace@9..10 " "
-        Slash@10..11 "/"
+        ArithmeticOp@10..11 "/"
         Whitespace@11..12 " "
         Integer@12..13 "4"
         Whitespace@13..14 " "
-    Minus@14..15 "-"
+    ArithmeticOp@14..15 "-"
     Whitespace@15..16 " "
     Integer@16..17 "5"
 "#]],
@@ -299,7 +310,7 @@ Root@0..7
   Expression@1..6
     Integer@1..2 "1"
     Whitespace@2..3 " "
-    Plus@3..4 "+"
+    ArithmeticOp@3..4 "+"
     Whitespace@4..5 " "
     Ident@5..6 "a"
   RParen@6..7 ")"
@@ -334,18 +345,18 @@ Root@0..15
     Expression@0..12
       Ident@0..1 "a"
       Whitespace@1..2 " "
-      Asterisk@2..3 "*"
+      ArithmeticOp@2..3 "*"
       Whitespace@3..4 " "
       LParen@4..5 "("
       Expression@5..10
         Integer@5..6 "1"
         Whitespace@6..7 " "
-        Plus@7..8 "+"
+        ArithmeticOp@7..8 "+"
         Whitespace@8..9 " "
         Integer@9..10 "2"
       RParen@10..11 ")"
       Whitespace@11..12 " "
-    Slash@12..13 "/"
+    ArithmeticOp@12..13 "/"
     Whitespace@13..14 " "
     Ident@14..15 "b"
 "#]],
@@ -361,19 +372,19 @@ Root@0..17
   Expression@0..17
     Integer@0..1 "1"
     Whitespace@1..2 " "
-    Asterisk@2..3 "*"
+    ArithmeticOp@2..3 "*"
     Whitespace@3..4 " "
     LParen@4..5 "("
     Expression@5..16
       Integer@5..6 "2"
       Whitespace@6..7 " "
-      Plus@7..8 "+"
+      ArithmeticOp@7..8 "+"
       Whitespace@8..9 " "
       LParen@9..10 "("
       Expression@10..15
         Integer@10..11 "3"
         Whitespace@11..12 " "
-        Plus@12..13 "+"
+        ArithmeticOp@12..13 "+"
         Whitespace@13..14 " "
         Integer@14..15 "4"
       RParen@15..16 ")"
@@ -399,7 +410,7 @@ Root@0..75
       Whitespace@3..4 " "
       Integer@4..7 "100"
       Whitespace@7..8 " "
-    And@8..11 "AND"
+    LogicOp@8..11 "AND"
     Whitespace@11..12 " "
     LParen@12..13 "("
     Expression@13..74
@@ -410,7 +421,7 @@ Root@0..75
         Whitespace@18..19 " "
         Ident@19..20 "b"
         Whitespace@20..21 " "
-      Or@21..23 "OR"
+      LogicOp@21..23 "OR"
       Expression@23..74
         Whitespace@23..24 " "
         LParen@24..25 "("
@@ -422,7 +433,7 @@ Root@0..75
             Whitespace@28..29 " "
             QuotedLiteral@29..34 "'foo'"
             Whitespace@34..35 " "
-          And@35..38 "AND"
+          LogicOp@35..38 "AND"
           Expression@38..48
             Whitespace@38..39 " "
             Ident@39..42 "bar"
@@ -432,7 +443,7 @@ Root@0..75
             Integer@46..48 "42"
         RParen@48..49 ")"
         Whitespace@49..50 " "
-        And@50..53 "AND"
+        LogicOp@50..53 "AND"
         Expression@53..74
           Whitespace@53..54 " "
           Ident@54..57 "foo"

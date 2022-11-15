@@ -105,9 +105,13 @@ pub enum SyntaxKind {
     VariableDeclList,
     /// Holds a generic SQL logic/arithmetic expression
     Expression,
+    /// Represents an arithmetic SQL operator (+, -, *, /)
+    ArithmeticOp,
     /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
     /// or other types of comparison operators of SQL (ilike, like)
     ComparisonOp,
+    /// Represents a logical SQL operator (AND, OR, NOT)
+    LogicOp,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -175,9 +179,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
-            TokenKind::AndKw => SyntaxKind::And,
-            TokenKind::OrKw => SyntaxKind::Or,
-            TokenKind::NotKw => SyntaxKind::Not,
+            TokenKind::AndKw => SyntaxKind::Keyword,
+            TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::NotKw => SyntaxKind::Keyword,
             TokenKind::LikeKw => SyntaxKind::ComparisonOp,
             TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::NumberTyKw => SyntaxKind::TypeName,
@@ -193,10 +197,10 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
             TokenKind::Exclam => SyntaxKind::Exclam,
-            TokenKind::Plus => SyntaxKind::Plus,
-            TokenKind::Minus => SyntaxKind::Minus,
-            TokenKind::Asterisk => SyntaxKind::Asterisk,
-            TokenKind::Slash => SyntaxKind::Slash,
+            TokenKind::Plus => SyntaxKind::ArithmeticOp,
+            TokenKind::Minus => SyntaxKind::ArithmeticOp,
+            TokenKind::Asterisk => SyntaxKind::ArithmeticOp,
+            TokenKind::Slash => SyntaxKind::ArithmeticOp,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::DoublePipe => SyntaxKind::Concat,
             TokenKind::Comment => SyntaxKind::Comment,
