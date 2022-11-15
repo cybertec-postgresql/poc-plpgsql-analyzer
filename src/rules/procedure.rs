@@ -4,86 +4,165 @@
 
 //! Implements procedure-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{replace_child, RuleError};
+use super::{find_token, replace_token, RuleDefinition, RuleError};
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstToken, Ident, Root};
-use crate::syntax::SyntaxKind;
+use crate::ast::{AstNode, AstToken, Ident, Procedure, ProcedureHeader, Root};
+use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::TextRange;
 
-pub(super) fn add_paramlist_parens(
-    root: &Root,
-    location: Option<TextRange>,
-    _ctx: &DboAnalyzeContext,
-) -> Result<TextRange, RuleError> {
-    if let Some(header) = root.procedure().and_then(|p| p.header()) {
-        if header.param_list().is_none() {
-            return replace_child(
-                &header,
-                |t| t.kind() == SyntaxKind::Ident,
-                location,
-                |t| TextRange::at(t.text_range().end(), 0.into()),
-                "Procedure identifier",
-                "()",
-                1..1,
-            );
-        } else {
-            return Err(RuleError::NoChange);
+pub(super) struct AddParamlistParenthesis;
+
+impl RuleDefinition for AddParamlistParenthesis {
+    fn short_desc(&self) -> &'static str {
+        "Add parameter list parentheses"
+    }
+
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        root.procedure()
+            .and_then(|p| p.header())
+            .map(|h| h.syntax().clone())
+            .ok_or(RuleError::NoSuchItem("Procedure header"))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        if let Some(header) = ProcedureHeader::cast(node.clone()) {
+            if header.param_list().is_none() {
+                let mut locations = find_token(
+                    &header,
+                    |t| t.kind() == SyntaxKind::Ident,
+                    |t| TextRange::at(t.text_range().end(), 0.into()),
+                );
+
+                if locations.is_empty() {
+                    return Err(RuleError::NoSuchItem("Procedure identifier"));
+                } else {
+                    locations.truncate(1);
+                    return Ok(locations);
+                }
+            } else {
+                return Err(RuleError::NoChange);
+            }
         }
+
+        Err(RuleError::NoSuchItem("Procedure header"))
     }
 
-    Err(RuleError::NoSuchItem("Procedure header"))
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: TextRange,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        replace_token(node, location, "()", 0..0)
+    }
 }
 
-pub(super) fn replace_procedure_prologue(
-    root: &Root,
-    location: Option<TextRange>,
-    _ctx: &DboAnalyzeContext,
-) -> Result<TextRange, RuleError> {
-    if let Some(procedure) = root.procedure() {
-        return replace_child(
-            &procedure,
-            |t| {
-                t.kind() == SyntaxKind::Keyword
-                    && ["is", "as"].contains(&t.text().to_lowercase().as_str())
-            },
-            location,
-            |t| t.text_range(),
-            "Procedure prologue",
-            "AS $$",
-            0..1,
-        );
+pub(super) struct ReplacePrologue;
+
+impl RuleDefinition for ReplacePrologue {
+    fn short_desc(&self) -> &'static str {
+        "Replace procedure prologue"
     }
 
-    Err(RuleError::NoSuchItem("Procedure prologue"))
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        root.procedure()
+            .map(|p| p.syntax().clone())
+            .ok_or(RuleError::NoSuchItem("Procedure"))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        if let Some(procedure) = Procedure::cast(node.clone()) {
+            let mut locations = find_token(
+                &procedure,
+                |t| {
+                    t.kind() == SyntaxKind::Keyword
+                        && ["is", "as"].contains(&t.text().to_lowercase().as_str())
+                },
+                |t| t.text_range(),
+            );
+
+            if locations.is_empty() {
+                return Err(RuleError::NoChange);
+            } else {
+                locations.truncate(1);
+                return Ok(locations);
+            }
+        }
+
+        Err(RuleError::NoSuchItem("Procedure prologue"))
+    }
+
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: TextRange,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        replace_token(node, location, "AS $$", 0..1)
+    }
 }
 
-pub(super) fn replace_procedure_epilogue(
-    root: &Root,
-    location: Option<TextRange>,
-    _ctx: &DboAnalyzeContext,
-) -> Result<TextRange, RuleError> {
-    if let Some(procedure) = root.procedure() {
-        return replace_child(
-            &procedure,
-            |t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "end",
-            location,
-            |t| {
-                let end = t
-                    .siblings_with_tokens(rowan::Direction::Next)
-                    .filter_map(|it| it.into_token())
-                    .find(|t| Ident::cast(t.clone()).is_some())
-                    .map(|e| e.text_range().end())
-                    .unwrap_or_else(|| t.text_range().end());
+pub(super) struct ReplaceEpilogue;
 
-                TextRange::new(t.text_range().start(), end)
-            },
-            "Procedure epilogue",
-            ";\n$$ LANGUAGE plpgsql",
-            1..3,
-        );
+impl RuleDefinition for ReplaceEpilogue {
+    fn short_desc(&self) -> &'static str {
+        "Replace procedure epilogue"
     }
 
-    Err(RuleError::NoSuchItem("Procedure epilogue"))
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        root.procedure()
+            .map(|p| p.syntax().clone())
+            .ok_or(RuleError::NoSuchItem("Procedure"))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        if let Some(procedure) = Procedure::cast(node.clone()) {
+            let mut locations = find_token(
+                &procedure,
+                |t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "end",
+                |t| {
+                    let end = t
+                        .siblings_with_tokens(rowan::Direction::Next)
+                        .filter_map(|it| it.into_token())
+                        .find(|t| Ident::cast(t.clone()).is_some())
+                        .map(|e| e.text_range().end())
+                        .unwrap_or_else(|| t.text_range().end());
+
+                    TextRange::new(t.text_range().start(), end)
+                },
+            );
+
+            if locations.is_empty() {
+                return Err(RuleError::NoChange);
+            } else {
+                locations.truncate(1);
+                return Ok(locations);
+            }
+        }
+
+        Err(RuleError::NoSuchItem("Procedure epilogue"))
+    }
+
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: TextRange,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", 1..3)
+    }
 }
 
 #[cfg(test)]
@@ -91,14 +170,10 @@ mod tests {
     use super::*;
     use crate::ast::AstNode;
     use crate::syntax::SyntaxNode;
-    use expect_test::{expect, expect_file, Expect, ExpectFile};
+    use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
 
     fn check(node: SyntaxNode, expect: Expect) {
-        expect.assert_eq(&node.to_string());
-    }
-
-    fn check_file(node: SyntaxNode, expect: ExpectFile) {
         expect.assert_eq(&node.to_string());
     }
 
@@ -108,19 +183,28 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let result = add_paramlist_parens(&root, None, &DboAnalyzeContext::default());
+        let rule = AddParamlistParenthesis;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let location = result.unwrap();
-        check_file(
-            root.syntax().clone(),
-            expect_file!["../../tests/fixtures/secure_dml.sql"],
-        );
+        let mut locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        let location = locations.pop().unwrap();
         assert_eq!(location, TextRange::new(27.into(), 27.into()));
         assert_eq!(&root.syntax().to_string()[location], "");
 
         let root = root.clone_for_update();
-        let result = add_paramlist_parens(&root, Some(location), &DboAnalyzeContext::default());
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -148,20 +232,28 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let result = replace_procedure_prologue(&root, None, &DboAnalyzeContext::default());
+        let rule = ReplacePrologue;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let location = result.unwrap();
-        check_file(
-            root.syntax().clone(),
-            expect_file!["../../tests/fixtures/secure_dml.sql"],
-        );
+        let mut locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        let location = locations.pop().unwrap();
         assert_eq!(location, TextRange::new(28.into(), 30.into()));
         assert_eq!(&root.syntax().to_string()[location], "IS");
 
         let root = root.clone_for_update();
-        let result =
-            replace_procedure_prologue(&root, Some(location), &DboAnalyzeContext::default());
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -189,20 +281,28 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let result = replace_procedure_epilogue(&root, None, &DboAnalyzeContext::default());
+        let rule = ReplaceEpilogue;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let location = result.unwrap();
-        check_file(
-            root.syntax().clone(),
-            expect_file!["../../tests/fixtures/secure_dml.sql"],
-        );
+        let mut locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        let location = locations.pop().unwrap();
         assert_eq!(location, TextRange::new(273.into(), 287.into()));
         assert_eq!(&root.syntax().to_string()[location], "END secure_dml");
 
         let root = root.clone_for_update();
-        let result =
-            replace_procedure_epilogue(&root, Some(location), &DboAnalyzeContext::default());
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -234,12 +334,14 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let result = add_paramlist_parens(&root, None, &DboAnalyzeContext::default());
+        let rule = AddParamlistParenthesis;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
         assert_eq!(result, Err(RuleError::NoChange));
-        check_file(
-            root.syntax().clone(),
-            expect_file!["../../tests/fixtures/empty_parameter_list.sql"],
-        );
     }
 
     #[test]
@@ -248,20 +350,28 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let result = replace_procedure_prologue(&root, None, &DboAnalyzeContext::default());
+        let rule = ReplacePrologue;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let location = result.unwrap();
-        check_file(
-            root.syntax().clone(),
-            expect_file!["../../tests/procedure/heading//procedure_as.ora.sql"],
-        );
+        let mut locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        let location = locations.pop().unwrap();
         assert_eq!(location, TextRange::new(74.into(), 76.into()));
         assert_eq!(&root.syntax().to_string()[location], "AS");
 
         let root = root.clone_for_update();
-        let result =
-            replace_procedure_prologue(&root, Some(location), &DboAnalyzeContext::default());
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();

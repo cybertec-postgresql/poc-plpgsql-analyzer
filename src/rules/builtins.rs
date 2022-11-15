@@ -4,20 +4,46 @@
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{check_parameter_types, RuleError};
+use super::{check_parameter_types, RuleDefinition, RuleError};
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::Root;
+use crate::ast::{AstNode, Root};
+use crate::syntax::SyntaxNode;
 use rowan::TextRange;
 
 /// Dummy rule for demonstrating passing in analyzer context and type checking.
-pub(super) fn fix_trunc(
-    root: &Root,
-    _location: Option<TextRange>,
-    ctx: &DboAnalyzeContext,
-) -> Result<TextRange, RuleError> {
-    check_parameter_types(root, ctx)?;
+///
+/// TODO: Make generic over procedures and functions
+pub(super) struct FixTrunc;
 
-    Err(RuleError::NoChange)
+impl RuleDefinition for FixTrunc {
+    fn short_desc(&self) -> &'static str {
+        "Fix `trunc()` usage based on type"
+    }
+
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        root.procedure()
+            .map(|p| p.syntax().clone())
+            .ok_or(RuleError::NoSuchItem("Procedure"))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        check_parameter_types(node, ctx)?;
+
+        Err(RuleError::NoChange)
+    }
+
+    fn apply(
+        &self,
+        _node: &SyntaxNode,
+        _location: TextRange,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        Err(RuleError::NoChange)
+    }
 }
 
 #[cfg(test)]
@@ -34,8 +60,14 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let change = fix_trunc(&root, None, &DboAnalyzeContext::default());
-        assert_eq!(change, Err(RuleError::NoTableInfo("persons".to_owned())));
+        let rule = FixTrunc;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
+        assert_eq!(result, Err(RuleError::NoTableInfo("persons".to_owned())));
 
         let mut columns = HashMap::new();
         columns.insert("id".into(), DboTableColumn::new(DboColumnType::Integer));
@@ -51,8 +83,8 @@ mod tests {
 
         let mut tables = HashMap::new();
         tables.insert("persons".into(), DboTable::new(columns));
-        let context = DboAnalyzeContext::new(tables);
-        let change = fix_trunc(&root, None, &context);
-        assert_eq!(change, Err(RuleError::NoChange));
+        let ctx = DboAnalyzeContext::new(tables);
+        let result = rule.find(&node, &ctx);
+        assert_eq!(result, Err(RuleError::NoChange));
     }
 }

@@ -134,14 +134,14 @@ describe('passing type context information into analyzer', () => {
       expect(metaData.rules.length).toEqual(2);
       expect(metaData.rules[0]).toEqual({
         name: 'CYAR-0002',
-        location: { offset: { start: 315, end: 317 }},
+        locations: [ { offset: { start: 315, end: 317 } } ],
         short_desc: 'Replace procedure prologue',
       });
       expect(content.substring(315, 317)).toEqual('IS');
 
       expect(metaData.rules[1]).toEqual({
         name: 'CYAR-0003',
-        location: { offset: { start: 571, end: 595 }},
+        locations: [ { offset: { start: 571, end: 595 } } ],
         short_desc: 'Replace procedure epilogue',
       });
       expect(content.substring(571, 595)).toEqual('END log_last_login_fuzzy');

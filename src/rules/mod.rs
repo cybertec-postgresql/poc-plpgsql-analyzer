@@ -2,41 +2,32 @@
 // SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-//! Implements rules for transpiling PL/SQL to PL/pgSQL.
-
-#![allow(dead_code)]
+//! Implements rules for transpiling PL/SQL to PL/pgSQL
 
 pub mod builtins;
 pub mod procedure;
 
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, Param, Root};
+use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::{parse_any, ParseError};
-use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxToken};
-use rowan::TextRange;
+use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
+use rowan::{TextRange, TokenAtOffset};
 use serde::Serialize;
+use std::collections::HashMap;
 use std::ops::Range;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
 
-static ANALYZER_RULES: phf::OrderedMap<&'static str, RuleDefinition> = phf::phf_ordered_map! {
-    "CYAR-0001" => RuleDefinition {
-        short_desc: "Add parameter list parentheses",
-        apply: procedure::add_paramlist_parens,
-    },
-    "CYAR-0002" => RuleDefinition {
-        short_desc: "Replace procedure prologue",
-        apply: procedure::replace_procedure_prologue,
-    },
-    "CYAR-0003" => RuleDefinition {
-        short_desc: "Replace procedure epilogue",
-        apply: procedure::replace_procedure_epilogue,
-    },
-    "CYAR-0004" => RuleDefinition {
-        short_desc: "Fix `trunc()` usage based on type",
-        apply: builtins::fix_trunc,
-    },
-};
+lazy_static::lazy_static! {
+    static ref ANALYZER_RULES: HashMap<&'static str, Box<dyn RuleDefinition + Send + Sync>> = {
+        let mut m = HashMap::new();
+        m.insert("CYAR-0001", Box::new(procedure::AddParamlistParenthesis) as Box<dyn RuleDefinition + Send + Sync>);
+        m.insert("CYAR-0002", Box::new(procedure::ReplacePrologue) as Box<dyn RuleDefinition + Send + Sync>);
+        m.insert("CYAR-0003", Box::new(procedure::ReplaceEpilogue) as Box<dyn RuleDefinition + Send + Sync>);
+        m.insert("CYAR-0004", Box::new(builtins::FixTrunc) as Box<dyn RuleDefinition + Send + Sync>);
+        m
+    };
+}
 
 #[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
@@ -49,13 +40,23 @@ pub enum RuleError {
     NoTableInfo(String),
     #[error("Invalid type reference: {0}")]
     InvalidTypeRef(String),
+    #[error("Invalid location: {0}")]
+    InvalidLocation(RuleLocation),
     #[error("Failed to parse replacement: {0}")]
     ParseError(String),
 }
 
-struct RuleDefinition {
-    short_desc: &'static str,
-    apply: fn(&Root, Option<TextRange>, &DboAnalyzeContext) -> Result<TextRange, RuleError>,
+trait RuleDefinition {
+    fn short_desc(&self) -> &'static str;
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError>;
+    fn find(&self, node: &SyntaxNode, ctx: &DboAnalyzeContext)
+        -> Result<Vec<TextRange>, RuleError>;
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: TextRange,
+        ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError>;
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
@@ -78,7 +79,7 @@ impl From<TextRange> for RuleLocation {
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 pub struct RuleHint {
     name: String,
-    location: RuleLocation,
+    locations: Vec<RuleLocation>,
     short_desc: &'static str,
 }
 
@@ -88,104 +89,97 @@ impl From<ParseError> for RuleError {
     }
 }
 
-impl RuleHint {
-    fn new(loc: Range<usize>, short_desc: &'static str) -> Self {
-        Self {
-            name: String::new(),
-            short_desc,
-            location: RuleLocation::new(loc),
-        }
-    }
-}
-
 pub fn find_applicable_rules(root: &Root, ctx: &DboAnalyzeContext) -> Vec<RuleHint> {
     ANALYZER_RULES
-        .into_iter()
+        .iter()
         .filter_map(|(name, rule)| {
-            (rule.apply)(root, None, ctx).ok().map(|range| RuleHint {
-                name: (*name).to_owned(),
-                location: range.into(),
-                short_desc: rule.short_desc,
-            })
+            rule.get_node(root)
+                .and_then(|node| {
+                    rule.find(&node, ctx).map(|ranges| RuleHint {
+                        name: (*name).to_owned(),
+                        locations: ranges.into_iter().map(Into::into).collect(),
+                        short_desc: rule.short_desc(),
+                    })
+                })
+                .ok()
         })
+        .collect()
+}
+
+/// Finds all child tokens within a syntax tree.
+///
+/// # Arguments
+///
+/// `node`: The parent node to find children token(s) in.
+///
+/// `token_pred`: A closure returning `true` for all tokens to replace.
+///
+/// `map_location`: Transforms the token location to the same format as
+/// `location`.
+fn find_token<P, M>(
+    node: &dyn AstNode<Language = SqlProcedureLang>,
+    token_pred: P,
+    map_location: M,
+) -> Vec<TextRange>
+where
+    P: Fn(&SyntaxToken) -> bool,
+    M: Fn(SyntaxToken) -> TextRange,
+{
+    node.syntax()
+        .children_with_tokens()
+        .filter_map(SyntaxElement::into_token)
+        .filter(token_pred)
+        .map(map_location)
         .collect()
 }
 
 /// Replaces a child token with an updated syntax tree.
 ///
-/// If no `location` is specified, it returns all locations (appropriatly
-/// transformed using `map_location`) suitable tokens to replace were found.
-///
 /// # Arguments
 ///
-/// `node`: The parent node to replace some children token in.
+/// `node`: The parent node to find and replace some children token in.
 ///
-/// `token_pred`: A closure returning `true` for all tokens to replace.
-///
-/// `location`: If not `None`, specifies the exact token to replace based on
-/// it's position.
-///
-/// `map_location`: Transforms the token location to the same format as
-/// `location`.
-///
-/// `item_name`: The name of the item to search for. Used for errors if the
-/// searched-for token could not be found.
+/// `location`: Specifies the exact token to replace based on it's position.
 ///
 /// `replacement`: A parsable string to replace the token(s) with.
 ///
-/// `replace_offset`: The offset and range to delete tokens at.
-fn replace_child<P, M>(
-    node: &dyn AstNode<Language = SqlProcedureLang>,
-    token_pred: P,
-    location: Option<TextRange>,
-    map_location: M,
-    item_name: &'static str,
+/// `replace_offset`: The offset and range from the found token to delete some
+/// tokens at. If the range is empty, no tokens are deleted.
+fn replace_token(
+    node: &SyntaxNode,
+    location: TextRange,
     replacement: &str,
-    replace_offset: Range<usize>,
-) -> Result<TextRange, RuleError>
-where
-    P: Fn(&SyntaxToken) -> bool,
-    M: FnOnce(&SyntaxToken) -> TextRange,
-{
+    to_delete: Range<usize>,
+) -> Result<TextRange, RuleError> {
     let replacement = parse_any(replacement)?.syntax().clone_for_update();
 
-    let token = node
-        .syntax()
-        .children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
-        .find(token_pred)
-        .ok_or(RuleError::NoSuchItem(item_name))?;
+    let start = match node.token_at_offset(location.start()) {
+        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.into())),
+        TokenAtOffset::Single(t) => t.index(),
+        TokenAtOffset::Between(_, t) => t.index(),
+    };
+    let end = match node.token_at_offset(location.start()) {
+        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.into())),
+        TokenAtOffset::Single(t) => t.index(),
+        TokenAtOffset::Between(_, t) => t.index(),
+    };
 
-    let range = map_location(&token);
-
-    match location {
-        // Only replace the node if a) the user requested replacement by specifying
-        // an location and b) if that location actually matches where we found our
-        // node to replace.
-        Some(loc) if loc == range => {
-            let index = token.index();
-            node.syntax().splice_children(
-                index + replace_offset.start..index + replace_offset.end,
-                vec![SyntaxElement::Node(replacement.clone())],
-            );
-            Ok(replacement.text_range())
-        }
-        Some(_) => Err(RuleError::NoSuchItem(item_name)),
-        None => Ok(range),
-    }
+    node.splice_children(
+        start + to_delete.start..end + to_delete.end,
+        vec![SyntaxElement::Node(replacement.clone())],
+    );
+    Ok(replacement.text_range())
 }
 
-fn check_parameter_types(root: &Root, ctx: &DboAnalyzeContext) -> Result<(), RuleError> {
-    if let Some(params) = root
-        .procedure()
+fn check_parameter_types(node: &SyntaxNode, ctx: &DboAnalyzeContext) -> Result<(), RuleError> {
+    if let Some(params) = Procedure::cast(node.clone())
         .and_then(|p| p.header())
         .and_then(|p| p.param_list())
     {
         return check_parameter_types_lower(&params.params(), ctx);
     }
 
-    if let Some(params) = root
-        .function()
+    if let Some(params) = Function::cast(node.clone())
         .and_then(|f| f.header())
         .and_then(|f| f.param_list())
     {
