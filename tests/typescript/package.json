@@ -1,7 +1,7 @@
 {
   "name": "poc-plpgsql-analyzer-ts-test",
   "scripts": {
-    "test": "sh -c 'wasm-pack build --target nodejs ../.. && npm run jest'",
+    "test": "sh -c 'wasm-pack build --dev --target nodejs ../.. && npm run jest'",
     "jest": "jest"
   },
   "devDependencies": {
