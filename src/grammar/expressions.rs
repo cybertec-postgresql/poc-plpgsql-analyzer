@@ -24,7 +24,12 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
     let token = p.current();
     match token {
-        TokenKind::Ident | TokenKind::QuotedLiteral | TokenKind::Integer => p.bump_any(),
+        TokenKind::Ident | TokenKind::QuotedLiteral | TokenKind::Integer => {
+            p.bump_any();
+            if min_bp == 0 && (p.at(TokenKind::SemiColon) || p.at(TokenKind::Eof)) {
+                add_expr_node(p, checkpoint, None);
+            }
+        }
         TokenKind::LParen => {
             p.bump_any();
             expr_bp(p, 0);
@@ -118,7 +123,8 @@ mod tests {
             parse("1", parse_expr),
             expect![[r#"
 Root@0..1
-  Integer@0..1 "1"
+  Expression@0..1
+    Integer@0..1 "1"
 "#]],
         );
     }
