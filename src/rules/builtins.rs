@@ -4,27 +4,26 @@
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{check_parameter_types, RuleChanges, RuleError};
-use crate::ast::{AstNode, Root};
-use crate::DboAnalyzeContext;
+use super::{check_parameter_types, RuleError};
+use crate::analyze::DboAnalyzeContext;
+use crate::ast::Root;
+use rowan::TextRange;
 
-/// Dummy rule for demonstrating passing in analyzer context.
-pub fn fix_trunc(root: &Root, ctx: &DboAnalyzeContext) -> Result<RuleChanges, RuleError> {
-    if !check_parameter_types(root, ctx) {
-        return Err("Parameter type information needed".to_owned());
-    }
+/// Dummy rule for demonstrating passing in analyzer context and type checking.
+pub(super) fn fix_trunc(
+    root: &Root,
+    _location: Option<TextRange>,
+    ctx: &DboAnalyzeContext,
+) -> Result<TextRange, RuleError> {
+    check_parameter_types(root, ctx)?;
 
-    let replacement = root.clone_for_update();
-
-    Ok(RuleChanges {
-        replacement: replacement.syntax().clone(),
-        hints: Vec::new(),
-    })
+    Err(RuleError::NoChange)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::ast::AstNode;
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
@@ -35,8 +34,8 @@ mod tests {
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
-        let change = fix_trunc(&root, &DboAnalyzeContext::default());
-        assert_eq!(change, Err("Parameter type information needed".to_owned()));
+        let change = fix_trunc(&root, None, &DboAnalyzeContext::default());
+        assert_eq!(change, Err(RuleError::NoTableInfo("persons".to_owned())));
 
         let mut columns = HashMap::new();
         columns.insert("id".into(), DboTableColumn::new(DboColumnType::Integer));
@@ -53,7 +52,7 @@ mod tests {
         let mut tables = HashMap::new();
         tables.insert("persons".into(), DboTable::new(columns));
         let context = DboAnalyzeContext::new(tables);
-        let change = fix_trunc(&root, &context);
-        assert!(change.is_ok(), "{:#?}", change);
+        let change = fix_trunc(&root, None, &context);
+        assert_eq!(change, Err(RuleError::NoChange));
     }
 }
