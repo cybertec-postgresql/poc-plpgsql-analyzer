@@ -154,7 +154,7 @@ where
         .children_with_tokens()
         .filter_map(SyntaxElement::into_token)
         .find(token_pred)
-        .ok_or_else(|| RuleError::NoSuchItem(item_name))?;
+        .ok_or(RuleError::NoSuchItem(item_name))?;
 
     let range = map_location(&token);
 

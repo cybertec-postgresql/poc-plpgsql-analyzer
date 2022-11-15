@@ -230,7 +230,7 @@ fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData,
     let lines_of_code = body.matches('\n').count();
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(&root, &ctx),
+        rules: find_applicable_rules(&root, ctx),
         function: None,
         procedure: Some(DboProcedureMetaData {
             name,
@@ -256,7 +256,7 @@ fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, Ana
         .unwrap_or(0);
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(&root, &ctx),
+        rules: find_applicable_rules(&root, ctx),
         function: None,
         procedure: None,
         query: Some(DboQueryMetaData { outer_joins }),
