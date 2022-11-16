@@ -35,17 +35,17 @@ pub enum DboType {
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboFunctionMetaData {
-    name: String,
-    body: String,
-    lines_of_code: usize,
+    pub name: String,
+    pub body: String,
+    pub lines_of_code: usize,
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboProcedureMetaData {
-    name: String,
-    body: String,
-    lines_of_code: usize,
+    pub name: String,
+    pub body: String,
+    pub lines_of_code: usize,
 }
 
 #[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
@@ -53,17 +53,17 @@ pub struct DboProcedureMetaData {
 pub struct DboQueryMetaData {
     // For now, we only report how many OUTER JOINs there are, but not any
     // other info about them yet.
-    outer_joins: usize,
+    pub outer_joins: usize,
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
 #[derive(Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboMetaData {
-    rules: Vec<RuleHint>,
-    function: Option<DboFunctionMetaData>,
-    procedure: Option<DboProcedureMetaData>,
-    query: Option<DboQueryMetaData>,
+    pub rules: Vec<RuleHint>,
+    pub function: Option<DboFunctionMetaData>,
+    pub procedure: Option<DboProcedureMetaData>,
+    pub query: Option<DboQueryMetaData>,
 }
 
 /// List of possible datatypes for tuple fields.
