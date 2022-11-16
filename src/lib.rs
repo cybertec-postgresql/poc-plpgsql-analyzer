@@ -15,4 +15,5 @@ mod util;
 
 pub use analyze::*;
 pub use parser::*;
+pub use rules::apply_rule;
 pub use util::SqlIdent;

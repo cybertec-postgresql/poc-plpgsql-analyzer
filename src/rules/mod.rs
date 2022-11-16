@@ -7,13 +7,14 @@
 pub mod builtins;
 pub mod procedure;
 
-use crate::analyze::DboAnalyzeContext;
+use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
-use crate::parser::{parse_any, ParseError};
+use crate::parser::*;
 use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
 use rowan::{TextRange, TokenAtOffset};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt;
 use std::ops::Range;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
@@ -42,8 +43,12 @@ pub enum RuleError {
     InvalidTypeRef(String),
     #[error("Invalid location: {0}")]
     InvalidLocation(RuleLocation),
+    #[error("Rule '{0}' not found")]
+    RuleNotFound(String),
     #[error("Failed to parse replacement: {0}")]
     ParseError(String),
+    #[error("Language construct unsupported: {0:?}")]
+    Unsupported(DboType),
 }
 
 trait RuleDefinition {
@@ -59,13 +64,13 @@ trait RuleDefinition {
     ) -> Result<TextRange, RuleError>;
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct RuleLocation {
-    offset: Range<usize>,
+    offset: Range<u32>,
 }
 
 impl RuleLocation {
-    fn new(offset: Range<usize>) -> Self {
+    fn new(offset: Range<u32>) -> Self {
         Self { offset }
     }
 }
@@ -73,6 +78,21 @@ impl RuleLocation {
 impl From<TextRange> for RuleLocation {
     fn from(text_range: TextRange) -> Self {
         Self::new(text_range.start().into()..text_range.end().into())
+    }
+}
+
+impl From<RuleLocation> for TextRange {
+    fn from(location: RuleLocation) -> Self {
+        TextRange::at(
+            location.offset.start.into(),
+            (location.offset.len() as u32).into(),
+        )
+    }
+}
+
+impl fmt::Display for RuleLocation {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}:{}", self.offset.start, self.offset.end)
     }
 }
 
@@ -104,6 +124,51 @@ pub fn find_applicable_rules(root: &Root, ctx: &DboAnalyzeContext) -> Vec<RuleHi
                 .ok()
         })
         .collect()
+}
+
+pub fn apply_rule(
+    typ: DboType,
+    sql: &str,
+    rule_name: &str,
+    location: RuleLocation,
+    ctx: &DboAnalyzeContext,
+) -> Result<RuleLocation, RuleError> {
+    let apply = |p: Parse| {
+        let rule = ANALYZER_RULES
+            .get(rule_name)
+            .ok_or_else(|| RuleError::RuleNotFound(rule_name.to_owned()))?;
+
+        let root = Root::cast(p.syntax())
+            .ok_or_else(|| RuleError::ParseError("failed to find root node".to_owned()))?;
+
+        let node = rule.get_node(&root)?;
+        rule.apply(&node, location.into(), ctx).map(Into::into)
+    };
+
+    match typ {
+        DboType::Function => apply(parse_function(sql)?),
+        DboType::Procedure => apply(parse_procedure(sql)?),
+        DboType::Query => apply(parse_query(sql)?),
+        _ => Err(RuleError::Unsupported(typ)),
+    }
+}
+
+#[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
+#[wasm_bindgen(js_name = "apply_rule")]
+pub fn js_apply_rule(
+    typ: DboType,
+    sql: &str,
+    rule: &str,
+    location: JsValue,
+    ctx: JsValue,
+) -> Result<JsValue, JsValue> {
+    let location = serde_wasm_bindgen::from_value(location)?;
+    let ctx = serde_wasm_bindgen::from_value(ctx)?;
+
+    match apply_rule(typ, sql, rule, location, &ctx) {
+        Ok(location) => Ok(serde_wasm_bindgen::to_value(&location)?),
+        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
+    }
 }
 
 /// Finds all child tokens within a syntax tree.
