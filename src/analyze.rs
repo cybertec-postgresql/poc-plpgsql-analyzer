@@ -327,7 +327,7 @@ mod tests {
             _ => unreachable!(),
         }
 
-        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
+        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.ora.sql");
         let result = analyze(
             DboType::Procedure,
             SECURE_DML,

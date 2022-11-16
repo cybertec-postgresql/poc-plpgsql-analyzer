@@ -183,4 +183,102 @@ Root@0..31
 "#]],
         );
     }
+
+    #[test]
+    fn test_parse_pg_procedure() {
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.pg.sql");
+
+        check(
+            parse(INPUT, parse_procedure),
+            expect![[r#"
+Root@0..304
+  Procedure@0..304
+    ProcedureHeader@0..30
+      Keyword@0..6 "CREATE"
+      Whitespace@6..7 " "
+      Keyword@7..16 "PROCEDURE"
+      Whitespace@16..17 " "
+      Ident@17..27 "secure_dml"
+      ParamList@27..29
+        LParen@27..28 "("
+        RParen@28..29 ")"
+      Whitespace@29..30 "\n"
+    Keyword@30..32 "AS"
+    Whitespace@32..33 " "
+    DollarQuote@33..35 "$$"
+    Whitespace@35..36 "\n"
+    Keyword@36..41 "BEGIN"
+    Whitespace@41..44 "\n  "
+    ProcedureBody@44..278
+      Ident@44..46 "IF"
+      Whitespace@46..47 " "
+      Ident@47..54 "TO_CHAR"
+      Whitespace@54..55 " "
+      LParen@55..56 "("
+      Ident@56..63 "SYSDATE"
+      Comma@63..64 ","
+      Whitespace@64..65 " "
+      QuotedLiteral@65..74 "'HH24:MI'"
+      RParen@74..75 ")"
+      Whitespace@75..76 " "
+      Ident@76..79 "NOT"
+      Whitespace@79..80 " "
+      Ident@80..87 "BETWEEN"
+      Whitespace@87..88 " "
+      QuotedLiteral@88..95 "'08:00'"
+      Whitespace@95..96 " "
+      Keyword@96..99 "AND"
+      Whitespace@99..100 " "
+      QuotedLiteral@100..107 "'18:00'"
+      Whitespace@107..116 "\n        "
+      Keyword@116..118 "OR"
+      Whitespace@118..119 " "
+      Ident@119..126 "TO_CHAR"
+      Whitespace@126..127 " "
+      LParen@127..128 "("
+      Ident@128..135 "SYSDATE"
+      Comma@135..136 ","
+      Whitespace@136..137 " "
+      QuotedLiteral@137..141 "'DY'"
+      RParen@141..142 ")"
+      Whitespace@142..143 " "
+      Keyword@143..145 "IN"
+      Whitespace@145..146 " "
+      LParen@146..147 "("
+      QuotedLiteral@147..152 "'SAT'"
+      Comma@152..153 ","
+      Whitespace@153..154 " "
+      QuotedLiteral@154..159 "'SUN'"
+      RParen@159..160 ")"
+      Whitespace@160..161 " "
+      Ident@161..165 "THEN"
+      Whitespace@165..170 "\n    "
+      Ident@170..193 "RAISE_APPLICATION_ERROR"
+      Whitespace@193..194 " "
+      LParen@194..195 "("
+      Integer@195..201 "-20205"
+      Comma@201..202 ","
+      Whitespace@202..211 "\n        "
+      QuotedLiteral@211..265 "'You may only make ch ..."
+      RParen@265..266 ")"
+      SemiColon@266..267 ";"
+      Whitespace@267..270 "\n  "
+      Keyword@270..273 "END"
+      Whitespace@273..274 " "
+      Ident@274..276 "IF"
+      SemiColon@276..277 ";"
+      Whitespace@277..278 "\n"
+    Keyword@278..281 "END"
+    SemiColon@281..282 ";"
+    Whitespace@282..283 "\n"
+    DollarQuote@283..285 "$$"
+    Whitespace@285..286 " "
+    Ident@286..294 "LANGUAGE"
+    Whitespace@294..295 " "
+    Ident@295..302 "plpgsql"
+    SemiColon@302..303 ";"
+    Whitespace@303..304 "\n"
+"#]],
+        );
+    }
 }

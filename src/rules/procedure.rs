@@ -179,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_add_paramlist_parens() {
-        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.sql");
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
@@ -228,7 +228,7 @@ mod tests {
 
     #[test]
     fn test_replace_procedure_prologue() {
-        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.sql");
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
@@ -277,7 +277,7 @@ mod tests {
 
     #[test]
     fn test_replace_procedure_epilogue() {
-        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.sql");
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();
@@ -346,7 +346,7 @@ mod tests {
 
     #[test]
     fn accept_either_is_or_as_in_procedure_prologue() {
-        const INPUT: &str = include_str!("../../tests/procedure/heading//procedure_as.ora.sql");
+        const INPUT: &str = include_str!("../../tests/procedure/heading/procedure_as.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
         let root = Root::cast(parse.syntax()).unwrap();

@@ -139,9 +139,8 @@ Root@0..5
 
     #[test]
     fn test_parse_ident_with_trivia() {
-        const INPUT: &str = " -- hello\n  foo";
         check(
-            parse(INPUT, parse_ident),
+            parse(" -- hello\n  foo", parse_ident),
             expect![[r#"
 Root@0..15
   Whitespace@0..1 " "
