@@ -4,6 +4,8 @@
 
 //! Implements miscellaneous types and helper.
 
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::fmt;
 use std::hash::{Hash, Hasher};
 
@@ -76,5 +78,31 @@ impl Hash for SqlIdent {
         } else {
             self.name.to_lowercase().hash(state);
         }
+    }
+}
+
+struct SqlIdentVisitor;
+
+impl<'de> Visitor<'de> for SqlIdentVisitor {
+    type Value = SqlIdent;
+
+    fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_str("a valid SQL identifier")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(v.into())
+    }
+}
+
+impl<'de> Deserialize<'de> for SqlIdent {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(SqlIdentVisitor)
     }
 }

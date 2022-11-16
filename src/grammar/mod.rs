@@ -91,6 +91,10 @@ fn parse_ident(p: &mut Parser) {
     p.expect(TokenKind::Ident);
 }
 
+fn eat_ident(p: &mut Parser) {
+    p.eat(TokenKind::Ident);
+}
+
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
     if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
@@ -135,9 +139,8 @@ Root@0..5
 
     #[test]
     fn test_parse_ident_with_trivia() {
-        const INPUT: &str = " -- hello\n  foo";
         check(
-            parse(INPUT, parse_ident),
+            parse(" -- hello\n  foo", parse_ident),
             expect![[r#"
 Root@0..15
   Whitespace@0..1 " "

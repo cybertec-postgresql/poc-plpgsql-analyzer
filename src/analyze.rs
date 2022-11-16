@@ -6,6 +6,7 @@
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
+use crate::rules::{find_applicable_rules, RuleHint};
 use crate::syntax::SyntaxKind;
 use crate::util::SqlIdent;
 use serde::{Deserialize, Serialize};
@@ -16,8 +17,8 @@ use wasm_typescript_definition::TypescriptDefinition;
 /// Different types the analyzer can possibly examine.
 ///
 /// Some types may be only available for specific frontends, e.g.
-/// [`Package`][`Type::Package`] is only available for Oracle databases.
-#[derive(Debug, Eq, PartialEq, Serialize)]
+/// [`Package`][`DboType::Package`] is only available for Oracle databases.
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize)]
 #[wasm_bindgen]
 pub enum DboType {
     CheckConstraint,
@@ -31,35 +32,45 @@ pub enum DboType {
     View,
 }
 
-/// The result of parsing and analyzing a piece of SQL code.
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
-pub enum DboMetaData {
-    #[serde(rename_all = "camelCase")]
-    Function {
-        name: String,
-        body: String,
-        lines_of_code: usize,
-    },
-    #[serde(rename_all = "camelCase")]
-    Procedure {
-        name: String,
-        body: String,
-        lines_of_code: usize,
-    },
-    #[serde(rename_all = "camelCase")]
-    Query {
-        // For now, we only report how many OUTER JOINs there are, but not any
-        // other info about them yet.
-        outer_joins: usize,
-    },
+pub struct DboFunctionMetaData {
+    pub name: String,
+    pub body: String,
+    pub lines_of_code: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboProcedureMetaData {
+    pub name: String,
+    pub body: String,
+    pub lines_of_code: usize,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboQueryMetaData {
+    // For now, we only report how many OUTER JOINs there are, but not any
+    // other info about them yet.
+    pub outer_joins: usize,
+}
+
+/// The result of parsing and analyzing a piece of SQL code.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[serde(rename_all = "camelCase")]
+pub struct DboMetaData {
+    pub rules: Vec<RuleHint>,
+    pub function: Option<DboFunctionMetaData>,
+    pub procedure: Option<DboProcedureMetaData>,
+    pub query: Option<DboQueryMetaData>,
 }
 
 /// List of possible datatypes for tuple fields.
 ///
 /// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
 /// but furter extensible as needed. Keep alphabetically sorted.
-#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
 #[wasm_bindgen]
 pub enum DboColumnType {
     BigInt,
@@ -75,7 +86,7 @@ pub enum DboColumnType {
     TimeWithTz,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboTableColumn {
     typ: DboColumnType,
@@ -87,7 +98,7 @@ impl DboTableColumn {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboTable {
     columns: HashMap<SqlIdent, DboTableColumn>,
 }
@@ -98,25 +109,7 @@ impl DboTable {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
-#[serde(rename_all = "camelCase")]
-pub struct JsDboTable {
-    columns: HashMap<String, DboTableColumn>,
-}
-
-impl From<JsDboTable> for DboTable {
-    fn from(from: JsDboTable) -> Self {
-        let mut columns = HashMap::new();
-
-        for (k, v) in from.columns {
-            columns.insert(k.into(), v);
-        }
-
-        Self { columns }
-    }
-}
-
-#[derive(Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboAnalyzeContext {
     tables: HashMap<SqlIdent, DboTable>,
 }
@@ -132,24 +125,6 @@ impl DboAnalyzeContext {
         column: &SqlIdent,
     ) -> Option<&DboTableColumn> {
         self.tables.get(table).and_then(|t| t.columns.get(column))
-    }
-}
-
-#[derive(Debug, Default, Eq, PartialEq, Deserialize, TypescriptDefinition)]
-#[serde(rename_all = "camelCase")]
-pub struct JsDboAnalyzeContext {
-    tables: HashMap<String, JsDboTable>,
-}
-
-impl From<JsDboAnalyzeContext> for DboAnalyzeContext {
-    fn from(from: JsDboAnalyzeContext) -> Self {
-        let mut tables = HashMap::new();
-
-        for (k, v) in from.tables {
-            tables.insert(k.into(), v.into());
-        }
-
-        Self { tables }
     }
 }
 
@@ -179,10 +154,15 @@ pub fn analyze(
     sql: &str,
     ctx: &DboAnalyzeContext,
 ) -> Result<DboMetaData, AnalyzeError> {
+    let cast_to_root = |p: Parse| {
+        Root::cast(p.syntax())
+            .ok_or_else(|| AnalyzeError::ParseError("failed to find root node".to_owned()))
+    };
+
     match typ {
-        DboType::Function => analyze_function(parse_function(sql)?, ctx),
-        DboType::Procedure => analyze_procedure(parse_procedure(sql)?, ctx),
-        DboType::Query => analyze_query(parse_query(sql)?, ctx),
+        DboType::Function => analyze_function(cast_to_root(parse_function(sql)?)?, ctx),
+        DboType::Procedure => analyze_procedure(cast_to_root(parse_procedure(sql)?)?, ctx),
+        DboType::Query => analyze_query(cast_to_root(parse_query(sql)?)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -190,28 +170,31 @@ pub fn analyze(
 /// WASM export of [`analyze()`]. Should _never_ be called from other Rust code.
 ///
 /// A second, WASM-specific function is needed here. Since the only allowed
-/// [`Result`] type to return to JS is a [`Result<T, JsError>`], we just call
+/// [`Result`] type to return to JS is a [`Result<T, JsValue>`], we just call
 /// the actual [`analyze()`] function and map the error type.
 ///
 /// For one, the main [`analyze()`] function shouldn't return a
-/// [`JsError`][`wasm_bindgen::JsError`], since it should represent the "normal"
+/// [`JsValue`][`wasm_bindgen::JsValue`], since it should represent the "normal"
 /// entry point into the library (e.g. from other Rust code). And secondly,
-/// [`JsError`][`wasm_bindgen::JsError`] doesn't implement the
+/// [`JsValue`][`wasm_bindgen::JsValue`] doesn't implement the
 /// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
+/// And secondly, we want to transparently parse
+/// [`DboAnalyzeContext`][`self::DboAnalyzeContext`] from the raw JS value
+/// and pass it on.
 #[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
 #[wasm_bindgen(js_name = "analyze")]
 pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
-    let ctx = serde_wasm_bindgen::from_value::<JsDboAnalyzeContext>(ctx)?;
+    let ctx = serde_wasm_bindgen::from_value(ctx)?;
 
-    match analyze(typ, sql, &ctx.into()) {
+    match analyze(typ, sql, &ctx) {
         Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
         Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
 }
 
-fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let function = Root::cast(parse.syntax())
-        .and_then(|p| p.function())
+fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let function = root
+        .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
 
     let body = function
@@ -222,16 +205,20 @@ fn analyze_function(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDat
     let name = function.name().unwrap_or_else(|| "<unknown>".to_string());
     let lines_of_code = body.matches('\n').count();
 
-    Ok(DboMetaData::Function {
-        name,
-        body,
-        lines_of_code,
+    Ok(DboMetaData {
+        rules: find_applicable_rules(&root, ctx),
+        function: Some(DboFunctionMetaData {
+            name,
+            body,
+            lines_of_code,
+        }),
+        ..Default::default()
     })
 }
 
-fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let procedure = Root::cast(parse.syntax())
-        .and_then(|r| r.procedure())
+fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let procedure = root
+        .procedure()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
 
     let body = procedure
@@ -242,16 +229,20 @@ fn analyze_procedure(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaDa
     let name = procedure.name().unwrap_or_else(|| "<unknown>".to_string());
     let lines_of_code = body.matches('\n').count();
 
-    Ok(DboMetaData::Procedure {
-        name,
-        body,
-        lines_of_code,
+    Ok(DboMetaData {
+        rules: find_applicable_rules(&root, ctx),
+        procedure: Some(DboProcedureMetaData {
+            name,
+            body,
+            lines_of_code,
+        }),
+        ..Default::default()
     })
 }
 
-fn analyze_query(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
-    let query = Root::cast(parse.syntax())
-        .and_then(|r| r.query())
+fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+    let query = root
+        .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
 
     let outer_joins = query
@@ -263,7 +254,11 @@ fn analyze_query(parse: Parse, _ctx: &DboAnalyzeContext) -> Result<DboMetaData, 
         })
         .unwrap_or(0);
 
-    Ok(DboMetaData::Query { outer_joins })
+    Ok(DboMetaData {
+        rules: find_applicable_rules(&root, ctx),
+        query: Some(DboQueryMetaData { outer_joins }),
+        ..Default::default()
+    })
 }
 
 #[cfg(test)]
@@ -281,11 +276,19 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Function {
-                name,
-                lines_of_code,
+            DboMetaData {
+                function:
+                    Some(DboFunctionMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
+                procedure,
+                query,
                 ..
             } => {
+                assert_eq!(procedure, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "function_heading_example");
                 assert_eq!(lines_of_code, 1);
             }
@@ -305,18 +308,26 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Procedure {
-                name,
-                lines_of_code,
+            DboMetaData {
+                function,
+                procedure:
+                    Some(DboProcedureMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
+                query,
                 ..
             } => {
+                assert_eq!(function, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "add_job_history");
                 assert_eq!(lines_of_code, 3);
             }
             _ => unreachable!(),
         }
 
-        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.sql");
+        const SECURE_DML: &str = include_str!("../tests/fixtures/secure_dml.ora.sql");
         let result = analyze(
             DboType::Procedure,
             SECURE_DML,
@@ -326,11 +337,19 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Procedure {
-                name,
-                lines_of_code,
+            DboMetaData {
+                function,
+                procedure:
+                    Some(DboProcedureMetaData {
+                        name,
+                        lines_of_code,
+                        ..
+                    }),
+                query,
                 ..
             } => {
+                assert_eq!(function, None);
+                assert_eq!(query, None);
                 assert_eq!(name, "secure_dml");
                 assert_eq!(lines_of_code, 5);
             }
@@ -346,7 +365,14 @@ mod tests {
         let result = result.unwrap();
 
         match result {
-            DboMetaData::Query { outer_joins, .. } => {
+            DboMetaData {
+                function,
+                procedure,
+                query: Some(DboQueryMetaData { outer_joins, .. }),
+                ..
+            } => {
+                assert_eq!(function, None);
+                assert_eq!(procedure, None);
                 assert_eq!(outer_joins, 1);
             }
             _ => unreachable!(),

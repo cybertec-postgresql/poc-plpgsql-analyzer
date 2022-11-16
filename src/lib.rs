@@ -4,6 +4,8 @@
 
 //! Proof of concept interface and implementation for a PL/SQL parser.
 
+#![forbid(unsafe_code)]
+
 mod analyze;
 mod ast;
 mod grammar;
@@ -15,4 +17,5 @@ mod util;
 
 pub use analyze::*;
 pub use parser::*;
+pub use rules::apply_rule;
 pub use util::SqlIdent;
