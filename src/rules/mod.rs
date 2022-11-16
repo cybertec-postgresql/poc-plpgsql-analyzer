@@ -72,7 +72,7 @@ trait RuleDefinition {
     ) -> Result<TextRange, RuleError>;
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct RuleLocation {
     offset: Range<u32>,
 }
@@ -104,7 +104,7 @@ impl fmt::Display for RuleLocation {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 pub struct RuleHint {
     name: String,
     locations: Vec<RuleLocation>,

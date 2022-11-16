@@ -18,7 +18,7 @@ use wasm_typescript_definition::TypescriptDefinition;
 ///
 /// Some types may be only available for specific frontends, e.g.
 /// [`Package`][`DboType::Package`] is only available for Oracle databases.
-#[derive(Debug, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize)]
 #[wasm_bindgen]
 pub enum DboType {
     CheckConstraint,
@@ -32,7 +32,7 @@ pub enum DboType {
     View,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboFunctionMetaData {
     pub name: String,
@@ -40,7 +40,7 @@ pub struct DboFunctionMetaData {
     pub lines_of_code: usize,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboProcedureMetaData {
     pub name: String,
@@ -48,7 +48,7 @@ pub struct DboProcedureMetaData {
     pub lines_of_code: usize,
 }
 
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboQueryMetaData {
     // For now, we only report how many OUTER JOINs there are, but not any
@@ -57,7 +57,7 @@ pub struct DboQueryMetaData {
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
-#[derive(Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboMetaData {
     pub rules: Vec<RuleHint>,
@@ -70,7 +70,7 @@ pub struct DboMetaData {
 ///
 /// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
 /// but furter extensible as needed. Keep alphabetically sorted.
-#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
 #[wasm_bindgen]
 pub enum DboColumnType {
     BigInt,
@@ -86,7 +86,7 @@ pub enum DboColumnType {
     TimeWithTz,
 }
 
-#[derive(Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboTableColumn {
     typ: DboColumnType,
@@ -98,7 +98,7 @@ impl DboTableColumn {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboTable {
     columns: HashMap<SqlIdent, DboTableColumn>,
 }
@@ -109,7 +109,7 @@ impl DboTable {
     }
 }
 
-#[derive(Debug, Default, Eq, PartialEq, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboAnalyzeContext {
     tables: HashMap<SqlIdent, DboTable>,
 }
