@@ -91,6 +91,10 @@ fn parse_ident(p: &mut Parser) {
     p.expect(TokenKind::Ident);
 }
 
+fn eat_ident(p: &mut Parser) {
+    p.eat(TokenKind::Ident);
+}
+
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
     if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {

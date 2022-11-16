@@ -39,6 +39,7 @@ fn parse_header(p: &mut Parser) {
 /// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
+    p.eat(TokenKind::DollarQuote);
     parse_var_decl_list(p);
     p.expect(TokenKind::BeginKw);
     p.eat_ws();
@@ -48,7 +49,7 @@ fn parse_body(p: &mut Parser) {
     p.finish();
 
     p.expect(TokenKind::EndKw);
-    parse_ident(p);
+    eat_ident(p);
     p.expect(TokenKind::SemiColon);
     p.eat_ws();
 }
