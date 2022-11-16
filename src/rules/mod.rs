@@ -19,14 +19,22 @@ use std::ops::Range;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
 
+macro_rules! rule_list {
+    ( $( $name:literal => $ty:path ),+ $(,)? ) => {
+        let mut m = HashMap::new();
+        $( m.insert($name, Box::new($ty) as Box<dyn RuleDefinition + Send + Sync>); )+
+        m
+    };
+}
+
 lazy_static::lazy_static! {
     static ref ANALYZER_RULES: HashMap<&'static str, Box<dyn RuleDefinition + Send + Sync>> = {
-        let mut m = HashMap::new();
-        m.insert("CYAR-0001", Box::new(procedure::AddParamlistParenthesis) as Box<dyn RuleDefinition + Send + Sync>);
-        m.insert("CYAR-0002", Box::new(procedure::ReplacePrologue) as Box<dyn RuleDefinition + Send + Sync>);
-        m.insert("CYAR-0003", Box::new(procedure::ReplaceEpilogue) as Box<dyn RuleDefinition + Send + Sync>);
-        m.insert("CYAR-0004", Box::new(builtins::FixTrunc) as Box<dyn RuleDefinition + Send + Sync>);
-        m
+        rule_list! {
+            "CYAR-0001" => procedure::AddParamlistParenthesis,
+            "CYAR-0002" => procedure::ReplacePrologue,
+            "CYAR-0003" => procedure::ReplaceEpilogue,
+            "CYAR-0004" => builtins::FixTrunc,
+        }
     };
 }
 
