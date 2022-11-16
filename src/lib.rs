@@ -4,6 +4,8 @@
 
 //! Proof of concept interface and implementation for a PL/SQL parser.
 
+#![forbid(unsafe_code)]
+
 mod analyze;
 mod ast;
 mod grammar;
