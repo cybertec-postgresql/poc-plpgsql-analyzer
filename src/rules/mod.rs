@@ -226,6 +226,12 @@ fn replace_token(
 ) -> Result<TextRange, RuleError> {
     let replacement = parse_any(replacement)?.syntax().clone_for_update();
 
+    if !node.text_range().contains_range(location) {
+        return Err(RuleError::InvalidLocation(location.into()));
+    }
+
+    let last = node.last_child_or_token().map(|e| e.index()).unwrap_or(0);
+
     let start = match node.token_at_offset(location.start()) {
         TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.into())),
         TokenAtOffset::Single(t) => t.index(),
@@ -237,10 +243,15 @@ fn replace_token(
         TokenAtOffset::Between(_, t) => t.index(),
     };
 
-    node.splice_children(
-        start + to_delete.start..end + to_delete.end,
-        vec![SyntaxElement::Node(replacement.clone())],
-    );
+    let to_delete = start + to_delete.start..end + to_delete.end;
+
+    // Check carefully that we also have a valid index range, as
+    // `.splice_children()` will straight up panic with out-of-bounds indices.
+    if to_delete.end > last {
+        return Err(RuleError::InvalidLocation(location.into()));
+    }
+
+    node.splice_children(to_delete, vec![SyntaxElement::Node(replacement.clone())]);
     Ok(replacement.text_range())
 }
 
