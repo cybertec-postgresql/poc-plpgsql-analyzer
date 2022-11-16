@@ -57,7 +57,7 @@ pub struct DboQueryMetaData {
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
-#[derive(Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
 #[serde(rename_all = "camelCase")]
 pub struct DboMetaData {
     rules: Vec<RuleHint>,
@@ -100,7 +100,7 @@ impl DboTableColumn {
 
 #[derive(Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboTable {
-    pub(crate) columns: HashMap<SqlIdent, DboTableColumn>,
+    columns: HashMap<SqlIdent, DboTableColumn>,
 }
 
 impl DboTable {
@@ -111,7 +111,7 @@ impl DboTable {
 
 #[derive(Debug, Default, Eq, PartialEq, Deserialize)]
 pub struct DboAnalyzeContext {
-    pub(crate) tables: HashMap<SqlIdent, DboTable>,
+    tables: HashMap<SqlIdent, DboTable>,
 }
 
 impl DboAnalyzeContext {
@@ -181,9 +181,10 @@ pub fn analyze(
 /// And secondly, we want to transparently parse
 /// [`DboAnalyzeContext`][`self::DboAnalyzeContext`] from the raw JS value
 /// and pass it on.
+#[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
 #[wasm_bindgen(js_name = "analyze")]
 pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
-    let ctx = serde_wasm_bindgen::from_value::<DboAnalyzeContext>(ctx)?;
+    let ctx = serde_wasm_bindgen::from_value(ctx)?;
 
     match analyze(typ, sql, &ctx) {
         Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
@@ -211,8 +212,7 @@ fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, 
             body,
             lines_of_code,
         }),
-        procedure: None,
-        query: None,
+        ..Default::default()
     })
 }
 
@@ -231,13 +231,12 @@ fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData,
 
     Ok(DboMetaData {
         rules: find_applicable_rules(&root, ctx),
-        function: None,
         procedure: Some(DboProcedureMetaData {
             name,
             body,
             lines_of_code,
         }),
-        query: None,
+        ..Default::default()
     })
 }
 
@@ -257,9 +256,8 @@ fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, Ana
 
     Ok(DboMetaData {
         rules: find_applicable_rules(&root, ctx),
-        function: None,
-        procedure: None,
         query: Some(DboQueryMetaData { outer_joins }),
+        ..Default::default()
     })
 }
 
