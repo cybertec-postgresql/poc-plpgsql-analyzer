@@ -13,7 +13,7 @@ use crate::parser::*;
 use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
 use rowan::{TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use indexmap::IndexMap;
 use std::fmt;
 use std::ops::Range;
 use wasm_bindgen::prelude::*;
@@ -21,14 +21,14 @@ use wasm_typescript_definition::TypescriptDefinition;
 
 macro_rules! rule_list {
     ( $( $name:literal => $ty:path ),+ $(,)? ) => {
-        let mut m = HashMap::new();
-        $( m.insert($name, Box::new($ty) as Box<dyn RuleDefinition + Send + Sync>); )+
-        m
+        indexmap::indexmap! {
+            $( $name => Box::new($ty) as Box<dyn RuleDefinition + Send + Sync>, )+
+        }
     };
 }
 
 lazy_static::lazy_static! {
-    static ref ANALYZER_RULES: HashMap<&'static str, Box<dyn RuleDefinition + Send + Sync>> = {
+    static ref ANALYZER_RULES: IndexMap<&'static str, Box<dyn RuleDefinition + Send + Sync>> = {
         rule_list! {
             "CYAR-0001" => procedure::AddParamlistParenthesis,
             "CYAR-0002" => procedure::ReplacePrologue,
