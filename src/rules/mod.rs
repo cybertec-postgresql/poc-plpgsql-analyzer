@@ -89,8 +89,8 @@ impl From<TextRange> for RuleLocation {
     }
 }
 
-impl From<RuleLocation> for TextRange {
-    fn from(location: RuleLocation) -> Self {
+impl From<&RuleLocation> for TextRange {
+    fn from(location: &RuleLocation) -> Self {
         TextRange::at(
             location.offset.start.into(),
             (location.offset.len() as u32).into(),
@@ -138,19 +138,22 @@ pub fn apply_rule(
     typ: DboType,
     sql: &str,
     rule_name: &str,
-    location: RuleLocation,
+    location: &RuleLocation,
     ctx: &DboAnalyzeContext,
-) -> Result<RuleLocation, RuleError> {
+) -> Result<(String, RuleLocation), RuleError> {
     let apply = |p: Parse| {
         let rule = ANALYZER_RULES
             .get(rule_name)
             .ok_or_else(|| RuleError::RuleNotFound(rule_name.to_owned()))?;
 
         let root = Root::cast(p.syntax())
-            .ok_or_else(|| RuleError::ParseError("failed to find root node".to_owned()))?;
+            .ok_or_else(|| RuleError::ParseError("failed to find root node".to_owned()))?
+            .clone_for_update();
 
         let node = rule.get_node(&root)?;
-        rule.apply(&node, location.into(), ctx).map(Into::into)
+        let location = rule.apply(&node, location.into(), ctx)?;
+
+        Ok((root.syntax().to_string(), location.into()))
     };
 
     match typ {
@@ -162,7 +165,7 @@ pub fn apply_rule(
 }
 
 #[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
-#[wasm_bindgen(js_name = "apply_rule")]
+#[wasm_bindgen(js_name = "applyRule")]
 pub fn js_apply_rule(
     typ: DboType,
     sql: &str,
@@ -173,7 +176,7 @@ pub fn js_apply_rule(
     let location = serde_wasm_bindgen::from_value(location)?;
     let ctx = serde_wasm_bindgen::from_value(ctx)?;
 
-    match apply_rule(typ, sql, rule, location, &ctx) {
+    match apply_rule(typ, sql, rule, &location, &ctx) {
         Ok(location) => Ok(serde_wasm_bindgen::to_value(&location)?),
         Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
