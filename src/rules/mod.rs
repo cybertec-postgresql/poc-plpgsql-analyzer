@@ -11,9 +11,9 @@ use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
 use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
+use indexmap::IndexMap;
 use rowan::{TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
-use indexmap::IndexMap;
 use std::fmt;
 use std::ops::Range;
 use wasm_bindgen::prelude::*;
@@ -290,4 +290,64 @@ fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> Res
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use expect_test::expect;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn test_apply_all_applicable_rules_on_procedure() {
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
+
+        let context = DboAnalyzeContext::default();
+        let result = crate::analyze(DboType::Procedure, INPUT, &context);
+        assert!(result.is_ok(), "{:#?}", result);
+        let mut metadata = result.unwrap();
+
+        assert_eq!(metadata.rules.len(), 3);
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[1].name, "CYAR-0002");
+        assert_eq!(metadata.rules[2].name, "CYAR-0003");
+
+        let mut transpiled = INPUT.to_owned();
+
+        let mut do_apply = |rule: &RuleHint| {
+            assert_eq!(rule.locations.len(), 1);
+
+            let result = apply_rule(
+                DboType::Procedure,
+                &transpiled,
+                &rule.name,
+                &rule.locations[0],
+                &context,
+            );
+            assert!(result.is_ok(), "{:#?}", result);
+            transpiled = result.unwrap().0;
+
+            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            result.unwrap()
+        };
+
+        metadata = do_apply(&metadata.rules[0]);
+        metadata = do_apply(&metadata.rules[0]);
+        do_apply(&metadata.rules[1]);
+
+        expect![[r#"
+            CREATE PROCEDURE secure_dml()
+            AS $$
+            BEGIN
+              IF TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                    OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+                RAISE_APPLICATION_ERROR (-20205,
+                    'You may only make changes during normal office hours');
+              END IF;
+            END;
+            $$ LANGUAGE plpgsql;
+        "#]]
+        .assert_eq(&transpiled);
+    }
 }
