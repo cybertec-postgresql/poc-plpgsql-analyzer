@@ -221,7 +221,7 @@ Root@0..304
       QuotedLiteral@65..74 "'HH24:MI'"
       RParen@74..75 ")"
       Whitespace@75..76 " "
-      Ident@76..79 "NOT"
+      Keyword@76..79 "NOT"
       Whitespace@79..80 " "
       Ident@80..87 "BETWEEN"
       Whitespace@87..88 " "
