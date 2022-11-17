@@ -46,7 +46,21 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
             add_expr_node(p, checkpoint, Some(r_bp));
         }
-        t => panic!("bad token: {:?}", t),
+        t => {
+            p.error(ParseError::ExpectedOneOfTokens(
+                [
+                    TokenKind::Ident,
+                    TokenKind::Integer,
+                    TokenKind::LParen,
+                    TokenKind::Minus,
+                    TokenKind::NotKw,
+                    TokenKind::Plus,
+                    TokenKind::QuotedLiteral,
+                ]
+                .to_vec(),
+            ));
+            return;
+        }
     }
 
     while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
