@@ -39,14 +39,15 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
         }
         TokenKind::NotKw | TokenKind::Plus | TokenKind::Minus => {
-            let (((), r_bp), syntax_kind) = prefix_bp(token);
-            match syntax_kind {
-                Some(syntax_kind) => p.bump_any_map(syntax_kind),
-                None => p.bump_any(),
+            if let Some((r_bp, syntax_kind)) = prefix_bp(token) {
+                match syntax_kind {
+                    Some(syntax_kind) => p.bump_any_map(syntax_kind),
+                    None => p.bump_any(),
+                }
+                add_expr_node(p, checkpoint, Some(r_bp));
             }
-            add_expr_node(p, checkpoint, Some(r_bp));
         }
-        t => {
+        _ => {
             p.error(ParseError::ExpectedOneOfTokens(
                 [
                     TokenKind::Ident,
@@ -66,7 +67,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
     while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
         let op = p.current();
 
-        if let Some(((l_bp, ()), syntax_kind)) = postfix_bp(op) {
+        if let Some((l_bp, syntax_kind)) = postfix_bp(op) {
             if l_bp < min_bp {
                 break;
             }
@@ -77,7 +78,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
 
             add_expr_node(p, checkpoint, None);
-            return;
+            continue;
         }
 
         if let Some(((l_bp, r_bp), syntax_kind)) = infix_bp(op) {
@@ -108,17 +109,17 @@ fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
     p.finish();
 }
 
-fn prefix_bp(op: TokenKind) -> (((), u8), Option<SyntaxKind>) {
+fn prefix_bp(op: TokenKind) -> Option<(u8, Option<SyntaxKind>)> {
     match op {
-        TokenKind::NotKw => (((), 5), Some(SyntaxKind::LogicOp)),
-        TokenKind::Plus | TokenKind::Minus => (((), 15), None),
-        _ => panic!("bad op: {:?}", op),
+        TokenKind::NotKw => Some((5, Some(SyntaxKind::LogicOp))),
+        TokenKind::Plus | TokenKind::Minus => Some((15, None)),
+        _ => None,
     }
 }
 
-fn postfix_bp(op: TokenKind) -> Option<((u8, ()), Option<SyntaxKind>)> {
+fn postfix_bp(op: TokenKind) -> Option<(u8, Option<SyntaxKind>)> {
     match op {
-        TokenKind::Exclam => Some(((17, ()), None)),
+        TokenKind::Exclam => Some((17, None)),
         _ => None,
     }
 }
