@@ -182,11 +182,11 @@ impl RuleDefinition for ReplaceEpilogue {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ast::AstNode;
     use crate::syntax::SyntaxNode;
     use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
+    use super::*;
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());

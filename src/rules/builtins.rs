@@ -108,11 +108,17 @@ impl RuleDefinition for ReplaceSysdate {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ast::AstNode;
+    use crate::syntax::SyntaxNode;
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
+    use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
+    use super::*;
+
+    fn check(node: SyntaxNode, expect: Expect) {
+        expect.assert_eq(&node.to_string());
+    }
 
     #[test]
     fn replace_trunc_with_date_trunc() {
@@ -146,5 +152,81 @@ mod tests {
         let ctx = DboAnalyzeContext::new(tables);
         let result = rule.find(&node, &ctx);
         assert_eq!(result, Err(RuleError::NoChange));
+    }
+
+    #[test]
+    fn test_replace_sysdate() {
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
+
+        let parse = crate::parse_procedure(INPUT).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap();
+        let rule = ReplaceSysdate;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
+        assert!(result.is_ok(), "{:#?}", result);
+
+        let locations = result.unwrap();
+        assert_eq!(locations.len(), 2);
+        assert_eq!(locations[0], TextRange::new(51.into(), 58.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0]], "SYSDATE");
+        assert_eq!(locations[1], TextRange::new(123.into(), 130.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0]], "SYSDATE");
+
+        let root = root.clone_for_update();
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(&node, locations[0], &DboAnalyzeContext::default());
+        let location = result.unwrap();
+        check(
+            root.syntax().clone(),
+            expect![[r#"
+                CREATE PROCEDURE secure_dml
+                IS
+                BEGIN
+                  IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                        OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+                    RAISE_APPLICATION_ERROR (-20205,
+                        'You may only make changes during normal office hours');
+                  END IF;
+                END secure_dml;
+            "#]],
+        );
+        assert_eq!(location, TextRange::new(51.into(), 68.into()));
+        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
+        assert!(result.is_ok(), "{:#?}", result);
+
+        let locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        assert_eq!(locations[0], TextRange::new(133.into(), 140.into()));
+
+        let result = rule.apply(&node, locations[0], &DboAnalyzeContext::default());
+        assert!(result.is_ok(), "{:#?}", result);
+
+        let location = result.unwrap();
+        check(
+            root.syntax().clone(),
+            expect![[r#"
+                CREATE PROCEDURE secure_dml
+                IS
+                BEGIN
+                  IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                        OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
+                    RAISE_APPLICATION_ERROR (-20205,
+                        'You may only make changes during normal office hours');
+                  END IF;
+                END secure_dml;
+            "#]],
+        );
+        assert_eq!(location, TextRange::new(133.into(), 150.into()));
+        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
     }
 }
