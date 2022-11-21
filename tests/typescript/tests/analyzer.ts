@@ -117,13 +117,10 @@ describe('passing type context information into analyzer', () => {
       tables: {
         persons: {
           columns: {
-            // TODO: This should be usable as `id: { typ: DboColumnType.Integer }`
-            // But somehow `serde_wasw_bindgen` messes up and can only deserialize
-            // this type from strings.
-            id: { typ: 'Integer' },
-            name: { typ: 'Text' },
-            number_of_logins: { typ: 'Integer' },
-            last_login: { typ: 'Date' },
+            id: { typ: DboColumnType.Integer },
+            name: { typ: DboColumnType.Text },
+            number_of_logins: { typ: DboColumnType.Integer },
+            last_login: { typ: DboColumnType.Date },
           },
         },
       },

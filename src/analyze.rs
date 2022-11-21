@@ -10,6 +10,7 @@ use crate::rules::{find_applicable_rules, RuleHint};
 use crate::syntax::SyntaxKind;
 use crate::util::SqlIdent;
 use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
@@ -18,7 +19,8 @@ use wasm_typescript_definition::TypescriptDefinition;
 ///
 /// Some types may be only available for specific frontends, e.g.
 /// [`Package`][`DboType::Package`] is only available for Oracle databases.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize_repr)]
+#[repr(usize)]
 #[wasm_bindgen]
 pub enum DboType {
     CheckConstraint,
@@ -70,7 +72,8 @@ pub struct DboMetaData {
 ///
 /// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
 /// but furter extensible as needed. Keep alphabetically sorted.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize_repr)]
+#[repr(usize)]
 #[wasm_bindgen]
 pub enum DboColumnType {
     BigInt,
