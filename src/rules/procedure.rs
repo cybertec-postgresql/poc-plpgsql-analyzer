@@ -4,10 +4,10 @@
 
 //! Implements procedure-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{find_token, replace_token, RuleDefinition, RuleError};
+use super::{find_token, next_token, replace_token, RuleDefinition, RuleError};
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, AstToken, Ident, Procedure, ProcedureHeader, Root};
-use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
+use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::TextRange;
 
 pub(super) struct AddParamlistParenthesis;
@@ -83,15 +83,9 @@ impl RuleDefinition for ReplacePrologue {
             let mut locations = find_token(
                 &procedure,
                 |t| {
-                    let next_token = t
-                        .siblings_with_tokens(rowan::Direction::Next)
-                        .filter_map(SyntaxElement::into_token)
-                        .filter(|t| t.kind() != SyntaxKind::Whitespace)
-                        .nth(1);
-
                     t.kind() == SyntaxKind::Keyword
                         && ["is", "as"].contains(&t.text().to_lowercase().as_str())
-                        && next_token
+                        && next_token(t)
                             .map(|t| t.kind() != SyntaxKind::DollarQuote)
                             .unwrap_or(true)
                 },
@@ -141,15 +135,9 @@ impl RuleDefinition for ReplaceEpilogue {
             let mut locations = find_token(
                 &procedure,
                 |t| {
-                    let next_token = t
-                        .siblings_with_tokens(rowan::Direction::Next)
-                        .filter_map(SyntaxElement::into_token)
-                        .filter(|t| t.kind() != SyntaxKind::Whitespace)
-                        .nth(1);
-
                     t.kind() == SyntaxKind::Keyword
                         && t.text().to_lowercase() == "end"
-                        && next_token
+                        && next_token(t)
                             .map(|t| t.kind() == SyntaxKind::Ident)
                             .unwrap_or(true)
                 },

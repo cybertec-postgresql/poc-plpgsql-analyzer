@@ -10,9 +10,9 @@ pub mod procedure;
 use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
-use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
+use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use indexmap::IndexMap;
-use rowan::{TextRange, TokenAtOffset};
+use rowan::{Direction, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Range;
@@ -208,6 +208,19 @@ where
         .filter(token_pred)
         .map(map_location)
         .collect()
+}
+
+/// Returns the next non-whitespace sibling token that follows.
+///
+/// # Arguments
+///
+/// `token`: The token to find the next non-whitespace sibling token of.
+fn next_token(token: &SyntaxToken) -> Option<SyntaxToken> {
+    token
+        .siblings_with_tokens(Direction::Next)
+        .filter_map(SyntaxElement::into_token)
+        .filter(|t| t.kind() != SyntaxKind::Whitespace)
+        .nth(1)
 }
 
 /// Replaces a child token with an updated syntax tree.
