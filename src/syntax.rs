@@ -79,10 +79,10 @@ pub enum SyntaxKind {
     FunctionBody,
     /// A node that marks a full SELECT statement
     SelectStmt,
-    /// A single column expression
+    /// A single column expression, as part of an SELECT clause
     ColumnExpr,
-    /// A node that consists of multiple column expressions
-    ColumnExprList,
+    /// A node that contains the whole SELECT clause of a query
+    SelectClause,
     /// Represent a complete `WHERE` clause expression
     WhereClause,
     /// A node that marks a variable declaration as part of a function or

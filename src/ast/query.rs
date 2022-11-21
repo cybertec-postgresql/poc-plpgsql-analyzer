@@ -8,9 +8,13 @@ use super::typed_syntax_node;
 use super::Expression;
 use crate::ast::AstNode;
 
-typed_syntax_node!(SelectStmt, ColumnExprList, ColumnExpr, WhereClause);
+typed_syntax_node!(SelectClause, SelectStmt, ColumnExpr, WhereClause);
 
 impl SelectStmt {
+    pub fn select_clause(&self) -> Option<SelectClause> {
+        self.syntax.children().find_map(SelectClause::cast)
+    }
+
     pub fn where_clause(&self) -> Option<WhereClause> {
         self.syntax.children().find_map(WhereClause::cast)
     }
