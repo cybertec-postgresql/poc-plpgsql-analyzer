@@ -57,6 +57,10 @@ jobs:
         working-directory: ./tests/typescript
         run: npm clean-install
 
+      - name: Check TypeScript code formatting
+        working-directory: ./tests/typescript
+        run: npx prettier tests --list-different
+
       - name: Execute Typescript tests
         working-directory: ./tests/typescript
         run: npm test
