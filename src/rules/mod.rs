@@ -10,7 +10,7 @@ pub mod procedure;
 use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
-use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use indexmap::IndexMap;
 use rowan::{Direction, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
@@ -183,31 +183,45 @@ pub fn js_apply_rule(
     }
 }
 
-/// Finds all child tokens within a syntax tree.
+/// Finds all child tokens within an AST node.
 ///
 /// # Arguments
 ///
 /// `node`: The parent node to find children token(s) in.
 ///
-/// `token_pred`: A closure returning `true` for all tokens to replace.
-///
-/// `map_location`: Transforms the token location to the same format as
-/// `location`.
-fn find_token<P, M>(
-    node: &dyn AstNode<Language = SqlProcedureLang>,
-    token_pred: P,
-    map_location: M,
-) -> Vec<TextRange>
+/// `token_pred`: A closure returning `true` for all tokens to return.
+fn find_children_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
 where
     P: Fn(&SyntaxToken) -> bool,
-    M: Fn(SyntaxToken) -> TextRange,
 {
-    node.syntax()
-        .children_with_tokens()
+    node.children_with_tokens()
         .filter_map(SyntaxElement::into_token)
         .filter(token_pred)
-        .map(map_location)
-        .collect()
+}
+
+/// Finds all (direct and indirect children) tokens within a syntax tree.
+///
+/// # Arguments
+///
+/// `node`: The parent node to find children token(s) in.
+///
+/// `token_pred`: A closure returning `true` for all tokens to return.
+fn find_descendants_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
+where
+    P: Fn(&SyntaxToken) -> bool,
+{
+    node.descendants_with_tokens()
+        .filter_map(SyntaxElement::into_token)
+        .filter(token_pred)
+}
+
+fn find_sibling_token<P>(node: &SyntaxToken, token_pred: P) -> Option<SyntaxToken>
+where
+    P: Fn(&SyntaxToken) -> bool,
+{
+    node.siblings_with_tokens(Direction::Next)
+        .filter_map(SyntaxElement::into_token)
+        .find(token_pred)
 }
 
 /// Returns the next non-whitespace sibling token that follows.

@@ -4,10 +4,12 @@
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{check_parameter_types, replace_token, RuleDefinition, RuleError};
+use super::{
+    check_parameter_types, find_descendants_tokens, replace_token, RuleDefinition, RuleError,
+};
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, AstToken, Ident, Root};
-use crate::syntax::{SyntaxElement, SyntaxNode};
+use crate::ast::{AstNode, Root};
+use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::TextRange;
 
 /// Dummy rule for demonstrating passing in analyzer context and type checking.
@@ -76,18 +78,11 @@ impl RuleDefinition for ReplaceSysdate {
         node: &SyntaxNode,
         _ctx: &DboAnalyzeContext,
     ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = node
-            .descendants_with_tokens()
-            .filter_map(|el| {
-                if let SyntaxElement::Token(t) = el {
-                    Ident::cast(t)
-                } else {
-                    None
-                }
-            })
-            .filter(|ident| ident.text().to_lowercase() == "sysdate")
-            .map(|ident| ident.syntax().text_range())
-            .collect::<Vec<TextRange>>();
+        let locations = find_descendants_tokens(node, |t| {
+            t.kind() == SyntaxKind::Ident && t.text().to_lowercase() == "sysdate"
+        })
+        .map(|t| t.text_range())
+        .collect::<Vec<TextRange>>();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)

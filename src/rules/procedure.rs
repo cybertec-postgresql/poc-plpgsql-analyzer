@@ -4,9 +4,11 @@
 
 //! Implements procedure-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{find_token, next_token, replace_token, RuleDefinition, RuleError};
+use super::{
+    find_children_tokens, find_sibling_token, next_token, replace_token, RuleDefinition, RuleError,
+};
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, AstToken, Ident, Procedure, ProcedureHeader, Root};
+use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
 use crate::syntax::{SyntaxKind, SyntaxNode};
 use rowan::TextRange;
 
@@ -31,11 +33,10 @@ impl RuleDefinition for AddParamlistParenthesis {
     ) -> Result<Vec<TextRange>, RuleError> {
         if let Some(header) = ProcedureHeader::cast(node.clone()) {
             if header.param_list().is_none() {
-                let mut locations = find_token(
-                    &header,
-                    |t| t.kind() == SyntaxKind::Ident,
-                    |t| TextRange::at(t.text_range().end(), 0.into()),
-                );
+                let mut locations =
+                    find_children_tokens(header.syntax(), |t| t.kind() == SyntaxKind::Ident)
+                        .map(|t| TextRange::at(t.text_range().end(), 0.into()))
+                        .collect::<Vec<TextRange>>();
 
                 if locations.is_empty() {
                     return Err(RuleError::NoSuchItem("Procedure identifier"));
@@ -80,17 +81,15 @@ impl RuleDefinition for ReplacePrologue {
         _ctx: &DboAnalyzeContext,
     ) -> Result<Vec<TextRange>, RuleError> {
         if let Some(procedure) = Procedure::cast(node.clone()) {
-            let mut locations = find_token(
-                &procedure,
-                |t| {
-                    t.kind() == SyntaxKind::Keyword
-                        && ["is", "as"].contains(&t.text().to_lowercase().as_str())
-                        && next_token(t)
-                            .map(|t| t.kind() != SyntaxKind::DollarQuote)
-                            .unwrap_or(true)
-                },
-                |t| t.text_range(),
-            );
+            let mut locations = find_children_tokens(procedure.syntax(), |t| {
+                t.kind() == SyntaxKind::Keyword
+                    && ["is", "as"].contains(&t.text().to_lowercase().as_str())
+                    && next_token(t)
+                        .map(|t| t.kind() != SyntaxKind::DollarQuote)
+                        .unwrap_or(true)
+            })
+            .map(|t| t.text_range())
+            .collect::<Vec<TextRange>>();
 
             if locations.is_empty() {
                 return Err(RuleError::NoChange);
@@ -132,26 +131,19 @@ impl RuleDefinition for ReplaceEpilogue {
         _ctx: &DboAnalyzeContext,
     ) -> Result<Vec<TextRange>, RuleError> {
         if let Some(procedure) = Procedure::cast(node.clone()) {
-            let mut locations = find_token(
-                &procedure,
-                |t| {
-                    t.kind() == SyntaxKind::Keyword
-                        && t.text().to_lowercase() == "end"
-                        && next_token(t)
-                            .map(|t| t.kind() == SyntaxKind::Ident)
-                            .unwrap_or(true)
-                },
-                |t| {
-                    let end = t
-                        .siblings_with_tokens(rowan::Direction::Next)
-                        .filter_map(|it| it.into_token())
-                        .find(|t| Ident::cast(t.clone()).is_some())
-                        .map(|e| e.text_range().end())
-                        .unwrap_or_else(|| t.text_range().end());
-
-                    TextRange::new(t.text_range().start(), end)
-                },
-            );
+            let mut locations = find_children_tokens(procedure.syntax(), |t| {
+                t.kind() == SyntaxKind::Keyword
+                    && t.text().to_lowercase() == "end"
+                    && next_token(t)
+                        .map(|t| t.kind() == SyntaxKind::Ident)
+                        .unwrap_or(true)
+            })
+            .map(|t| {
+                let end = find_sibling_token(&t, |t| t.kind() == SyntaxKind::Ident)
+                    .unwrap_or_else(|| t.clone());
+                TextRange::new(t.text_range().start(), end.text_range().end())
+            })
+            .collect::<Vec<TextRange>>();
 
             if locations.is_empty() {
                 return Err(RuleError::NoChange);
