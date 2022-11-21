@@ -83,14 +83,17 @@ impl RuleDefinition for ReplacePrologue {
             let mut locations = find_token(
                 &procedure,
                 |t| {
-                    let next_token = t.siblings_with_tokens(rowan::Direction::Next)
+                    let next_token = t
+                        .siblings_with_tokens(rowan::Direction::Next)
                         .filter_map(SyntaxElement::into_token)
                         .filter(|t| t.kind() != SyntaxKind::Whitespace)
                         .nth(1);
 
                     t.kind() == SyntaxKind::Keyword
                         && ["is", "as"].contains(&t.text().to_lowercase().as_str())
-                        && next_token.map(|t| t.kind() != SyntaxKind::DollarQuote).unwrap_or(true)
+                        && next_token
+                            .map(|t| t.kind() != SyntaxKind::DollarQuote)
+                            .unwrap_or(true)
                 },
                 |t| t.text_range(),
             );
@@ -138,14 +141,17 @@ impl RuleDefinition for ReplaceEpilogue {
             let mut locations = find_token(
                 &procedure,
                 |t| {
-                    let next_token = t.siblings_with_tokens(rowan::Direction::Next)
+                    let next_token = t
+                        .siblings_with_tokens(rowan::Direction::Next)
                         .filter_map(SyntaxElement::into_token)
                         .filter(|t| t.kind() != SyntaxKind::Whitespace)
                         .nth(1);
 
                     t.kind() == SyntaxKind::Keyword
                         && t.text().to_lowercase() == "end"
-                        && next_token.map(|t| t.kind() == SyntaxKind::Ident).unwrap_or(true)
+                        && next_token
+                            .map(|t| t.kind() == SyntaxKind::Ident)
+                            .unwrap_or(true)
                 },
                 |t| {
                     let end = t
@@ -182,11 +188,11 @@ impl RuleDefinition for ReplaceEpilogue {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::ast::AstNode;
     use crate::syntax::SyntaxNode;
     use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
-    use super::*;
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());

@@ -108,13 +108,13 @@ impl RuleDefinition for ReplaceSysdate {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::ast::AstNode;
     use crate::syntax::SyntaxNode;
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
     use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
-    use super::*;
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());
