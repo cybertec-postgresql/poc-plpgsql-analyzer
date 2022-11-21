@@ -4,10 +4,10 @@
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use super::{check_parameter_types, RuleDefinition, RuleError};
+use super::{check_parameter_types, replace_token, RuleDefinition, RuleError};
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, Root};
-use crate::syntax::SyntaxNode;
+use crate::ast::{AstNode, AstToken, Ident, Root};
+use crate::syntax::{SyntaxElement, SyntaxNode};
 use rowan::TextRange;
 
 /// Dummy rule for demonstrating passing in analyzer context and type checking.
@@ -43,6 +43,66 @@ impl RuleDefinition for FixTrunc {
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         Err(RuleError::NoChange)
+    }
+}
+
+pub(super) struct ReplaceSysdate;
+
+impl RuleDefinition for ReplaceSysdate {
+    fn short_desc(&self) -> &'static str {
+        "Replace `SYSDATE` with PostgreSQL's `clock_timestamp()`"
+    }
+
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        if let Some(body) = root.procedure().and_then(|p| p.body()) {
+            return Ok(body.syntax().clone());
+        }
+
+        if let Some(body) = root.function().and_then(|p| p.body()) {
+            return Ok(body.syntax().clone());
+        }
+
+        if let Some(clause) = root.query().and_then(|p| p.select_clause()) {
+            return Ok(clause.syntax().clone());
+        }
+
+        Err(RuleError::NoSuchItem(
+            "Procedure body, function body or SELECT clause",
+        ))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        let locations = node
+            .descendants_with_tokens()
+            .filter_map(|el| {
+                if let SyntaxElement::Token(t) = el {
+                    Ident::cast(t)
+                } else {
+                    None
+                }
+            })
+            .filter(|ident| ident.text().to_lowercase() == "sysdate")
+            .map(|ident| ident.syntax().text_range())
+            .collect::<Vec<TextRange>>();
+
+        if locations.is_empty() {
+            Err(RuleError::NoChange)
+        } else {
+            Ok(locations)
+        }
+    }
+
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: TextRange,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        replace_token(node, location, "clock_timestamp()", 0..1)
     }
 }
 

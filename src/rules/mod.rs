@@ -34,6 +34,7 @@ lazy_static::lazy_static! {
             "CYAR-0002" => procedure::ReplacePrologue,
             "CYAR-0003" => procedure::ReplaceEpilogue,
             "CYAR-0004" => builtins::FixTrunc,
+            "CYAR-0005" => builtins::ReplaceSysdate,
         }
     };
 }
@@ -307,16 +308,15 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let mut metadata = result.unwrap();
 
-        assert_eq!(metadata.rules.len(), 3);
+        assert_eq!(metadata.rules.len(), 4);
         assert_eq!(metadata.rules[0].name, "CYAR-0001");
         assert_eq!(metadata.rules[1].name, "CYAR-0002");
         assert_eq!(metadata.rules[2].name, "CYAR-0003");
+        assert_eq!(metadata.rules[3].name, "CYAR-0005");
 
         let mut transpiled = INPUT.to_owned();
 
         let mut do_apply = |rule: &RuleHint| {
-            assert_eq!(rule.locations.len(), 1);
-
             let result = apply_rule(
                 DboType::Procedure,
                 &transpiled,
@@ -332,16 +332,32 @@ mod tests {
             result.unwrap()
         };
 
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
         metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0002");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
         metadata = do_apply(&metadata.rules[0]);
-        do_apply(&metadata.rules[1]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0003");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 2);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        do_apply(&metadata.rules[0]);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
             AS $$
             BEGIN
-              IF TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
-                    OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+              IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                    OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
                 RAISE_APPLICATION_ERROR (-20205,
                     'You may only make changes during normal office hours');
               END IF;
