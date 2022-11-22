@@ -158,31 +158,50 @@ describe('trying to apply some transpiler rules', () => {
     let metaData = analyze(DboType.Procedure, content, context);
 
     expect(metaData.rules).toBeInstanceOf(Array);
-    expect(metaData.rules.length).toEqual(3);
+    expect(metaData.rules.length).toEqual(4);
     expect(metaData.rules[0].name).toEqual('CYAR-0001');
     expect(metaData.rules[1].name).toEqual('CYAR-0002');
     expect(metaData.rules[2].name).toEqual('CYAR-0003');
+    expect(metaData.rules[3].name).toEqual('CYAR-0005');
 
     let transpiled = content;
     const doApply = rule => {
-      expect(rule.locations).toBeInstanceOf(Array);
-      expect(rule.locations.length).toEqual(1);
-
       let location;
       [transpiled, location] = applyRule(DboType.Procedure, transpiled, rule.name, rule.locations[0], context);
 
       return analyze(DboType.Procedure, transpiled, context);
     };
 
+    expect(metaData.rules[0].name).toEqual('CYAR-0001');
+    expect(metaData.rules[0].locations).toBeInstanceOf(Array);
+    expect(metaData.rules[0].locations.length).toEqual(1);
     metaData = doApply(metaData.rules[0]);
+
+    expect(metaData.rules[0].name).toEqual('CYAR-0002');
+    expect(metaData.rules[0].locations).toBeInstanceOf(Array);
+    expect(metaData.rules[0].locations.length).toEqual(1);
     metaData = doApply(metaData.rules[0]);
-    doApply(metaData.rules[1]);
+
+    expect(metaData.rules[0].name).toEqual('CYAR-0003');
+    expect(metaData.rules[0].locations).toBeInstanceOf(Array);
+    expect(metaData.rules[0].locations.length).toEqual(1);
+    metaData = doApply(metaData.rules[0]);
+
+    expect(metaData.rules[0].name).toEqual('CYAR-0005');
+    expect(metaData.rules[0].locations).toBeInstanceOf(Array);
+    expect(metaData.rules[0].locations.length).toEqual(2);
+    metaData = doApply(metaData.rules[0]);
+
+    expect(metaData.rules[0].name).toEqual('CYAR-0005');
+    expect(metaData.rules[0].locations).toBeInstanceOf(Array);
+    expect(metaData.rules[0].locations.length).toEqual(1);
+    metaData = doApply(metaData.rules[0]);
 
     expect(transpiled).toEqual(`CREATE PROCEDURE secure_dml()
 AS $$
 BEGIN
-  IF TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
-        OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+  IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+        OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
     RAISE_APPLICATION_ERROR (-20205,
         'You may only make changes during normal office hours');
   END IF;

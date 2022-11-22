@@ -10,9 +10,9 @@ pub mod procedure;
 use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
-use crate::syntax::{SqlProcedureLang, SyntaxElement, SyntaxNode, SyntaxToken};
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use indexmap::IndexMap;
-use rowan::{TextRange, TokenAtOffset};
+use rowan::{Direction, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Range;
@@ -34,6 +34,7 @@ lazy_static::lazy_static! {
             "CYAR-0002" => procedure::ReplacePrologue,
             "CYAR-0003" => procedure::ReplaceEpilogue,
             "CYAR-0004" => builtins::FixTrunc,
+            "CYAR-0005" => builtins::ReplaceSysdate,
         }
     };
 }
@@ -182,31 +183,58 @@ pub fn js_apply_rule(
     }
 }
 
-/// Finds all child tokens within a syntax tree.
+/// Finds all child tokens within an AST node.
 ///
 /// # Arguments
 ///
 /// `node`: The parent node to find children token(s) in.
 ///
-/// `token_pred`: A closure returning `true` for all tokens to replace.
-///
-/// `map_location`: Transforms the token location to the same format as
-/// `location`.
-fn find_token<P, M>(
-    node: &dyn AstNode<Language = SqlProcedureLang>,
-    token_pred: P,
-    map_location: M,
-) -> Vec<TextRange>
+/// `token_pred`: A closure returning `true` for all tokens to return.
+fn find_children_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
 where
     P: Fn(&SyntaxToken) -> bool,
-    M: Fn(SyntaxToken) -> TextRange,
 {
-    node.syntax()
-        .children_with_tokens()
+    node.children_with_tokens()
         .filter_map(SyntaxElement::into_token)
         .filter(token_pred)
-        .map(map_location)
-        .collect()
+}
+
+/// Finds all (direct and indirect children) tokens within a syntax tree.
+///
+/// # Arguments
+///
+/// `node`: The parent node to find children token(s) in.
+///
+/// `token_pred`: A closure returning `true` for all tokens to return.
+fn find_descendants_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
+where
+    P: Fn(&SyntaxToken) -> bool,
+{
+    node.descendants_with_tokens()
+        .filter_map(SyntaxElement::into_token)
+        .filter(token_pred)
+}
+
+fn find_sibling_token<P>(node: &SyntaxToken, token_pred: P) -> Option<SyntaxToken>
+where
+    P: Fn(&SyntaxToken) -> bool,
+{
+    node.siblings_with_tokens(Direction::Next)
+        .filter_map(SyntaxElement::into_token)
+        .find(token_pred)
+}
+
+/// Returns the next non-whitespace sibling token that follows.
+///
+/// # Arguments
+///
+/// `token`: The token to find the next non-whitespace sibling token of.
+fn next_token(token: &SyntaxToken) -> Option<SyntaxToken> {
+    token
+        .siblings_with_tokens(Direction::Next)
+        .filter_map(SyntaxElement::into_token)
+        .filter(|t| t.kind() != SyntaxKind::Whitespace)
+        .nth(1)
 }
 
 /// Replaces a child token with an updated syntax tree.
@@ -307,16 +335,15 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let mut metadata = result.unwrap();
 
-        assert_eq!(metadata.rules.len(), 3);
+        assert_eq!(metadata.rules.len(), 4);
         assert_eq!(metadata.rules[0].name, "CYAR-0001");
         assert_eq!(metadata.rules[1].name, "CYAR-0002");
         assert_eq!(metadata.rules[2].name, "CYAR-0003");
+        assert_eq!(metadata.rules[3].name, "CYAR-0005");
 
         let mut transpiled = INPUT.to_owned();
 
         let mut do_apply = |rule: &RuleHint| {
-            assert_eq!(rule.locations.len(), 1);
-
             let result = apply_rule(
                 DboType::Procedure,
                 &transpiled,
@@ -332,16 +359,32 @@ mod tests {
             result.unwrap()
         };
 
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
         metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0002");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
         metadata = do_apply(&metadata.rules[0]);
-        do_apply(&metadata.rules[1]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0003");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 2);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        do_apply(&metadata.rules[0]);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
             AS $$
             BEGIN
-              IF TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
-                    OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN') THEN
+              IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                    OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
                 RAISE_APPLICATION_ERROR (-20205,
                     'You may only make changes during normal office hours');
               END IF;

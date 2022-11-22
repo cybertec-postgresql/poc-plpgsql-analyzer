@@ -29,7 +29,7 @@ fn parse_column_expr(p: &mut Parser) {
         return;
     }
 
-    p.start(SyntaxKind::ColumnExprList);
+    p.start(SyntaxKind::SelectClause);
 
     while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::ColumnExpr);
