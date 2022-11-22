@@ -47,18 +47,15 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
         }
         _ => {
-            p.error(ParseError::ExpectedOneOfTokens(
-                [
-                    TokenKind::Ident,
-                    TokenKind::Integer,
-                    TokenKind::LParen,
-                    TokenKind::Minus,
-                    TokenKind::NotKw,
-                    TokenKind::Plus,
-                    TokenKind::QuotedLiteral,
-                ]
-                .to_vec(),
-            ));
+            p.error(ParseError::ExpectedOneOfTokens(vec![
+                TokenKind::Ident,
+                TokenKind::Integer,
+                TokenKind::LParen,
+                TokenKind::Minus,
+                TokenKind::NotKw,
+                TokenKind::Plus,
+                TokenKind::QuotedLiteral,
+            ]));
             return;
         }
     }
