@@ -177,7 +177,8 @@ impl<'a> Parser<'a> {
         true
     }
 
-    /// Consumes the next token if `kind` matches and creates a new node of `target`
+    /// Consumes the next token if `kind` matches and creates a new node of
+    /// `target`
     pub fn eat_one_of_map(&mut self, kinds: &[TokenKind], target: SyntaxKind) -> bool {
         if !kinds.contains(&self.current()) {
             false
@@ -297,7 +298,8 @@ impl<'a> Parser<'a> {
         self.builder.token(syntax_kind.into(), token.text);
     }
 
-    /// Function to consume the next token, regardless of any [`TokenKind`], and add it as `target` `[SyntaxKind]` node to the tree
+    /// Function to consume the next token, regardless of any [`TokenKind`], and
+    /// add it as `target` `[SyntaxKind]` node to the tree
     fn do_bump_map(&mut self, target: SyntaxKind) {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();

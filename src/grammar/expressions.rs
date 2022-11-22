@@ -8,12 +8,11 @@
 //    https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 //    https://arzg.github.io/lang/10/
 
-use rowan::Checkpoint;
-
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
+use rowan::Checkpoint;
 
 pub(crate) fn parse_expr(p: &mut Parser) {
     expr_bp(p, 0);
