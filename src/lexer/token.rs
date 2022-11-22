@@ -70,6 +70,9 @@ pub enum TokenKind {
     #[token("or", priority = 100, ignore(case))]
     OrKw,
 
+    #[token("not", ignore(case))]
+    NotKw,
+
     #[regex(r"(?i)i?like")]
     LikeKw,
 
@@ -108,9 +111,6 @@ pub enum TokenKind {
     #[token(";")]
     SemiColon,
 
-    #[token("*")]
-    Asterisk,
-
     #[token(":=")]
     Assign,
 
@@ -122,6 +122,18 @@ pub enum TokenKind {
 
     #[token("%")]
     Percentage,
+
+    #[token("!")]
+    Exclam,
+
+    #[token("+")]
+    Plus,
+
+    #[token("-")]
+    Minus,
+
+    #[token("*")]
+    Asterisk,
 
     #[token("/")]
     Slash,

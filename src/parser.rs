@@ -8,7 +8,7 @@
 use crate::grammar;
 use crate::lexer::{Lexer, Token, TokenKind};
 use crate::syntax::{SyntaxKind, SyntaxNode};
-use rowan::{GreenNode, GreenNodeBuilder};
+use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]
@@ -177,6 +177,17 @@ impl<'a> Parser<'a> {
         true
     }
 
+    /// Consumes the next token if `kind` matches and creates a new node of
+    /// `target`
+    pub fn eat_one_of_map(&mut self, kinds: &[TokenKind], target: SyntaxKind) -> bool {
+        if !kinds.contains(&self.current()) {
+            false
+        } else {
+            self.do_bump_map(target);
+            true
+        }
+    }
+
     /// Consumes the current token as it is
     pub fn bump(&mut self, kind: TokenKind) {
         assert!(self.eat(kind));
@@ -186,6 +197,13 @@ impl<'a> Parser<'a> {
     pub fn bump_any(&mut self) {
         if self.current() != TokenKind::Eof {
             self.do_bump();
+        }
+    }
+
+    /// Consumes the next token as `target`, advances by one token
+    pub fn bump_any_map(&mut self, target: SyntaxKind) {
+        if self.current() != TokenKind::Eof {
+            self.do_bump_map(target);
         }
     }
 
@@ -245,6 +263,15 @@ impl<'a> Parser<'a> {
         self.builder.start_node(kind.into());
     }
 
+    /// Start a new (nested) node at a checkpoint
+    pub(crate) fn start_node_at(&mut self, checkpoint: Checkpoint, kind: SyntaxKind) {
+        self.builder.start_node_at(checkpoint, kind.into())
+    }
+
+    pub(crate) fn checkpoint(&self) -> Checkpoint {
+        self.builder.checkpoint()
+    }
+
     /// Finish the current node
     pub(crate) fn finish(&mut self) {
         self.builder.finish_node();
@@ -269,5 +296,16 @@ impl<'a> Parser<'a> {
         }
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
+    }
+
+    /// Function to consume the next token, regardless of any [`TokenKind`], and
+    /// add it as `target` `[SyntaxKind]` node to the tree
+    fn do_bump_map(&mut self, target: SyntaxKind) {
+        assert!(!self.tokens.is_empty());
+        let token = self.tokens.pop().unwrap();
+        if token.kind == TokenKind::Error {
+            self.error(ParseError::UnknownToken(token.text.to_string()));
+        }
+        self.builder.token(target.into(), token.text);
     }
 }

@@ -24,8 +24,22 @@ pub enum SyntaxKind {
     RParen,
     /// Percentage symbol
     Percentage,
+    /// An exclamation mark `!`
+    Exclam,
+    /// A plus `+`
+    Plus,
+    /// A minus `-`
+    Minus,
+    /// An asterisk `*`
+    Asterisk,
     /// Slash char '/'
     Slash,
+    /// Logical operator AND
+    And,
+    /// Logical operator OR
+    Or,
+    /// Unary logical operator NOT
+    Not,
     /// Inline comment starting with '--'
     Comment,
     /// Any whitespace character
@@ -43,8 +57,6 @@ pub enum SyntaxKind {
     Comma,
     /// A semi colon
     SemiColon,
-    /// An asterisk `*`
-    Asterisk,
     /// A colon token
     Colon,
     /// An Assign operator `:=`
@@ -93,9 +105,13 @@ pub enum SyntaxKind {
     VariableDeclList,
     /// Holds a generic SQL logic/arithmetic expression
     Expression,
+    /// Represents an arithmetic SQL operator (+, -, *, /)
+    ArithmeticOp,
     /// Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=)
     /// or other types of comparison operators of SQL (ilike, like)
     ComparisonOp,
+    /// Represents a logical SQL operator (AND, OR, NOT)
+    LogicOp,
     /// A text slice node
     Text,
     /// An error token with a cause
@@ -165,6 +181,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::WhereKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::NotKw => SyntaxKind::Keyword,
             TokenKind::LikeKw => SyntaxKind::ComparisonOp,
             TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::NumberTyKw => SyntaxKind::TypeName,
@@ -175,12 +192,17 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::SemiColon => SyntaxKind::SemiColon,
-            TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::LParen => SyntaxKind::LParen,
             TokenKind::RParen => SyntaxKind::RParen,
             TokenKind::Percentage => SyntaxKind::Percentage,
+            TokenKind::Exclam => SyntaxKind::Exclam,
+            // Used in `SELECT *` or as an arithmetic op
+            // Mapping to arithmetic op happens in `grammar/expressions.rs`
+            TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Slash => SyntaxKind::Slash,
+            TokenKind::Plus => SyntaxKind::ArithmeticOp,
+            TokenKind::Minus => SyntaxKind::ArithmeticOp,
             TokenKind::ComparisonOp => SyntaxKind::ComparisonOp,
             TokenKind::DoublePipe => SyntaxKind::Concat,
             TokenKind::Comment => SyntaxKind::Comment,
