@@ -27,6 +27,7 @@ wasm-bindgen = "^0.2.83"
 wasm-typescript-definition = "^0.1.4"
 lazy_static = "^1.4.0"
 indexmap = "^1.9.1"
+serde_repr = "^0.1.9"
 
 [dependencies.serde]
 version = "^1.0"
