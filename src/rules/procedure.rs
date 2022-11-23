@@ -6,6 +6,7 @@
 
 use super::{
     find_children_tokens, find_sibling_token, next_token, replace_token, RuleDefinition, RuleError,
+    RuleLocation,
 };
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
@@ -55,7 +56,7 @@ impl RuleDefinition for AddParamlistParenthesis {
     fn apply(
         &self,
         node: &SyntaxNode,
-        location: TextRange,
+        location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         replace_token(node, location, "()", Some(SyntaxKind::ParamList), 0..0)
@@ -105,7 +106,7 @@ impl RuleDefinition for ReplacePrologue {
     fn apply(
         &self,
         node: &SyntaxNode,
-        location: TextRange,
+        location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         replace_token(node, location, "AS $$", None, 0..1)
@@ -159,7 +160,7 @@ impl RuleDefinition for ReplaceEpilogue {
     fn apply(
         &self,
         node: &SyntaxNode,
-        location: TextRange,
+        location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         replace_token(node, location, ";\n$$ LANGUAGE plpgsql", None, 1..3)
@@ -205,7 +206,11 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
 
-        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, location),
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -254,7 +259,11 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
 
-        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, location),
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -303,7 +312,11 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
 
-        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, location),
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
@@ -372,7 +385,11 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
 
-        let result = rule.apply(&node, location, &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, location),
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();

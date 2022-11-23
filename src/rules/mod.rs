@@ -68,7 +68,7 @@ trait RuleDefinition {
     fn apply(
         &self,
         node: &SyntaxNode,
-        location: TextRange,
+        location: &RuleLocation,
         ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError>;
 }
@@ -76,26 +76,30 @@ trait RuleDefinition {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct RuleLocation {
     offset: Range<u32>,
+    line: Range<u32>,
+    column: Range<u32>,
 }
 
 impl RuleLocation {
-    fn new(offset: Range<u32>) -> Self {
-        Self { offset }
-    }
-}
+    /// The caller must take care that the offset is always valid for the given
+    /// text.
+    fn from(text: &str, range: TextRange) -> Self {
+        let offset: Range<u32> = range.into();
+        let line_start = text[0..(offset.start as usize)].matches('\n').count() as u32 + 1;
+        let line_end = line_start
+            + text[(offset.start as usize)..(offset.end as usize)]
+                .matches('\n')
+                .count() as u32;
 
-impl From<TextRange> for RuleLocation {
-    fn from(text_range: TextRange) -> Self {
-        Self::new(text_range.start().into()..text_range.end().into())
+        Self {
+            offset,
+            line: line_start..line_end,
+            column: 1..1,
+        }
     }
-}
 
-impl From<&RuleLocation> for TextRange {
-    fn from(location: &RuleLocation) -> Self {
-        TextRange::at(
-            location.offset.start.into(),
-            (location.offset.len() as u32).into(),
-        )
+    fn text_range(&self) -> TextRange {
+        TextRange::new(self.offset.start.into(), self.offset.end.into())
     }
 }
 
@@ -118,7 +122,7 @@ impl From<ParseError> for RuleError {
     }
 }
 
-pub fn find_applicable_rules(root: &Root, ctx: &DboAnalyzeContext) -> Vec<RuleHint> {
+pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) -> Vec<RuleHint> {
     ANALYZER_RULES
         .iter()
         .filter_map(|(name, rule)| {
@@ -126,7 +130,10 @@ pub fn find_applicable_rules(root: &Root, ctx: &DboAnalyzeContext) -> Vec<RuleHi
                 .and_then(|node| {
                     rule.find(&node, ctx).map(|ranges| RuleHint {
                         name: (*name).to_owned(),
-                        locations: ranges.into_iter().map(Into::into).collect(),
+                        locations: ranges
+                            .into_iter()
+                            .map(|r| RuleLocation::from(input, r))
+                            .collect(),
                         short_desc: rule.short_desc(),
                     })
                 })
@@ -154,8 +161,10 @@ pub fn apply_rule(
         let node = rule.get_node(&root)?;
 
         if let Some(location) = location {
-            let location = rule.apply(&node, location.into(), ctx)?;
-            Ok((root.syntax().to_string(), vec![location.into()]))
+            let range = rule.apply(&node, location, ctx)?;
+            let text = root.syntax().to_string();
+            let location = RuleLocation::from(&text, range);
+            Ok((root.syntax().to_string(), vec![location]))
         } else {
             let mut result = Vec::new();
             while let Ok(locations) = rule.find(&node, ctx) {
@@ -163,11 +172,14 @@ pub fn apply_rule(
                     break;
                 }
 
-                let location = rule.apply(&node, locations[0], ctx)?;
-                result.push(location.into());
+                let location = RuleLocation::from(&root.syntax().to_string(), locations[0]);
+                let range = rule.apply(&node, &location, ctx)?;
+                result.push(range);
             }
 
-            Ok((root.syntax().to_string(), result))
+            let text = root.syntax().to_string();
+            let result = result.into_iter().map(|r| RuleLocation::from(&text, r)).collect();
+            Ok((text, result))
         }
     };
 
@@ -269,26 +281,27 @@ fn next_token(token: &SyntaxToken) -> Option<SyntaxToken> {
 /// tokens at. If the range is empty, no tokens are deleted.
 fn replace_token(
     node: &SyntaxNode,
-    location: TextRange,
+    location: &RuleLocation,
     replacement: &str,
     kind: Option<SyntaxKind>,
     to_delete: Range<usize>,
 ) -> Result<TextRange, RuleError> {
     let replacement = parse_any(replacement)?.syntax().clone_for_update();
 
-    if !node.text_range().contains_range(location) {
-        return Err(RuleError::InvalidLocation(location.into()));
+    let text_range = location.text_range();
+    if !node.text_range().contains_range(text_range) {
+        return Err(RuleError::InvalidLocation(location.clone()));
     }
 
     let last = node.last_child_or_token().map(|e| e.index()).unwrap_or(0);
 
-    let start = match node.token_at_offset(location.start()) {
-        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.into())),
+    let start = match node.token_at_offset(text_range.start()) {
+        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.clone())),
         TokenAtOffset::Single(t) => t.index(),
         TokenAtOffset::Between(_, t) => t.index(),
     };
-    let end = match node.token_at_offset(location.start()) {
-        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.into())),
+    let end = match node.token_at_offset(text_range.start()) {
+        TokenAtOffset::None => return Err(RuleError::InvalidLocation(location.clone())),
         TokenAtOffset::Single(t) => t.index(),
         TokenAtOffset::Between(_, t) => t.index(),
     };
@@ -298,7 +311,7 @@ fn replace_token(
     // Check carefully that we also have a valid index range, as
     // `.splice_children()` will straight up panic with out-of-bounds indices.
     if to_delete.end > last {
-        return Err(RuleError::InvalidLocation(location.into()));
+        return Err(RuleError::InvalidLocation(location.clone()));
     }
 
     if let Some(kind) = kind {
@@ -341,7 +354,7 @@ fn replace_token(
         } else {
             // TODO: Is this what we want? Also, completely untested as we do not have
             // any rule yet which only deletes tokens, without also inserting some.
-            Ok(TextRange::new(location.start(), location.start()))
+            Ok(TextRange::new(text_range.start(), text_range.start()))
         }
     }
 }

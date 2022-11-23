@@ -163,9 +163,9 @@ pub fn analyze(
     };
 
     match typ {
-        DboType::Function => analyze_function(cast_to_root(parse_function(sql)?)?, ctx),
-        DboType::Procedure => analyze_procedure(cast_to_root(parse_procedure(sql)?)?, ctx),
-        DboType::Query => analyze_query(cast_to_root(parse_query(sql)?)?, ctx),
+        DboType::Function => analyze_function(sql, cast_to_root(parse_function(sql)?)?, ctx),
+        DboType::Procedure => analyze_procedure(sql, cast_to_root(parse_procedure(sql)?)?, ctx),
+        DboType::Query => analyze_query(sql, cast_to_root(parse_query(sql)?)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
@@ -195,7 +195,7 @@ pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsVa
     }
 }
 
-fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_function(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let function = root
         .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
@@ -209,7 +209,7 @@ fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, 
     let lines_of_code = body.matches('\n').count();
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(&root, ctx),
+        rules: find_applicable_rules(input, &root, ctx),
         function: Some(DboFunctionMetaData {
             name,
             body,
@@ -219,7 +219,7 @@ fn analyze_function(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, 
     })
 }
 
-fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let procedure = root
         .procedure()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
@@ -233,7 +233,7 @@ fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData,
     let lines_of_code = body.matches('\n').count();
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(&root, ctx),
+        rules: find_applicable_rules(input, &root, ctx),
         procedure: Some(DboProcedureMetaData {
             name,
             body,
@@ -243,7 +243,7 @@ fn analyze_procedure(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData,
     })
 }
 
-fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_query(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
     let query = root
         .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
@@ -258,7 +258,7 @@ fn analyze_query(root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, Ana
         .unwrap_or(0);
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(&root, ctx),
+        rules: find_applicable_rules(input, &root, ctx),
         query: Some(DboQueryMetaData { outer_joins }),
         ..Default::default()
     })
