@@ -6,6 +6,7 @@
 
 use super::{
     check_parameter_types, find_descendants_tokens, replace_token, RuleDefinition, RuleError,
+    RuleLocation,
 };
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, Root};
@@ -41,7 +42,7 @@ impl RuleDefinition for FixTrunc {
     fn apply(
         &self,
         _node: &SyntaxNode,
-        _location: TextRange,
+        _location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         Err(RuleError::NoChange)
@@ -94,7 +95,7 @@ impl RuleDefinition for ReplaceSysdate {
     fn apply(
         &self,
         node: &SyntaxNode,
-        location: TextRange,
+        location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
         replace_token(node, location, "clock_timestamp()", None, 0..1)
@@ -177,7 +178,11 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
 
-        let result = rule.apply(&node, locations[0], &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, locations[0]),
+            &DboAnalyzeContext::default(),
+        );
         let location = result.unwrap();
         check(
             root.syntax().clone(),
@@ -203,7 +208,11 @@ mod tests {
         assert_eq!(locations.len(), 1);
         assert_eq!(locations[0], TextRange::new(133.into(), 140.into()));
 
-        let result = rule.apply(&node, locations[0], &DboAnalyzeContext::default());
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(&root.syntax().to_string(), locations[0]),
+            &DboAnalyzeContext::default(),
+        );
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();

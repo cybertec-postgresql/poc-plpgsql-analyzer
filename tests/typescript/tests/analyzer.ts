@@ -134,14 +134,26 @@ describe('passing type context information into analyzer', () => {
     expect(metaData.rules.length).toEqual(2);
     expect(metaData.rules[0]).toEqual({
       name: 'CYAR-0002',
-      locations: [{ offset: { start: 315, end: 317 } }],
+      locations: [
+        {
+          offset: { start: 315, end: 317 },
+          line: { start: 13, end: 13 },
+          column: { start: 1, end: 1 },
+        },
+      ],
       short_desc: 'Replace procedure prologue',
     });
     expect(content.substring(315, 317)).toEqual('IS');
 
     expect(metaData.rules[1]).toEqual({
       name: 'CYAR-0003',
-      locations: [{ offset: { start: 571, end: 595 } }],
+      locations: [
+        {
+          offset: { start: 571, end: 595 },
+          line: { start: 18, end: 18 },
+          column: { start: 1, end: 1 },
+        },
+      ],
       short_desc: 'Replace procedure epilogue',
     });
     expect(content.substring(571, 595)).toEqual('END log_last_login_fuzzy');
@@ -167,7 +179,13 @@ describe('trying to apply some transpiler rules', () => {
     let transpiled = content;
     const doApply = rule => {
       let location;
-      [transpiled, location] = applyRule(DboType.Procedure, transpiled, rule.name, rule.locations[0], context);
+      [transpiled, location] = applyRule(
+        DboType.Procedure,
+        transpiled,
+        rule.name,
+        rule.locations[0],
+        context,
+      );
 
       return analyze(DboType.Procedure, transpiled, context);
     };
