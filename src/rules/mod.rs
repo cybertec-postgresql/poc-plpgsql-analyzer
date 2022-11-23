@@ -84,17 +84,25 @@ impl RuleLocation {
     /// The caller must take care that the offset is always valid for the given
     /// text.
     fn from(text: &str, range: TextRange) -> Self {
-        let offset: Range<u32> = range.into();
-        let line_start = text[0..(offset.start as usize)].matches('\n').count() as u32 + 1;
-        let line_end = line_start
-            + text[(offset.start as usize)..(offset.end as usize)]
-                .matches('\n')
-                .count() as u32;
+        let (start, end) = (range.start().into(), range.end().into());
+        let line_start = text[0..start].matches('\n').count() as u32 + 1;
+        let line_end = line_start + text[start..end].matches('\n').count() as u32;
+
+        let column_start = text[0..start]
+            .rfind('\n')
+            .map(|i| start - i)
+            .unwrap_or(start + 1) as u32;
+
+        let column_end = if range.is_empty() {
+            column_start
+        } else {
+            text[0..end].rfind('\n').map(|i| end - i).unwrap_or(end + 1) as u32
+        };
 
         Self {
-            offset,
+            offset: range.into(),
             line: line_start..line_end,
-            column: 1..1,
+            column: column_start..column_end,
         }
     }
 
@@ -178,7 +186,10 @@ pub fn apply_rule(
             }
 
             let text = root.syntax().to_string();
-            let result = result.into_iter().map(|r| RuleLocation::from(&text, r)).collect();
+            let result = result
+                .into_iter()
+                .map(|r| RuleLocation::from(&text, r))
+                .collect();
             Ok((text, result))
         }
     };
@@ -436,35 +447,35 @@ mod tests {
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 27..27);
         assert_eq!(metadata.rules[0].locations[0].line, 1..1);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..1);
+        assert_eq!(metadata.rules[0].locations[0].column, 28..28);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0002");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 30..32);
         assert_eq!(metadata.rules[0].locations[0].line, 2..2);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..1);
+        assert_eq!(metadata.rules[0].locations[0].column, 1..3);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0003");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 281..292);
         assert_eq!(metadata.rules[0].locations[0].line, 9..9);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..1);
+        assert_eq!(metadata.rules[0].locations[0].column, 4..15);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 2);
         assert_eq!(metadata.rules[0].locations[0].offset, 56..63);
         assert_eq!(metadata.rules[0].locations[0].line, 4..4);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..1);
+        assert_eq!(metadata.rules[0].locations[0].column, 15..22);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 138..145);
         assert_eq!(metadata.rules[0].locations[0].line, 5..5);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..1);
+        assert_eq!(metadata.rules[0].locations[0].column, 21..28);
         do_apply(&metadata.rules[0]);
 
         expect![[r#"
