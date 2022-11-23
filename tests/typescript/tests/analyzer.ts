@@ -149,7 +149,7 @@ describe('passing type context information into analyzer', () => {
       name: 'CYAR-0003',
       locations: [
         {
-          offset: { start: 571, end: 595 },
+          offset: { start: 574, end: 595 },
           line: { start: 18, end: 18 },
           column: { start: 1, end: 1 },
         },
