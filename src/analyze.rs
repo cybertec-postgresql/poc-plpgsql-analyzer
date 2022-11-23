@@ -195,7 +195,11 @@ pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsVa
     }
 }
 
-fn analyze_function(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_function(
+    input: &str,
+    root: Root,
+    ctx: &DboAnalyzeContext,
+) -> Result<DboMetaData, AnalyzeError> {
     let function = root
         .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
@@ -219,7 +223,11 @@ fn analyze_function(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<
     })
 }
 
-fn analyze_procedure(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_procedure(
+    input: &str,
+    root: Root,
+    ctx: &DboAnalyzeContext,
+) -> Result<DboMetaData, AnalyzeError> {
     let procedure = root
         .procedure()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure".to_owned()))?;
@@ -243,7 +251,11 @@ fn analyze_procedure(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result
     })
 }
 
-fn analyze_query(input: &str, root: Root, ctx: &DboAnalyzeContext) -> Result<DboMetaData, AnalyzeError> {
+fn analyze_query(
+    input: &str,
+    root: Root,
+    ctx: &DboAnalyzeContext,
+) -> Result<DboMetaData, AnalyzeError> {
     let query = root
         .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
