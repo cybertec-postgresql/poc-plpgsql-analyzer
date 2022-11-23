@@ -13,8 +13,8 @@ fn test_parse_procedure_coverage(path: &Path) -> datatest_stable::Result<()> {
     let parse = result.unwrap();
     assert!(
         parse.errors.is_empty(),
-        "\n{}\n{:?}",
-        parse.tree(),
+        "\n{:#?}\n{:?}",
+        parse.syntax(),
         parse.errors
     );
     Ok(())
@@ -27,8 +27,8 @@ fn test_parse_function_coverage(path: &Path) -> datatest_stable::Result<()> {
     let parse = result.unwrap();
     assert!(
         parse.errors.is_empty(),
-        "\n{}\n{:?}",
-        parse.tree(),
+        "\n{:#?}\n{:?}",
+        parse.syntax(),
         parse.errors
     );
     Ok(())
@@ -41,8 +41,8 @@ fn test_parse_dql_select_coverage(path: &Path) -> datatest_stable::Result<()> {
     let parse = result.unwrap();
     assert!(
         parse.errors.is_empty(),
-        "\n{}\n{:?}",
-        parse.tree(),
+        "\n{:#?}\n{:?}",
+        parse.syntax(),
         parse.errors
     );
     Ok(())

@@ -123,7 +123,7 @@ mod tests {
     /// Helper function to compare the build syntax tree with the expected
     /// output.
     pub fn check(parse: Parse, expected_tree: Expect) {
-        expected_tree.assert_eq(parse.tree().as_str())
+        expected_tree.assert_eq(&format!("{:#?}", parse.syntax()))
     }
 
     #[test]

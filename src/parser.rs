@@ -93,11 +93,6 @@ impl Parse {
         SyntaxNode::new_root(self.green_node.clone())
     }
 
-    #[allow(unused)]
-    pub fn tree(&self) -> String {
-        format!("{:#?}", self.syntax())
-    }
-
     pub fn ok(&self) -> bool {
         self.errors.is_empty()
     }
