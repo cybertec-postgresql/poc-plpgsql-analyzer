@@ -453,4 +453,62 @@ mod tests {
         "#]]
         .assert_eq(&transpiled);
     }
+
+    #[test]
+    fn test_apply_all_applicable_rules_on_procedure_without_location() {
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
+
+        let context = DboAnalyzeContext::default();
+        let result = crate::analyze(DboType::Procedure, INPUT, &context);
+        assert!(result.is_ok(), "{:#?}", result);
+        let mut metadata = result.unwrap();
+
+        assert_eq!(metadata.rules.len(), 4);
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[1].name, "CYAR-0002");
+        assert_eq!(metadata.rules[2].name, "CYAR-0003");
+        assert_eq!(metadata.rules[3].name, "CYAR-0005");
+
+        let mut transpiled = INPUT.to_owned();
+
+        let mut do_apply = |rule: &RuleHint| {
+            let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, None, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            transpiled = result.unwrap().0;
+
+            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            result.unwrap()
+        };
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0002");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0003");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 2);
+        do_apply(&metadata.rules[0]);
+
+        expect![[r#"
+            CREATE PROCEDURE secure_dml()
+            AS $$
+            BEGIN
+              IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                    OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
+                RAISE_APPLICATION_ERROR (-20205,
+                    'You may only make changes during normal office hours');
+              END IF;
+            END;
+            $$ LANGUAGE plpgsql;
+        "#]]
+        .assert_eq(&transpiled);
+    }
 }
