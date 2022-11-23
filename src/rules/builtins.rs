@@ -97,7 +97,7 @@ impl RuleDefinition for ReplaceSysdate {
         location: TextRange,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, "clock_timestamp()", 0..1)
+        replace_token(node, location, "clock_timestamp()", None, 0..1)
     }
 }
 

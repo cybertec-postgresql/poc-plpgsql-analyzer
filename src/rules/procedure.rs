@@ -58,7 +58,7 @@ impl RuleDefinition for AddParamlistParenthesis {
         location: TextRange,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, "()", 0..0)
+        replace_token(node, location, "()", Some(SyntaxKind::ParamList), 0..0)
     }
 }
 
@@ -108,7 +108,7 @@ impl RuleDefinition for ReplacePrologue {
         location: TextRange,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, "AS $$", 0..1)
+        replace_token(node, location, "AS $$", None, 0..1)
     }
 }
 
@@ -162,7 +162,7 @@ impl RuleDefinition for ReplaceEpilogue {
         location: TextRange,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", 1..3)
+        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", None, 1..3)
     }
 }
 

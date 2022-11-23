@@ -12,7 +12,7 @@ use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 use indexmap::IndexMap;
-use rowan::{Direction, TextRange, TokenAtOffset};
+use rowan::{Direction, GreenNode, GreenToken, NodeOrToken, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Range;
@@ -139,9 +139,9 @@ pub fn apply_rule(
     typ: DboType,
     sql: &str,
     rule_name: &str,
-    location: &RuleLocation,
+    location: Option<&RuleLocation>,
     ctx: &DboAnalyzeContext,
-) -> Result<(String, RuleLocation), RuleError> {
+) -> Result<(String, Vec<RuleLocation>), RuleError> {
     let apply = |p: Parse| {
         let rule = ANALYZER_RULES
             .get(rule_name)
@@ -152,9 +152,23 @@ pub fn apply_rule(
             .clone_for_update();
 
         let node = rule.get_node(&root)?;
-        let location = rule.apply(&node, location.into(), ctx)?;
 
-        Ok((root.syntax().to_string(), location.into()))
+        if let Some(location) = location {
+            let location = rule.apply(&node, location.into(), ctx)?;
+            Ok((root.syntax().to_string(), vec![location.into()]))
+        } else {
+            let mut result = Vec::new();
+            while let Ok(locations) = rule.find(&node, ctx) {
+                if locations.is_empty() {
+                    break;
+                }
+
+                let location = rule.apply(&node, locations[0], ctx)?;
+                result.push(location.into());
+            }
+
+            Ok((root.syntax().to_string(), result))
+        }
     };
 
     match typ {
@@ -174,10 +188,10 @@ pub fn js_apply_rule(
     location: JsValue,
     ctx: JsValue,
 ) -> Result<JsValue, JsValue> {
-    let location = serde_wasm_bindgen::from_value(location)?;
+    let location: Option<RuleLocation> = serde_wasm_bindgen::from_value(location)?;
     let ctx = serde_wasm_bindgen::from_value(ctx)?;
 
-    match apply_rule(typ, sql, rule, &location, &ctx) {
+    match apply_rule(typ, sql, rule, location.as_ref(), &ctx) {
         Ok(location) => Ok(serde_wasm_bindgen::to_value(&location)?),
         Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
     }
@@ -247,12 +261,17 @@ fn next_token(token: &SyntaxToken) -> Option<SyntaxToken> {
 ///
 /// `replacement`: A parsable string to replace the token(s) with.
 ///
+/// `kind`: If set, becomes the root node of the inserted AST subtree. If unset,
+/// all children of of the AST subtree are inserted instead, without a node
+/// nesting them in the existing AST.
+///
 /// `replace_offset`: The offset and range from the found token to delete some
 /// tokens at. If the range is empty, no tokens are deleted.
 fn replace_token(
     node: &SyntaxNode,
     location: TextRange,
     replacement: &str,
+    kind: Option<SyntaxKind>,
     to_delete: Range<usize>,
 ) -> Result<TextRange, RuleError> {
     let replacement = parse_any(replacement)?.syntax().clone_for_update();
@@ -282,8 +301,49 @@ fn replace_token(
         return Err(RuleError::InvalidLocation(location.into()));
     }
 
-    node.splice_children(to_delete, vec![SyntaxElement::Node(replacement.clone())]);
-    Ok(replacement.text_range())
+    if let Some(kind) = kind {
+        // If we have a syntax kind, we have to first construct a new green tree to then
+        // create a new green node of the specified type. And to do that, we
+        // have to convert all children syntax elements into their green tree
+        // equvilant first.
+        let children = replacement
+            .children_with_tokens()
+            .map(|elem| match elem {
+                SyntaxElement::Node(n) => NodeOrToken::Node(n.green().into_owned()),
+                SyntaxElement::Token(t) => NodeOrToken::Token(t.green().to_owned()),
+            })
+            .collect::<Vec<NodeOrToken<GreenNode, GreenToken>>>();
+
+        let child =
+            SyntaxNode::new_root(rowan::GreenNode::new(kind.into(), children)).clone_for_update();
+
+        // Now insert it as one single node into the original AST.
+        node.splice_children(to_delete, vec![SyntaxElement::Node(child.clone())]);
+
+        // The child node was modified, so it's location now represents it in the AST we
+        // inserted it into.
+        Ok(child.text_range())
+    } else {
+        // Just insert all the children elements without a nesting node.
+        let children = replacement
+            .children_with_tokens()
+            .collect::<Vec<SyntaxElement>>();
+
+        node.splice_children(to_delete, children.clone());
+
+        // The rule might just delete some token, without inserting any. Return the
+        // correct location in any case.
+        if let (Some(first), Some(last)) = (children.first(), children.last()) {
+            Ok(TextRange::new(
+                first.text_range().start(),
+                last.text_range().end(),
+            ))
+        } else {
+            // TODO: Is this what we want? Also, completely untested as we do not have
+            // any rule yet which only deletes tokens, without also inserting some.
+            Ok(TextRange::new(location.start(), location.start()))
+        }
+    }
 }
 
 fn check_parameter_types(node: &SyntaxNode, ctx: &DboAnalyzeContext) -> Result<(), RuleError> {
@@ -348,7 +408,7 @@ mod tests {
                 DboType::Procedure,
                 &transpiled,
                 &rule.name,
-                &rule.locations[0],
+                Some(&rule.locations[0]),
                 &context,
             );
             assert!(result.is_ok(), "{:#?}", result);
@@ -377,6 +437,64 @@ mod tests {
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 1);
+        do_apply(&metadata.rules[0]);
+
+        expect![[r#"
+            CREATE PROCEDURE secure_dml()
+            AS $$
+            BEGIN
+              IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+                    OR TO_CHAR (clock_timestamp(), 'DY') IN ('SAT', 'SUN') THEN
+                RAISE_APPLICATION_ERROR (-20205,
+                    'You may only make changes during normal office hours');
+              END IF;
+            END;
+            $$ LANGUAGE plpgsql;
+        "#]]
+        .assert_eq(&transpiled);
+    }
+
+    #[test]
+    fn test_apply_all_applicable_rules_on_procedure_without_location() {
+        const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
+
+        let context = DboAnalyzeContext::default();
+        let result = crate::analyze(DboType::Procedure, INPUT, &context);
+        assert!(result.is_ok(), "{:#?}", result);
+        let mut metadata = result.unwrap();
+
+        assert_eq!(metadata.rules.len(), 4);
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[1].name, "CYAR-0002");
+        assert_eq!(metadata.rules[2].name, "CYAR-0003");
+        assert_eq!(metadata.rules[3].name, "CYAR-0005");
+
+        let mut transpiled = INPUT.to_owned();
+
+        let mut do_apply = |rule: &RuleHint| {
+            let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, None, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            transpiled = result.unwrap().0;
+
+            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            result.unwrap()
+        };
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0002");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0003");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0005");
+        assert_eq!(metadata.rules[0].locations.len(), 2);
         do_apply(&metadata.rules[0]);
 
         expect![[r#"
