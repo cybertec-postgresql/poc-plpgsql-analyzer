@@ -448,7 +448,7 @@ mod tests {
 
         assert_eq!(metadata.rules[0].name, "CYAR-0003");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 278..292);
+        assert_eq!(metadata.rules[0].locations[0].offset, 281..292);
         assert_eq!(metadata.rules[0].locations[0].line, 9..9);
         assert_eq!(metadata.rules[0].locations[0].column, 1..1);
         metadata = do_apply(&metadata.rules[0]);

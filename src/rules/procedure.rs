@@ -140,9 +140,10 @@ impl RuleDefinition for ReplaceEpilogue {
                         .unwrap_or(true)
             })
             .map(|t| {
-                let end = find_sibling_token(&t, |t| t.kind() == SyntaxKind::Ident)
+                let start = t.next_token().unwrap_or_else(|| t.clone());
+                let end = find_sibling_token(&start, |t| t.kind() == SyntaxKind::Ident)
                     .unwrap_or_else(|| t.clone());
-                TextRange::new(t.text_range().start(), end.text_range().end())
+                TextRange::new(start.text_range().start(), end.text_range().end())
             })
             .collect::<Vec<TextRange>>();
 
@@ -163,7 +164,7 @@ impl RuleDefinition for ReplaceEpilogue {
         location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", None, 1..3)
+        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", None, 0..2)
     }
 }
 
@@ -303,8 +304,8 @@ mod tests {
         let mut locations = result.unwrap();
         assert_eq!(locations.len(), 1);
         let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(273.into(), 287.into()));
-        assert_eq!(&root.syntax().to_string()[location], "END secure_dml");
+        assert_eq!(location, TextRange::new(276.into(), 287.into()));
+        assert_eq!(&root.syntax().to_string()[location], " secure_dml");
 
         let root = root.clone_for_update();
 
