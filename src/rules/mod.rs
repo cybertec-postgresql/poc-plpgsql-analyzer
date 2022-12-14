@@ -12,6 +12,7 @@ use std::ops::Range;
 use indexmap::IndexMap;
 use rowan::{Direction, GreenNode, GreenToken, NodeOrToken, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
+use unicode_width::UnicodeWidthStr;
 use wasm_bindgen::prelude::*;
 use wasm_typescript_definition::TypescriptDefinition;
 
@@ -94,37 +95,26 @@ impl RuleLocation {
     /// The caller must take care that the offset is always valid for the given
     /// text.
     fn from(text: &str, range: TextRange) -> Self {
-        let (start, end) = (range.start().into(), range.end().into());
-        let line_start = text[0..start].matches('\n').count() as u32 + 1;
-        let line_end = line_start + text[start..end].matches('\n').count() as u32;
-
-        let column_start = text[0..start]
-            .rfind('\n')
-            .map(|i| start - i)
-            .unwrap_or(start + 1) as u32;
-
-        let column_end = if range.is_empty() {
-            column_start
-        } else {
-            text[0..end].rfind('\n').map(|i| end - i).unwrap_or(end + 1) as u32
-        };
-
         Self {
             offset: range.into(),
-            start: LineCol {
-                line: line_start,
-                col: column_start,
-            },
-            end: LineCol {
-                line: line_end,
-                col: column_end,
-            },
+            start: position_to_line_col(text, range.start().into()),
+            end: position_to_line_col(text, range.end().into()),
         }
     }
 
     fn text_range(&self) -> TextRange {
         TextRange::new(self.offset.start.into(), self.offset.end.into())
     }
+}
+
+/// Determine the Line:Column for an offset in a &str
+fn position_to_line_col(text: &str, pos: usize) -> LineCol {
+    let line = text[0..pos].matches('\n').count() as u32 + 1;
+
+    let line_start = text[0..pos].rfind('\n').map(|i| i + 1).unwrap_or(0);
+    let col = (UnicodeWidthStr::width(&text[line_start..pos])) as u32 + 1;
+
+    LineCol { line, col }
 }
 
 impl fmt::Display for RuleLocation {
@@ -575,6 +565,74 @@ mod tests {
             END;
             $$ LANGUAGE plpgsql;
         "#]]
+        .assert_eq(&transpiled);
+    }
+
+    #[test]
+    fn test_unicode_width_in_rule_location() {
+        const INPUT: &str = include_str!("../../tests/fixtures/unicode_characters.ora.sql");
+
+        let context = DboAnalyzeContext::default();
+        let result = crate::analyze(DboType::Procedure, INPUT, &context);
+        assert!(result.is_ok(), "{:#?}", result);
+        let mut metadata = result.unwrap();
+
+        assert_eq!(metadata.rules.len(), 3);
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[1].name, "CYAR-0002");
+        assert_eq!(metadata.rules[2].name, "CYAR-0003");
+
+        let mut transpiled = INPUT.to_owned();
+
+        let mut do_apply = |rule: &RuleHint| {
+            let result = apply_rule(
+                DboType::Procedure,
+                &transpiled,
+                &rule.name,
+                Some(&rule.locations[0]),
+                &context,
+            );
+            assert!(result.is_ok(), "{:#?}", result);
+            transpiled = result.unwrap().0;
+
+            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
+            assert!(result.is_ok(), "{:#?}", result);
+            result.unwrap()
+        };
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0001");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        assert_eq!(metadata.rules[0].locations[0].offset, 40..40);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 30);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 30);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0002");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        assert_eq!(metadata.rules[0].locations[0].offset, 43..45);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
+        metadata = do_apply(&metadata.rules[0]);
+
+        assert_eq!(metadata.rules[0].name, "CYAR-0003");
+        assert_eq!(metadata.rules[0].locations.len(), 1);
+        assert_eq!(metadata.rules[0].locations[0].offset, 77..101);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 17);
+        do_apply(&metadata.rules[0]);
+
+        expect![[r#"CREATE PROCEDURE "读文👩🏼‍🔬"()
+AS $$ BEGIN
+  NULL; -- メ メ
+END;
+$$ LANGUAGE plpgsql;
+"#]]
         .assert_eq(&transpiled);
     }
 }
