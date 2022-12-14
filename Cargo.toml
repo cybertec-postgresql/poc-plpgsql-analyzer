@@ -26,6 +26,7 @@ serde-wasm-bindgen = "^0.4.5"
 serde_repr = "^0.1.9"
 text-size = "^1.1.0"
 thiserror = "^1.0.35"
+unicode-width = "0.1.10"
 wasm-bindgen = "^0.2.83"
 wasm-typescript-definition = "^0.1.4"
 
