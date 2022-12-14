@@ -1,4 +1,4 @@
 CREATE PROCEDURE "读文👩🏼‍🔬"
 IS BEGIN
-  NULL;
+  NULL; -- メ メ
 END "读文👩🏼‍🔬";

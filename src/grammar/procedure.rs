@@ -190,8 +190,8 @@ Root@0..31
         check(
             parse(INPUT, parse_procedure),
             expect![[r#"
-Root@0..87
-  Procedure@0..87
+Root@0..98
+  Procedure@0..98
     ProcedureHeader@0..41
       Keyword@0..6 "CREATE"
       Whitespace@6..7 " "
@@ -203,15 +203,17 @@ Root@0..87
     Whitespace@43..44 " "
     Keyword@44..49 "BEGIN"
     Whitespace@49..52 "\n  "
-    ProcedureBody@52..58
+    ProcedureBody@52..69
       Ident@52..56 "NULL"
       SemiColon@56..57 ";"
-      Whitespace@57..58 "\n"
-    Keyword@58..61 "END"
-    Whitespace@61..62 " "
-    Ident@62..85 "\"读文👩🏼\u{200d}🔬\""
-    SemiColon@85..86 ";"
-    Whitespace@86..87 "\n"
+      Whitespace@57..58 " "
+      Comment@58..68 "-- メ メ"
+      Whitespace@68..69 "\n"
+    Keyword@69..72 "END"
+    Whitespace@72..73 " "
+    Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
+    SemiColon@96..97 ";"
+    Whitespace@97..98 "\n"
 "#]],
         );
     }
