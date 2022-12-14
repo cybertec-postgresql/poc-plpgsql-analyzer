@@ -188,6 +188,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::VarcharTyKw => SyntaxKind::TypeName,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::Ident => SyntaxKind::Ident,
+            TokenKind::DelimitedIdent => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::Comma => SyntaxKind::Comma,

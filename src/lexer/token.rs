@@ -98,6 +98,9 @@ pub enum TokenKind {
     #[regex(r"(?i)[a-z_][a-z0-9_$]*(\.[a-z_][a-z0-9_$]*)?", priority = 1)]
     Ident,
 
+    #[regex(r#""(?:[^"]|"")+""#)]
+    DelimitedIdent,
+
     // TODO: Escaped characters, esp. \'
     #[regex("'[^']*'")]
     QuotedLiteral,
@@ -186,5 +189,10 @@ mod tests {
     #[test]
     fn lex_ident() {
         check("hello", TokenKind::Ident);
+    }
+
+    #[test]
+    fn lex_quoted_ident() {
+        check(r#""读文👩🏼‍🔬""#, TokenKind::DelimitedIdent);
     }
 }
