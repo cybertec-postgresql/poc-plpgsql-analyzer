@@ -76,8 +76,14 @@ trait RuleDefinition {
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct RuleLocation {
     offset: Range<u32>,
-    line: Range<u32>,
-    column: Range<u32>,
+    start: LineCol,
+    end: LineCol,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
+pub struct LineCol {
+    line: u32,
+    col: u32,
 }
 
 impl RuleLocation {
@@ -101,8 +107,14 @@ impl RuleLocation {
 
         Self {
             offset: range.into(),
-            line: line_start..line_end,
-            column: column_start..column_end,
+            start: LineCol {
+                line: line_start,
+                col: column_start,
+            },
+            end: LineCol {
+                line: line_end,
+                col: column_end,
+            },
         }
     }
 
@@ -446,36 +458,46 @@ mod tests {
         assert_eq!(metadata.rules[0].name, "CYAR-0001");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 27..27);
-        assert_eq!(metadata.rules[0].locations[0].line, 1..1);
-        assert_eq!(metadata.rules[0].locations[0].column, 28..28);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 28);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0002");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 30..32);
-        assert_eq!(metadata.rules[0].locations[0].line, 2..2);
-        assert_eq!(metadata.rules[0].locations[0].column, 1..3);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0003");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 281..292);
-        assert_eq!(metadata.rules[0].locations[0].line, 9..9);
-        assert_eq!(metadata.rules[0].locations[0].column, 4..15);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 9);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 9);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 15);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 2);
         assert_eq!(metadata.rules[0].locations[0].offset, 56..63);
-        assert_eq!(metadata.rules[0].locations[0].line, 4..4);
-        assert_eq!(metadata.rules[0].locations[0].column, 15..22);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 15);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 22);
         metadata = do_apply(&metadata.rules[0]);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 1);
         assert_eq!(metadata.rules[0].locations[0].offset, 138..145);
-        assert_eq!(metadata.rules[0].locations[0].line, 5..5);
-        assert_eq!(metadata.rules[0].locations[0].column, 21..28);
+        assert_eq!(metadata.rules[0].locations[0].start.line, 5);
+        assert_eq!(metadata.rules[0].locations[0].start.col, 21);
+        assert_eq!(metadata.rules[0].locations[0].end.line, 5);
+        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
         do_apply(&metadata.rules[0]);
 
         expect![[r#"
