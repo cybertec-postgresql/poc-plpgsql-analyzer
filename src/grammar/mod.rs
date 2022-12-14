@@ -50,7 +50,7 @@ fn parse_param_list(p: &mut Parser) {
 ///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
-    p.expect(TokenKind::Ident);
+    parse_ident(p);
 
     while !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
         p.bump_any();
@@ -69,7 +69,7 @@ fn parse_var_decl_list(p: &mut Parser) {
     while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::VariableDecl);
 
-        if !p.expect(TokenKind::Ident) {
+        if !p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) {
             break;
         }
 
@@ -88,17 +88,17 @@ fn parse_var_decl_list(p: &mut Parser) {
 
 /// Parses a single SQL identifier.
 fn parse_ident(p: &mut Parser) {
-    p.expect(TokenKind::Ident);
+    p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
 }
 
 fn eat_ident(p: &mut Parser) {
-    p.eat(TokenKind::Ident);
+    p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
 }
 
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
     if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
-        p.expect(TokenKind::Ident);
+        parse_ident(p);
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
     }

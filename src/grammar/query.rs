@@ -34,7 +34,7 @@ fn parse_column_expr(p: &mut Parser) {
     while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::ColumnExpr);
 
-        if !p.eat(TokenKind::Ident) {
+        if !p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) {
             p.until_last(TokenKind::Comma);
         }
 
@@ -45,7 +45,9 @@ fn parse_column_expr(p: &mut Parser) {
 }
 
 fn parse_from_list(p: &mut Parser) {
-    while p.expect(TokenKind::Ident) && p.eat(TokenKind::Comma) {}
+    while p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) && p.eat(TokenKind::Comma)
+    {
+    }
 }
 
 fn parse_where_clause(p: &mut Parser) {
