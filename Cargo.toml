@@ -16,18 +16,18 @@ build = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
+indexmap = "^1.9.1"
+lazy_static = "^1.4.0"
 logos = "^0.12.1"
 num-derive = "^0.3.3"
 num-traits = "^0.2.15"
 rowan = "^0.15.10"
 serde-wasm-bindgen = "^0.4.5"
+serde_repr = "^0.1.9"
 text-size = "^1.1.0"
 thiserror = "^1.0.35"
 wasm-bindgen = "^0.2.83"
 wasm-typescript-definition = "^0.1.4"
-lazy_static = "^1.4.0"
-indexmap = "^1.9.1"
-serde_repr = "^0.1.9"
 
 [dependencies.serde]
 version = "^1.0"
