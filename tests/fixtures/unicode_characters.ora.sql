@@ -1,0 +1,4 @@
+CREATE PROCEDURE "读文👩🏼‍🔬"
+IS BEGIN
+  NULL;
+END "读文👩🏼‍🔬";
