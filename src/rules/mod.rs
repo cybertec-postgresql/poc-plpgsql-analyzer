@@ -4,20 +4,24 @@
 
 //! Implements rules for transpiling PL/SQL to PL/pgSQL
 
-pub mod builtins;
-pub mod procedure;
+extern crate unicode_width;
+
+use std::fmt;
+use std::ops::Range;
+
+use indexmap::IndexMap;
+use rowan::{Direction, GreenNode, GreenToken, NodeOrToken, TextRange, TokenAtOffset};
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::*;
+use wasm_typescript_definition::TypescriptDefinition;
 
 use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
-use indexmap::IndexMap;
-use rowan::{Direction, GreenNode, GreenToken, NodeOrToken, TextRange, TokenAtOffset};
-use serde::{Deserialize, Serialize};
-use std::fmt;
-use std::ops::Range;
-use wasm_bindgen::prelude::*;
-use wasm_typescript_definition::TypescriptDefinition;
+
+pub mod builtins;
+pub mod procedure;
 
 macro_rules! rule_list {
     ( $( $name:literal => $ty:path ),+ $(,)? ) => {
@@ -418,9 +422,10 @@ fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> Res
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use expect_test::expect;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_apply_all_applicable_rules_on_procedure() {
