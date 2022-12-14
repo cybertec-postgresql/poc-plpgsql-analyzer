@@ -23,7 +23,10 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
     let token = p.current();
     match token {
-        TokenKind::Ident | TokenKind::QuotedLiteral | TokenKind::Integer => {
+        TokenKind::Ident
+        | TokenKind::DelimitedIdent
+        | TokenKind::QuotedLiteral
+        | TokenKind::Integer => {
             p.bump_any();
             if min_bp == 0 && (p.at(TokenKind::SemiColon) || p.at(TokenKind::Eof)) {
                 add_expr_node(p, checkpoint, None);
@@ -49,6 +52,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
         _ => {
             p.error(ParseError::ExpectedOneOfTokens(vec![
                 TokenKind::Ident,
+                TokenKind::DelimitedIdent,
                 TokenKind::Integer,
                 TokenKind::LParen,
                 TokenKind::Minus,
