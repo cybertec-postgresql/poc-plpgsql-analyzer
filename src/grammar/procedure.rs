@@ -185,6 +185,38 @@ Root@0..31
     }
 
     #[test]
+    fn test_parse_proc_with_quoted_ident() {
+        const INPUT: &str = include_str!("../../tests/fixtures/unicode_characters.ora.sql");
+        check(
+            parse(INPUT, parse_procedure),
+            expect![[r#"
+Root@0..87
+  Procedure@0..87
+    ProcedureHeader@0..41
+      Keyword@0..6 "CREATE"
+      Whitespace@6..7 " "
+      Keyword@7..16 "PROCEDURE"
+      Whitespace@16..17 " "
+      Ident@17..40 "\"读文👩🏼\u{200d}🔬\""
+      Whitespace@40..41 "\n"
+    Keyword@41..43 "IS"
+    Whitespace@43..44 " "
+    Keyword@44..49 "BEGIN"
+    Whitespace@49..52 "\n  "
+    ProcedureBody@52..58
+      Ident@52..56 "NULL"
+      SemiColon@56..57 ";"
+      Whitespace@57..58 "\n"
+    Keyword@58..61 "END"
+    Whitespace@61..62 " "
+    Ident@62..85 "\"读文👩🏼\u{200d}🔬\""
+    SemiColon@85..86 ";"
+    Whitespace@86..87 "\n"
+"#]],
+        );
+    }
+
+    #[test]
     fn test_parse_pg_procedure() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.pg.sql");
 
