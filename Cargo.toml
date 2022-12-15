@@ -1,6 +1,6 @@
 [package]
 name = "poc-plpgsql-analyzer"
-authors = ["Christoph Heiss <christoph.heiss@cybertec.at>"]
+authors = ["Christoph Heiss <christoph.heiss@cybertec.at>", "Kieran Kaelin <kieran_kaelin@yahoo.co.uk"]
 version = "0.1.0"
 edition = "2021"
 description = "Proof of concept for tooling to migrate PL/SQL code to PL/pgSQL written in Rust."
