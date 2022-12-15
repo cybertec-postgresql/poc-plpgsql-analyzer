@@ -137,8 +137,8 @@ describe('passing type context information into analyzer', () => {
       locations: [
         {
           offset: { start: 315, end: 317 },
-          line: { start: 13, end: 13 },
-          column: { start: 1, end: 3 },
+          start: { line: 13, col: 1 },
+          end: { line: 13, col: 3 },
         },
       ],
       short_desc: 'Replace procedure prologue',
@@ -150,8 +150,8 @@ describe('passing type context information into analyzer', () => {
       locations: [
         {
           offset: { start: 574, end: 595 },
-          line: { start: 18, end: 18 },
-          column: { start: 4, end: 25 },
+          start: { line: 18, col: 4 },
+          end: { line: 18, col: 25 },
         },
       ],
       short_desc: 'Replace procedure epilogue',
