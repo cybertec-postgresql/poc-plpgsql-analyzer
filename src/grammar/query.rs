@@ -31,7 +31,7 @@ fn parse_column_expr(p: &mut Parser) {
 
     p.start(SyntaxKind::SelectClause);
 
-    while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) {
+    while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) && !p.at(TokenKind::SemiColon) {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
