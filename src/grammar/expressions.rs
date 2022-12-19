@@ -8,11 +8,13 @@
 //    https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 //    https://arzg.github.io/lang/10/
 
+use rowan::Checkpoint;
+
+use crate::grammar::parse_ident_or_function_invocation;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
-use rowan::Checkpoint;
 
 pub(crate) fn parse_expr(p: &mut Parser) {
     expr_bp(p, 0);
@@ -27,7 +29,14 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
         | TokenKind::DelimitedIdent
         | TokenKind::QuotedLiteral
         | TokenKind::Integer => {
-            p.bump_any();
+            match token {
+                TokenKind::Ident | TokenKind::DelimitedIdent => {
+                    parse_ident_or_function_invocation(p);
+                }
+                _ => {
+                    p.bump_any();
+                }
+            }
             if min_bp == 0 && (p.at(TokenKind::SemiColon) || p.at(TokenKind::Eof)) {
                 add_expr_node(p, checkpoint, None);
             }

@@ -7,11 +7,13 @@
 
 mod expressions;
 mod function;
+mod function_invocation;
 mod procedure;
 mod query;
 
 pub(crate) use expressions::*;
 pub(crate) use function::*;
+pub(crate) use function_invocation::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
 
@@ -93,6 +95,14 @@ fn parse_ident(p: &mut Parser) {
 
 fn eat_ident(p: &mut Parser) {
     p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
+}
+
+fn parse_ident_or_function_invocation(p: &mut Parser) {
+    if p.nth(1) == Some(TokenKind::LParen) {
+        parse_function_invocation(p);
+    } else {
+        parse_ident(p);
+    }
 }
 
 /// Parses a data type.
