@@ -145,6 +145,27 @@ impl<'a> Parser<'a> {
         self.current() == kind
     }
 
+    /// Lookahead operation: returns the kind of the next nth token.
+    pub fn nth(&mut self, mut n: usize) -> Option<TokenKind> {
+        let mut i = 1;
+        loop {
+            match &self.tokens.iter().rev().peekable().nth(i) {
+                Some(token) => {
+                    if !token.kind.is_trivia() {
+                        n -= 1;
+                        if n == 0 {
+                            return Some(token.kind);
+                        }
+                    }
+                    i += 1;
+                }
+                None => {
+                    return None;
+                }
+            }
+        }
+    }
+
     /// Returns the current [`TokenKind`] if there is a token.
     pub fn current(&mut self) -> TokenKind {
         self.eat_ws();
