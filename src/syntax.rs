@@ -82,6 +82,12 @@ pub enum SyntaxKind {
     /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` &
     /// `END;`
     ProcedureBody,
+    /// An invocation of a function, from the identifier and the opening bracket to the closing bracket
+    FunctionInvocation,
+    /// A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas
+    ArgumentList,
+    /// A singular argument inside an argument list
+    Argument,
     /// A node that marks a full CREATE [..] FUNCTION block
     Function,
     /// A node that marks a FUNCTION header with params and return type

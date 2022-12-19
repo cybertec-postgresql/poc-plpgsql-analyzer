@@ -34,11 +34,11 @@ fn parse_column_expr(p: &mut Parser) {
     while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::ColumnExpr);
 
-        if !p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) {
-            p.until_last(TokenKind::Comma);
-        }
+        parse_expr(p);
 
         p.finish();
+
+        p.eat(TokenKind::Comma);
     }
 
     p.finish();
@@ -79,6 +79,37 @@ Root@0..19
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
     Ident@14..19 "table"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_function_invocation() {
+        check(
+            parse("SELECT trunc(SYSDATE, 'MM') FROM DUAL;", parse_query),
+            expect![[r#"
+Root@0..38
+  SelectStmt@0..38
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..28
+      ColumnExpr@7..28
+        FunctionInvocation@7..27
+          Ident@7..12 "trunc"
+          LParen@12..13 "("
+          ArgumentList@13..26
+            Argument@13..20
+              Ident@13..20 "SYSDATE"
+            Comma@20..21 ","
+            Whitespace@21..22 " "
+            Argument@22..26
+              QuotedLiteral@22..26 "'MM'"
+          RParen@26..27 ")"
+        Whitespace@27..28 " "
+    Keyword@28..32 "FROM"
+    Whitespace@32..33 " "
+    Ident@33..37 "DUAL"
+    SemiColon@37..38 ";"
 "#]],
         );
     }
