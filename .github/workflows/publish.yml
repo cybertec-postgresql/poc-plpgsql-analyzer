@@ -1,0 +1,73 @@
+name: Publish to npm
+
+on:
+  release:
+    types: [created]
+
+env:
+  NODE_VERSION: 16
+  RUSTFLAGS: -D warnings
+  CARGO_TERM_COLOR: always
+  WASM_PACK_OUT_NAME: plpgsql-analyzer
+  WASM_PACK_SCOPE: cybertec
+  PKG_README_PATH: ./PKG_README.md
+
+jobs:
+  build-wasm:
+    name: Build and publish WASM library
+    runs-on: [self-hosted, Linux]
+    container: docker.io/debian:stable
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install tools
+        run: |
+          apt-get update \
+            && apt-get install --assume-yes \
+            curl binaryen gcc libssl-dev make pkg-config
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rust-std
+          targets: wasm32-unknown-unknown
+
+      - name: Cache Rust crates
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+
+      - name: Install wasm-pack
+        uses: baptiste0928/cargo-install@v1.3.0
+        with:
+          crate: wasm-pack
+          version: "0.10.3"
+
+      - name: Build using wasm-pack
+        run: >
+          wasm-pack build
+          --release
+          --target bundler
+          --out-name ${{ env.WASM_PACK_OUT_NAME }}
+          --scope ${{ env.WASM_PACK_SCOPE }}
+
+      - name: Overwrite README.md
+        run: cp ${{ env.PKG_README_PATH }} ./pkg/README.md
+
+      - name: Rename package
+        run: >
+          sed -i 's/"name": "@${{ env.WASM_PACK_SCOPE }}\/${{ github.event.repository.name }}"/"name": "@${{ env.WASM_PACK_SCOPE }}\/${{ env.WASM_PACK_OUT_NAME }}"/g' ./pkg/package.json
+
+      - name: Publish package to NPM
+        working-directory: ./pkg
+        run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
