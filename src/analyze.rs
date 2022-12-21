@@ -4,16 +4,18 @@
 
 //! Implements the main analyzer functionality.
 
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+use serde_repr::{Deserialize_repr, Serialize_repr};
+use wasm_bindgen::prelude::*;
+use wasm_typescript_definition::TypescriptDefinition;
+
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use crate::rules::{find_applicable_rules, RuleHint};
 use crate::syntax::SyntaxKind;
 use crate::util::SqlIdent;
-use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::HashMap;
-use wasm_bindgen::prelude::*;
-use wasm_typescript_definition::TypescriptDefinition;
 
 /// Different types the analyzer can possibly examine.
 ///
@@ -278,8 +280,9 @@ fn analyze_query(
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn test_analyze_function() {

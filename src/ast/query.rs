@@ -4,9 +4,10 @@
 
 //! Typed AST nodes for PL/SQL procedures.
 
+use crate::ast::AstNode;
+
 use super::typed_syntax_node;
 use super::Expression;
-use crate::ast::AstNode;
 
 typed_syntax_node!(SelectClause, SelectStmt, ColumnExpr, WhereClause);
 
@@ -28,10 +29,12 @@ impl WhereClause {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use pretty_assertions::assert_eq;
+
     use crate::ast::{ComparisonOpType, Root};
     use crate::syntax::SyntaxKind;
-    use pretty_assertions::assert_eq;
+
+    use super::*;
 
     #[test]
     fn check_ast_node_to_select_stmt() {

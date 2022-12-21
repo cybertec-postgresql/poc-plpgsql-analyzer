@@ -5,11 +5,6 @@
 
 //! Implements grammar parsing of the token tree from the lexer.
 
-mod expressions;
-mod function;
-mod function_invocation;
-mod procedure;
-mod query;
 use std::ops::Range;
 
 pub(crate) use expressions::*;
@@ -21,6 +16,12 @@ pub(crate) use query::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+
+mod expressions;
+mod function;
+mod function_invocation;
+mod procedure;
+mod query;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {
@@ -164,9 +165,11 @@ fn parse_typename(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::parser::{Parse, Parser};
     use expect_test::{expect, Expect};
+
+    use crate::parser::{Parse, Parser};
+
+    use super::*;
 
     /// A helper to allow to call the different parse functions.
     pub fn parse<F>(input: &str, f: F) -> Parse

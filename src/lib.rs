@@ -6,6 +6,11 @@
 
 #![forbid(unsafe_code)]
 
+pub use analyze::*;
+pub use parser::*;
+pub use rules::apply_rule;
+pub use util::SqlIdent;
+
 mod analyze;
 mod ast;
 mod grammar;
@@ -14,8 +19,3 @@ mod parser;
 mod rules;
 mod syntax;
 mod util;
-
-pub use analyze::*;
-pub use parser::*;
-pub use rules::apply_rule;
-pub use util::SqlIdent;

@@ -5,9 +5,10 @@
 
 //! Implements a syntax-level representation of the input.
 
-use crate::lexer::TokenKind;
 use num_derive::{FromPrimitive, ToPrimitive};
 use num_traits::{FromPrimitive, ToPrimitive};
+
+use crate::lexer::TokenKind;
 
 /// Represents all possible kind of syntax items the parser can process.
 ///

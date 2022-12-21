@@ -4,14 +4,16 @@
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
 
+use rowan::TextRange;
+
+use crate::analyze::DboAnalyzeContext;
+use crate::ast::{AstNode, Root};
+use crate::syntax::{SyntaxKind, SyntaxNode};
+
 use super::{
     check_parameter_types, find_descendants_tokens, replace_token, RuleDefinition, RuleError,
     RuleLocation,
 };
-use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, Root};
-use crate::syntax::{SyntaxKind, SyntaxNode};
-use rowan::TextRange;
 
 /// Dummy rule for demonstrating passing in analyzer context and type checking.
 ///
@@ -104,13 +106,16 @@ impl RuleDefinition for ReplaceSysdate {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use std::collections::HashMap;
+
+    use expect_test::{expect, Expect};
+    use pretty_assertions::assert_eq;
+
     use crate::ast::AstNode;
     use crate::syntax::SyntaxNode;
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
-    use expect_test::{expect, Expect};
-    use pretty_assertions::assert_eq;
-    use std::collections::HashMap;
+
+    use super::*;
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());

@@ -4,10 +4,11 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use super::parse_expr;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+
+use super::parse_expr;
 
 pub(crate) fn parse_query(p: &mut Parser) {
     p.start(SyntaxKind::SelectStmt);
@@ -61,9 +62,10 @@ fn parse_where_clause(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
+    use expect_test::expect;
+
     use super::super::tests::{check, parse};
     use super::*;
-    use expect_test::expect;
 
     #[test]
     fn test_parse_simple_select() {
