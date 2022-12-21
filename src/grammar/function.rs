@@ -28,6 +28,8 @@ fn parse_header(p: &mut Parser) {
         p.expect(TokenKind::ReplaceKw);
     }
 
+    p.eat_one_of(&[TokenKind::Editionable, TokenKind::NonEditionable]);
+
     p.expect(TokenKind::FunctionKw);
 
     parse_ident(p);
@@ -176,6 +178,95 @@ Root@0..31
   Ident@24..29 "hello"
   SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_editionable_function() {
+        const INPUT: &str = include_str!("../../tests/function/heading/ignore_editionable.ora.sql");
+
+        check(
+            parse(INPUT, parse_function),
+            expect![[r#"
+Root@0..171
+  Function@0..171
+    FunctionHeader@0..146
+      Comment@0..73 "-- test: ignore EDITI ..."
+      Whitespace@73..74 "\n"
+      Keyword@74..80 "CREATE"
+      Whitespace@80..81 " "
+      Keyword@81..83 "OR"
+      Whitespace@83..84 " "
+      Keyword@84..91 "REPLACE"
+      Whitespace@91..92 " "
+      Keyword@92..103 "EDITIONABLE"
+      Whitespace@103..104 " "
+      Keyword@104..112 "FUNCTION"
+      Whitespace@112..113 " "
+      Ident@113..131 "ignore_editionable"
+      Whitespace@131..132 "\n"
+      Keyword@132..138 "RETURN"
+      Whitespace@138..139 " "
+      TypeName@139..146 "number "
+    Keyword@146..148 "IS"
+    Whitespace@148..149 "\n"
+    Keyword@149..154 "BEGIN"
+    Whitespace@154..156 "\n "
+    FunctionBody@156..166
+      Keyword@156..162 "RETURN"
+      Whitespace@162..163 " "
+      Integer@163..164 "1"
+      SemiColon@164..165 ";"
+      Whitespace@165..166 "\n"
+    Keyword@166..169 "END"
+    SemiColon@169..170 ";"
+    Whitespace@170..171 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_non_editionable_function() {
+        const INPUT: &str =
+            include_str!("../../tests/function/heading/ignore_noneditionable.ora.sql");
+
+        check(
+            parse(INPUT, parse_function),
+            expect![[r#"
+Root@0..180
+  Function@0..180
+    FunctionHeader@0..155
+      Comment@0..76 "-- test: ignore NONED ..."
+      Whitespace@76..77 "\n"
+      Keyword@77..83 "CREATE"
+      Whitespace@83..84 " "
+      Keyword@84..86 "OR"
+      Whitespace@86..87 " "
+      Keyword@87..94 "REPLACE"
+      Whitespace@94..95 " "
+      Keyword@95..109 "NONEDITIONABLE"
+      Whitespace@109..110 " "
+      Keyword@110..118 "FUNCTION"
+      Whitespace@118..119 " "
+      Ident@119..140 "ignore_noneditionable"
+      Whitespace@140..141 "\n"
+      Keyword@141..147 "RETURN"
+      Whitespace@147..148 " "
+      TypeName@148..155 "number "
+    Keyword@155..157 "IS"
+    Whitespace@157..158 "\n"
+    Keyword@158..163 "BEGIN"
+    Whitespace@163..165 "\n "
+    FunctionBody@165..175
+      Keyword@165..171 "RETURN"
+      Whitespace@171..172 " "
+      Integer@172..173 "1"
+      SemiColon@173..174 ";"
+      Whitespace@174..175 "\n"
+    Keyword@175..178 "END"
+    SemiColon@178..179 ";"
+    Whitespace@179..180 "\n"
 "#]],
         );
     }
