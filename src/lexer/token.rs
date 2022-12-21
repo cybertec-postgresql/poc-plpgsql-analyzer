@@ -101,7 +101,7 @@ pub enum TokenKind {
     #[regex(r"-?\d+", priority = 2)]
     Integer,
 
-    #[regex(r"(?i)[a-z_][a-z0-9_$]*(\.[a-z_][a-z0-9_$]*)?", priority = 1)]
+    #[regex(r"(?i)[a-z_][a-z0-9_$]*", priority = 1)]
     Ident,
 
     #[regex(r#""(?:[^"]|"")+""#)]
