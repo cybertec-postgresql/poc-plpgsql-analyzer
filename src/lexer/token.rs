@@ -10,7 +10,7 @@ use std::fmt;
 /// Use to tokenize the input text
 #[derive(logos::Logos, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TokenKind {
-    #[regex("[ \n\r]+")]
+    #[regex("[ \t\n\r]+")]
     Whitespace,
 
     #[token("create", ignore(case))]
@@ -189,8 +189,8 @@ mod tests {
     }
 
     #[test]
-    fn lex_spaces_and_newlines() {
-        check("  \n", TokenKind::Whitespace);
+    fn lex_spaces_tabs_and_newlines() {
+        check(" \t \n", TokenKind::Whitespace);
     }
 
     #[test]
