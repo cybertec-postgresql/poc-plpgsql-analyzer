@@ -16,6 +16,12 @@ pub enum TokenKind {
     #[token("create", ignore(case))]
     CreateKw,
 
+    #[token("editionable", ignore(case))]
+    Editionable,
+
+    #[token("noneditionable", ignore(case))]
+    NonEditionable,
+
     #[token("procedure", ignore(case))]
     ProcedureKw,
 

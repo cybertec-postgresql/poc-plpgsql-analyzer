@@ -169,6 +169,8 @@ impl From<TokenKind> for SyntaxKind {
         match kind {
             TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::CreateKw => SyntaxKind::Keyword,
+            TokenKind::Editionable => SyntaxKind::Keyword,
+            TokenKind::NonEditionable => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::ReplaceKw => SyntaxKind::Keyword,
