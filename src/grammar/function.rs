@@ -32,7 +32,8 @@ fn parse_header(p: &mut Parser) {
 
     p.expect(TokenKind::FunctionKw);
 
-    parse_ident(p);
+    parse_qualified_ident(p, 1..2);
+
     parse_param_list(p);
     parse_return_type(p);
     parse_attributes(p);
@@ -136,7 +137,10 @@ Root@0..145
       Param@40..92
         Ident@40..48 "p_emp_id"
         Whitespace@48..58 "          "
-        Ident@58..81 "job_history.employee_id"
+        QualifiedIdent@58..81
+          Ident@58..69 "job_history"
+          Dot@69..70 "."
+          Ident@70..81 "employee_id"
         Keyword@81..86 "%type"
         Whitespace@86..92 "\n     "
       Comma@92..93 ","
@@ -144,7 +148,10 @@ Root@0..145
       Param@94..144
         Ident@94..106 "p_start_date"
         Whitespace@106..112 "      "
-        Ident@112..134 "job_history.start_date"
+        QualifiedIdent@112..134
+          Ident@112..123 "job_history"
+          Dot@123..124 "."
+          Ident@124..134 "start_date"
         Keyword@134..139 "%type"
         Whitespace@139..144 "\n    "
       RParen@144..145 ")"
