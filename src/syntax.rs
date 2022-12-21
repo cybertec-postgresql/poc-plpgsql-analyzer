@@ -46,9 +46,10 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml or parameter name, potentially
-    /// schema-qualified
+    /// An identifier, e.g. secure_dml or parameter name
     Ident,
+    /// A qualified identifier, e.g. <schema>.<procedure>, <schema>.<table>.<column>
+    QualifiedIdent,
     /// A type name
     TypeName,
     /// A single dot
