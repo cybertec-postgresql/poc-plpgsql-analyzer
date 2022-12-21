@@ -133,7 +133,7 @@ fn parse_qualified_ident(p: &mut Parser, expected_components: Range<u8>) {
         }
 
         parse_ident(p);
-        i = i + 1;
+        i += 1;
     }
 
     if i > 1 {

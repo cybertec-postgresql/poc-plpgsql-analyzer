@@ -132,17 +132,14 @@ impl QualifiedIdent {
             .filter(|it| it.kind() == SyntaxKind::Ident)
             .last()
             .map(|it| it.text().into())
-            .into()
     }
 
     pub fn qualifier(&self) -> Option<SqlIdent> {
         self.syntax
             .children_with_tokens()
             .filter_map(|it| it.into_token())
-            .filter(|it| it.kind() == SyntaxKind::Ident)
-            .next()
+            .find(|it| it.kind() == SyntaxKind::Ident)
             .map(|it| it.text().into())
-            .into()
     }
 }
 
@@ -176,12 +173,9 @@ impl Param {
             .filter_map(|it| it.into_token())
             .find(|t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "%type")?;
 
-        // TODO: Resolve Option nesting
         type_kw
             .prev_sibling_or_token()
-            .map(|t| t.into_node())
-            .flatten()
-            .map(QualifiedIdent::cast)
-            .flatten()
+            .and_then(|t| t.into_node())
+            .and_then(QualifiedIdent::cast)
     }
 }
