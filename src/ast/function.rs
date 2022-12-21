@@ -4,9 +4,10 @@
 
 //! Typed AST nodes for PL/SQL functions.
 
+use crate::ast::{AstNode, AstToken, ParamList};
+
 use super::typed_syntax_node;
 use super::Ident;
-use crate::ast::{AstNode, AstToken, ParamList};
 
 typed_syntax_node!(Function, FunctionHeader, FunctionBody);
 
@@ -52,8 +53,9 @@ impl FunctionBody {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ast::Root;
+
+    use super::*;
 
     #[test]
     fn check_ast_node_to_function() {

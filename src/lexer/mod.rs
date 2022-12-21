@@ -5,12 +5,14 @@
 
 //! Implements a Lexer based on the [`logos`] crate.
 
-mod token;
+use std::ops;
 
 use logos::Logos;
 use rowan::{TextRange, TextSize};
-use std::ops;
+
 pub use token::TokenKind;
+
+mod token;
 
 /// Wrapper for the actual [`Logos`] parser.
 #[derive(Debug)]

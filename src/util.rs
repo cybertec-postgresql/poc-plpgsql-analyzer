@@ -4,10 +4,11 @@
 
 //! Implements miscellaneous types and helper.
 
-use serde::de::{self, Visitor};
-use serde::{Deserialize, Deserializer};
 use std::fmt;
 use std::hash::{Hash, Hasher};
+
+use serde::de::{self, Visitor};
+use serde::{Deserialize, Deserializer};
 
 #[derive(Clone, Debug, Eq)]
 pub struct SqlIdent {

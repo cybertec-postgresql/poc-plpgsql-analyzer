@@ -5,10 +5,11 @@
 
 //! Typed AST nodes for PL/SQL procedures.
 
-use super::typed_syntax_node;
-use super::Ident;
 use crate::ast::{AstNode, AstToken, ParamList};
 use crate::syntax::SyntaxElement;
+
+use super::typed_syntax_node;
+use super::Ident;
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 
@@ -54,8 +55,9 @@ impl ProcedureBody {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use crate::ast::Root;
+
+    use super::*;
 
     #[test]
     fn check_ast_node_to_procedure() {

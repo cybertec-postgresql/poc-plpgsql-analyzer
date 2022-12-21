@@ -4,10 +4,11 @@
 
 //! Implements parsing of functions from a token tree.
 
-use super::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+
+use super::*;
 
 /// Parses a complete function.
 pub fn parse_function(p: &mut Parser) {
@@ -71,9 +72,10 @@ fn parse_body(p: &mut Parser) {
 
 #[cfg(test)]
 mod tests {
+    use expect_test::expect;
+
     use super::super::tests::{check, parse};
     use super::*;
-    use expect_test::expect;
 
     #[test]
     fn test_parse_header_without_replace() {

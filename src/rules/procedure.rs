@@ -4,14 +4,16 @@
 
 //! Implements procedure-specific rules for transpiling PL/SQL to PL/pgSQL.
 
+use rowan::TextRange;
+
+use crate::analyze::DboAnalyzeContext;
+use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
+use crate::syntax::{SyntaxKind, SyntaxNode};
+
 use super::{
     find_children_tokens, find_sibling_token, next_token, replace_token, RuleDefinition, RuleError,
     RuleLocation,
 };
-use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
-use crate::syntax::{SyntaxKind, SyntaxNode};
-use rowan::TextRange;
 
 pub(super) struct AddParamlistParenthesis;
 
@@ -170,11 +172,13 @@ impl RuleDefinition for ReplaceEpilogue {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::ast::AstNode;
-    use crate::syntax::SyntaxNode;
     use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
+
+    use crate::ast::AstNode;
+    use crate::syntax::SyntaxNode;
+
+    use super::*;
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());
