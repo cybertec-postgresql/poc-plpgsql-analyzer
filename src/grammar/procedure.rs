@@ -33,7 +33,7 @@ fn parse_header(p: &mut Parser) {
 
     p.expect(TokenKind::ProcedureKw);
 
-    parse_ident(p);
+    parse_qualified_ident(p, 1..2);
     parse_param_list(p);
     p.finish();
 }
@@ -140,7 +140,10 @@ Root@0..146
       Param@41..93
         Ident@41..49 "p_emp_id"
         Whitespace@49..59 "          "
-        Ident@59..82 "job_history.employee_id"
+        QualifiedIdent@59..82
+          Ident@59..70 "job_history"
+          Dot@70..71 "."
+          Ident@71..82 "employee_id"
         Keyword@82..87 "%type"
         Whitespace@87..93 "\n     "
       Comma@93..94 ","
@@ -148,7 +151,10 @@ Root@0..146
       Param@95..145
         Ident@95..107 "p_start_date"
         Whitespace@107..113 "      "
-        Ident@113..135 "job_history.start_date"
+        QualifiedIdent@113..135
+          Ident@113..124 "job_history"
+          Dot@124..125 "."
+          Ident@125..135 "start_date"
         Keyword@135..140 "%type"
         Whitespace@140..145 "\n    "
       RParen@145..146 ")"
@@ -216,6 +222,41 @@ Root@0..98
     Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
     SemiColon@96..97 ";"
     Whitespace@97..98 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_procedure_with_schema_qualifier() {
+        const INPUT: &str = include_str!("../../tests/procedure/heading/schema_qualified.ora.sql");
+        check(
+            parse(INPUT, parse_procedure),
+            expect![[r#"
+Root@0..124
+  Procedure@0..124
+    ProcedureHeader@0..100
+      Comment@0..58 "-- test: Qualify the  ..."
+      Whitespace@58..59 "\n"
+      Keyword@59..65 "CREATE"
+      Whitespace@65..66 " "
+      Keyword@66..75 "PROCEDURE"
+      QualifiedIdent@75..99
+        Whitespace@75..76 " "
+        Ident@76..94 "\"alternate_SCHEMA\""
+        Dot@94..95 "."
+        Ident@95..99 "proc"
+      Whitespace@99..100 "\n"
+    Keyword@100..102 "IS"
+    Whitespace@102..103 "\n"
+    Keyword@103..108 "BEGIN"
+    Whitespace@108..113 "\n    "
+    ProcedureBody@113..119
+      Ident@113..117 "NULL"
+      SemiColon@117..118 ";"
+      Whitespace@118..119 "\n"
+    Keyword@119..122 "END"
+    SemiColon@122..123 ";"
+    Whitespace@123..124 "\n"
 "#]],
         );
     }

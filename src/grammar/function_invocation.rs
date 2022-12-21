@@ -4,14 +4,14 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{parse_expr, parse_ident};
+use crate::grammar::{parse_expr, parse_qualified_ident};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 pub(crate) fn parse_function_invocation(p: &mut Parser) {
     p.start(SyntaxKind::FunctionInvocation);
-    parse_ident(p);
+    parse_qualified_ident(p, 1..2);
     p.expect(TokenKind::LParen);
 
     if !p.at(TokenKind::RParen) {

@@ -10,6 +10,7 @@ mod function;
 mod function_invocation;
 mod procedure;
 mod query;
+use std::ops::Range;
 
 pub(crate) use expressions::*;
 pub(crate) use function::*;
@@ -55,7 +56,11 @@ fn parse_param(p: &mut Parser) {
     parse_ident(p);
 
     while !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
-        p.bump_any();
+        if p.at(TokenKind::Ident) {
+            parse_qualified_ident(p, 1..3);
+        } else {
+            p.bump_any();
+        }
     }
 
     p.finish();
@@ -93,6 +98,49 @@ fn parse_ident(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
 }
 
+/// Parses a qualified SQL identifier.
+///
+/// # Arguments
+///
+/// * `p`: The parser struct
+/// * `expected_components`: A range of the minimum and maximum expected components that should be present in the identifier.
+///
+/// returns: ()
+///
+/// # Examples
+///
+/// ```
+/// // Matches [identifier].<identifier>
+/// // parse_qualified_ident(p, 1..2);
+/// ```
+///
+/// ```
+/// // Matches <identifier>.<identifier>.<identifier>
+/// // parse_qualified_ident(p, 3..3);
+/// ```
+fn parse_qualified_ident(p: &mut Parser, expected_components: Range<u8>) {
+    assert!(expected_components.start > 0);
+    let checkpoint = p.checkpoint();
+    parse_ident(p);
+
+    let mut i: u8 = 1;
+    while i < expected_components.end {
+        if i < expected_components.start {
+            p.expect(TokenKind::Dot);
+        } else if !p.eat(TokenKind::Dot) {
+            break;
+        }
+
+        parse_ident(p);
+        i = i + 1;
+    }
+
+    if i > 1 {
+        p.start_node_at(checkpoint, SyntaxKind::QualifiedIdent);
+        p.finish();
+    }
+}
+
 fn eat_ident(p: &mut Parser) {
     p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
 }
@@ -101,14 +149,14 @@ fn parse_ident_or_function_invocation(p: &mut Parser) {
     if p.nth(1) == Some(TokenKind::LParen) {
         parse_function_invocation(p);
     } else {
-        parse_ident(p);
+        parse_qualified_ident(p, 1..3);
     }
 }
 
 /// Parses a data type.
 fn parse_typename(p: &mut Parser) {
     if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
-        parse_ident(p);
+        parse_qualified_ident(p, 1..3);
         p.expect(TokenKind::Percentage);
         p.expect(TokenKind::TypeKw);
     }
