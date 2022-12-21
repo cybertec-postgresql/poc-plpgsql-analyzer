@@ -5,19 +5,20 @@
 
 //! Implements a typed AST for PL/SQL.
 
-mod expressions;
-mod function;
-mod procedure;
-mod query;
+pub use rowan::ast::AstNode;
 
-use crate::syntax::{SyntaxKind, SyntaxToken};
-use crate::util::SqlIdent;
 pub use expressions::*;
 pub use function::*;
 pub use procedure::*;
 pub use query::*;
-pub use rowan::ast::AstNode;
-use rowan::Direction;
+
+use crate::syntax::{SyntaxKind, SyntaxToken};
+use crate::util::SqlIdent;
+
+mod expressions;
+mod function;
+mod procedure;
+mod query;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
@@ -97,7 +98,7 @@ pub trait AstToken {
     }
 }
 
-typed_syntax_node!(Root, ParamList, Param);
+typed_syntax_node!(Root, ParamList, Param, QualifiedIdent);
 typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
@@ -117,20 +118,38 @@ impl Root {
     }
 }
 
-impl Ident {
-    /// Returns the full identifier name itself.
+// TODO: Access of identifiers using at least three components
+impl QualifiedIdent {
+    /// Returns the fully qualified identifier name itself.
     pub fn text(&self) -> String {
         self.syntax.text().to_string()
     }
 
-    /// TODO: Implement proper handling of escaped identifiers and such
     pub fn name(&self) -> Option<SqlIdent> {
-        self.text().split_once('.').map(|(_, name)| name.into())
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|it| it.into_token())
+            .filter(|it| it.kind() == SyntaxKind::Ident)
+            .last()
+            .map(|it| it.text().into())
+            .into()
     }
 
-    /// TODO: Implement proper handling of escaped identifiers and such
     pub fn qualifier(&self) -> Option<SqlIdent> {
-        self.text().split_once('.').map(|(qual, _)| qual.into())
+        self.syntax
+            .children_with_tokens()
+            .filter_map(|it| it.into_token())
+            .filter(|it| it.kind() == SyntaxKind::Ident)
+            .next()
+            .map(|it| it.text().into())
+            .into()
+    }
+}
+
+impl Ident {
+    /// Returns the full identifier name itself.
+    pub fn text(&self) -> String {
+        self.syntax.text().to_string()
     }
 }
 
@@ -150,16 +169,19 @@ impl Param {
             .map(|id| id.text())
     }
 
-    pub fn type_reference(&self) -> Option<Ident> {
+    pub fn type_reference(&self) -> Option<QualifiedIdent> {
         let type_kw = self
             .syntax
             .children_with_tokens()
             .filter_map(|it| it.into_token())
             .find(|t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "%type")?;
 
+        // TODO: Resolve Option nesting
         type_kw
-            .siblings_with_tokens(Direction::Prev)
-            .filter_map(|it| it.into_token())
-            .find_map(Ident::cast)
+            .prev_sibling_or_token()
+            .map(|t| t.into_node())
+            .flatten()
+            .map(QualifiedIdent::cast)
+            .flatten()
     }
 }

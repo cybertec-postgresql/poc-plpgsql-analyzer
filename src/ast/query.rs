@@ -55,9 +55,9 @@ mod tests {
         let expr = clause.expression().unwrap();
 
         assert_eq!(
-            expr.filter_tokens(|t| t.kind() == SyntaxKind::Ident)
+            expr.filter_nodes(|t| t.kind() == SyntaxKind::QualifiedIdent)
                 .next()
-                .map(|t| t.text().to_owned()),
+                .map(|t| t.text().to_string()),
             Some("places.person_id".to_owned()),
         );
 
@@ -69,9 +69,9 @@ mod tests {
         );
 
         assert_eq!(
-            expr.filter_tokens(|t| t.kind() == SyntaxKind::Ident)
+            expr.filter_nodes(|t| t.kind() == SyntaxKind::QualifiedIdent)
                 .nth(1)
-                .map(|t| t.text().to_owned()),
+                .map(|t| t.text().to_string()),
             Some("persons.id".to_owned()),
         );
     }

@@ -4,9 +4,11 @@
 
 //! Implements a typed AST node for SQL expressions.
 
-use super::typed_syntax_node;
-use crate::syntax::SyntaxToken;
 use std::str::FromStr;
+
+use crate::syntax::{SyntaxNode, SyntaxToken};
+
+use super::typed_syntax_node;
 
 typed_syntax_node!(Expression);
 
@@ -31,6 +33,14 @@ impl Expression {
             .children_with_tokens()
             .filter_map(|it| it.into_token())
             .filter(filter)
+    }
+
+    #[allow(unused)]
+    pub fn filter_nodes<F>(&self, filter: F) -> impl Iterator<Item = SyntaxNode>
+    where
+        F: Fn(&SyntaxNode) -> bool,
+    {
+        self.syntax.children().filter(filter)
     }
 }
 
