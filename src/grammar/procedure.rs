@@ -29,6 +29,8 @@ fn parse_header(p: &mut Parser) {
         p.expect(TokenKind::ReplaceKw);
     }
 
+    p.eat_one_of(&[TokenKind::Editionable, TokenKind::NonEditionable]);
+
     p.expect(TokenKind::ProcedureKw);
 
     parse_ident(p);
@@ -312,6 +314,90 @@ Root@0..304
     Ident@295..302 "plpgsql"
     SemiColon@302..303 ";"
     Whitespace@303..304 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_editionable_procedure() {
+        const INPUT: &str =
+            include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
+
+        check(
+            parse(INPUT, parse_procedure),
+            expect![[r#"
+Root@0..176
+  Procedure@0..176
+    ProcedureHeader@0..133
+      Comment@0..73 "-- test: ignore EDITI ..."
+      Whitespace@73..74 "\n"
+      Keyword@74..80 "CREATE"
+      Whitespace@80..81 " "
+      Keyword@81..83 "OR"
+      Whitespace@83..84 " "
+      Keyword@84..91 "REPLACE"
+      Whitespace@91..92 " "
+      Keyword@92..103 "EDITIONABLE"
+      Whitespace@103..104 " "
+      Keyword@104..113 "PROCEDURE"
+      Whitespace@113..114 " "
+      Ident@114..132 "ignore_editionable"
+      Whitespace@132..133 "\n"
+    Keyword@133..135 "IS"
+    Whitespace@135..136 "\n"
+    Keyword@136..141 "BEGIN"
+    Whitespace@141..146 "\n    "
+    ProcedureBody@146..152
+      Ident@146..150 "NULL"
+      SemiColon@150..151 ";"
+      Whitespace@151..152 "\n"
+    Keyword@152..155 "END"
+    Whitespace@155..156 " "
+    Ident@156..174 "ignore_editionable"
+    SemiColon@174..175 ";"
+    Whitespace@175..176 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_non_editionable_procedure() {
+        const INPUT: &str =
+            include_str!("../../tests/procedure/heading/ignore_noneditionable.ora.sql");
+
+        check(
+            parse(INPUT, parse_procedure),
+            expect![[r#"
+Root@0..193
+  Procedure@0..193
+    ProcedureHeader@0..147
+      Comment@0..81 "-- test: ignore NONED ..."
+      Whitespace@81..82 "\n"
+      Keyword@82..88 "CREATE"
+      Whitespace@88..89 " "
+      Keyword@89..91 "OR"
+      Whitespace@91..92 " "
+      Keyword@92..99 "REPLACE"
+      Whitespace@99..100 " "
+      Keyword@100..114 "NONEDITIONABLE"
+      Whitespace@114..115 " "
+      Keyword@115..124 "PROCEDURE"
+      Whitespace@124..125 " "
+      Ident@125..146 "ignore_noneditionable"
+      Whitespace@146..147 "\n"
+    Keyword@147..149 "IS"
+    Whitespace@149..150 "\n"
+    Keyword@150..155 "BEGIN"
+    Whitespace@155..160 "\n    "
+    ProcedureBody@160..166
+      Ident@160..164 "NULL"
+      SemiColon@164..165 ";"
+      Whitespace@165..166 "\n"
+    Keyword@166..169 "END"
+    Whitespace@169..170 " "
+    Ident@170..191 "ignore_noneditionable"
+    SemiColon@191..192 ";"
+    Whitespace@192..193 "\n"
 "#]],
         );
     }
