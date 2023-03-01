@@ -7,6 +7,7 @@
 
 pub use rowan::ast::AstNode;
 
+pub use datatype::*;
 pub use expressions::*;
 pub use function::*;
 pub use procedure::*;
@@ -15,6 +16,7 @@ pub use query::*;
 use crate::syntax::{SyntaxKind, SyntaxToken};
 use crate::util::SqlIdent;
 
+mod datatype;
 mod expressions;
 mod function;
 mod procedure;
@@ -166,16 +168,11 @@ impl Param {
             .map(|id| id.text())
     }
 
-    pub fn type_reference(&self) -> Option<QualifiedIdent> {
-        let type_kw = self
-            .syntax
-            .children_with_tokens()
-            .filter_map(|it| it.into_token())
-            .find(|t| t.kind() == SyntaxKind::Keyword && t.text().to_lowercase() == "%type")?;
+    pub fn datatype(&self) -> Option<Datatype> {
+        self.syntax.children().find_map(Datatype::cast)
+    }
 
-        type_kw
-            .prev_sibling_or_token()
-            .and_then(|t| t.into_node())
-            .and_then(QualifiedIdent::cast)
+    pub fn type_reference(&self) -> Option<QualifiedIdent> {
+        self.datatype()?.referenced_type()
     }
 }
