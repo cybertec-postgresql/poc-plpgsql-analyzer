@@ -51,6 +51,7 @@ fn parse_param_list(p: &mut Parser) {
 }
 
 /// Parses a single parameter in a parameter list of a procedure.
+/// Refer to https://docs.oracle.com/en/database/oracle/oracle-database/21/lnpls/formal-parameter-declaration.html#GUID-5BA8E033-96B9-439A-A4FC-4844FEC14AD8.
 ///
 /// Example:
 ///   p2 VARCHAR2 := 'not empty'
@@ -58,11 +59,17 @@ fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
     parse_ident(p);
 
-    while !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
-        if p.at(TokenKind::Ident) {
-            parse_qualified_ident(p, 1..3);
+    if !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
+        p.eat(TokenKind::InKw);
+
+        if p.eat(TokenKind::OutKw) {
+            p.eat(TokenKind::NoCopyKw);
+            parse_datatype(p);
         } else {
-            p.bump_any();
+            parse_datatype(p);
+            if p.eat_one_of(&[TokenKind::Assign, TokenKind::DefaultKw]) {
+                parse_expr(p);
+            }
         }
     }
 
