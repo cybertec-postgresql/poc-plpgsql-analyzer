@@ -44,7 +44,7 @@ fn parse_header(p: &mut Parser) {
 
 fn parse_return_type(p: &mut Parser) {
     if p.eat(TokenKind::ReturnKw) {
-        parse_typename(p);
+        parse_datatype(p);
     }
 }
 
@@ -139,23 +139,29 @@ Root@0..145
       Param@40..92
         Ident@40..48 "p_emp_id"
         Whitespace@48..58 "          "
-        QualifiedIdent@58..81
-          Ident@58..69 "job_history"
-          Dot@69..70 "."
-          Ident@70..81 "employee_id"
-        Keyword@81..86 "%type"
-        Whitespace@86..92 "\n     "
+        Datatype@58..92
+          QualifiedIdent@58..81
+            Ident@58..69 "job_history"
+            Dot@69..70 "."
+            Ident@70..81 "employee_id"
+          TypeAttribute@81..86
+            Percentage@81..82 "%"
+            Keyword@82..86 "type"
+          Whitespace@86..92 "\n     "
       Comma@92..93 ","
       Whitespace@93..94 " "
       Param@94..144
         Ident@94..106 "p_start_date"
         Whitespace@106..112 "      "
-        QualifiedIdent@112..134
-          Ident@112..123 "job_history"
-          Dot@123..124 "."
-          Ident@124..134 "start_date"
-        Keyword@134..139 "%type"
-        Whitespace@139..144 "\n    "
+        Datatype@112..144
+          QualifiedIdent@112..134
+            Ident@112..123 "job_history"
+            Dot@123..124 "."
+            Ident@124..134 "start_date"
+          TypeAttribute@134..139
+            Percentage@134..135 "%"
+            Keyword@135..139 "type"
+          Whitespace@139..144 "\n    "
       RParen@144..145 ")"
 "#]],
         );
@@ -216,8 +222,10 @@ Root@0..171
       Ident@113..131 "ignore_editionable"
       Whitespace@131..132 "\n"
       Keyword@132..138 "RETURN"
-      Whitespace@138..139 " "
-      TypeName@139..146 "number "
+      Datatype@138..146
+        Whitespace@138..139 " "
+        Keyword@139..145 "number"
+        Whitespace@145..146 " "
     Keyword@146..148 "IS"
     Whitespace@148..149 "\n"
     Keyword@149..154 "BEGIN"
@@ -261,8 +269,10 @@ Root@0..180
       Ident@119..140 "ignore_noneditionable"
       Whitespace@140..141 "\n"
       Keyword@141..147 "RETURN"
-      Whitespace@147..148 " "
-      TypeName@148..155 "number "
+      Datatype@147..155
+        Whitespace@147..148 " "
+        Keyword@148..154 "number"
+        Whitespace@154..155 " "
     Keyword@155..157 "IS"
     Whitespace@157..158 "\n"
     Keyword@158..163 "BEGIN"

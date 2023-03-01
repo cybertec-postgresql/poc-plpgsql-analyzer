@@ -58,7 +58,7 @@ pub enum TokenKind {
     #[token("deterministic", ignore(case))]
     DeterministicKw,
 
-    #[token("%type", ignore(case))]
+    #[token("type", ignore(case))]
     TypeKw,
 
     #[token("select", ignore(case))]
@@ -85,18 +85,134 @@ pub enum TokenKind {
     #[token("(+)")]
     OracleJoinKw,
 
-    #[regex(r"number(\s*\(\s*\d+\s*(\s*,\d+\s*)?\s*\))?", ignore(case))]
-    NumberTyKw,
+    #[token("interval", ignore(case))]
+    IntervalKw,
 
-    // TODO: Although the correct variant (note the extra `\s*` at the beginning
-    // of the matching group), this seems to match more whitespace than it should.
-    // E.g. with the first one below, `p2 VARCHAR2 := ...` will produce
-    // `TypeName@3..12 "VARCHAR2 "`, which obviously is _wrong_.
-    // Seems to be a bug in the `logos` crate, should probably be reported to
-    // the project.
-    // #[regex(r"varchar2?(\s*\(\s*\d+\s*\))?", ignore(case))]
-    #[regex(r"varchar2?(\(\s*\d+\s*\))?", ignore(case))]
-    VarcharTyKw,
+    #[token("precision", ignore(case))]
+    PrecisionKw,
+
+    #[token("binary_float", ignore(case))]
+    BinaryFloatKw,
+
+    #[token("binary_double", ignore(case))]
+    BinaryDoubleKw,
+
+    #[token("nvarchar2", ignore(case))]
+    Nvarchar2Kw,
+
+    #[token("dec", ignore(case))]
+    DecKw,
+
+    #[token("integer", ignore(case))]
+    IntegerKw,
+
+    #[token("int", ignore(case))]
+    IntKw,
+
+    #[token("numeric", ignore(case))]
+    NumericKw,
+
+    #[token("smallint", ignore(case))]
+    SmallintKw,
+
+    #[token("number", ignore(case))]
+    NumberKw,
+
+    #[token("decimal", ignore(case))]
+    DecimalKw,
+
+    #[token("double", ignore(case))]
+    DoubleKw,
+
+    #[token("float", ignore(case))]
+    FloatKw,
+
+    #[token("real", ignore(case))]
+    RealKw,
+
+    #[token("nchar", ignore(case))]
+    NcharKw,
+
+    #[token("long", ignore(case))]
+    LongKw,
+
+    #[token("char", ignore(case))]
+    CharKw,
+
+    #[token("byte", ignore(case))]
+    ByteKw,
+
+    #[token("with", ignore(case))]
+    WithKw,
+
+    #[token("local", ignore(case))]
+    LocalKw,
+
+    #[token("time", ignore(case))]
+    TimeKw,
+
+    #[token("zone", ignore(case))]
+    ZoneKw,
+
+    #[token("set", ignore(case))]
+    SetKw,
+
+    #[token("character", ignore(case))]
+    CharacterKw,
+
+    #[token("varchar2", ignore(case))]
+    Varchar2Kw,
+
+    #[token("varchar", ignore(case))]
+    VarcharKw,
+
+    #[token("raw", ignore(case))]
+    RawKw,
+
+    #[token("date", ignore(case))]
+    DateKw,
+
+    #[token("rowid", ignore(case))]
+    RowidKw,
+
+    #[token("urowid", ignore(case))]
+    UrowidKw,
+
+    #[token("timestamp", ignore(case))]
+    TimestampKw,
+
+    #[token("bfile", ignore(case))]
+    BfileKw,
+
+    #[token("blob", ignore(case))]
+    BlobKw,
+
+    #[token("clob", ignore(case))]
+    ClobKw,
+
+    #[token("nclob", ignore(case))]
+    NclobKw,
+
+    #[token("varying", ignore(case))]
+    VaryingKw,
+
+    #[token("national", ignore(case))]
+    NationalKw,
+
+    #[token("to", ignore(case))]
+    ToKw,
+
+    #[token("year", ignore(case))]
+    YearKw,
+
+    #[token("month", ignore(case))]
+    MonthKw,
+
+    #[token("day", ignore(case))]
+    DayKw,
+
+    #[token("second", ignore(case))]
+    SecondKw,
 
     #[regex(r"-?\d+", priority = 2)]
     Integer,
