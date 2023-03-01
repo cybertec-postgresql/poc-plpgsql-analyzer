@@ -186,6 +186,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,
             TokenKind::EndKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
+            TokenKind::NoCopyKw => SyntaxKind::Keyword,
+            TokenKind::DefaultKw => SyntaxKind::Keyword,
             TokenKind::InKw => SyntaxKind::Keyword,
             TokenKind::ReturnKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
