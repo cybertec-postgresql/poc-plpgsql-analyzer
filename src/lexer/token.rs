@@ -52,6 +52,12 @@ pub enum TokenKind {
     #[token("out", ignore(case))]
     OutKw,
 
+    #[token("nocopy", ignore(case))]
+    NoCopyKw,
+
+    #[token("default", ignore(case))]
+    DefaultKw,
+
     #[token("return", ignore(case))]
     ReturnKw,
 
