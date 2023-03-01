@@ -273,6 +273,41 @@ Root@0..160
         );
     }
 
+    #[test]
+    fn test_table_attributes() {
+        check(
+            parse(
+                r#"CREATE TABLE tab (id int) SEGMENT CREATION IMMEDIATE;"#,
+                parse_table,
+            ),
+            expect![[r#"
+Root@0..53
+  Table@0..53
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..12 "TABLE"
+    Whitespace@12..13 " "
+    Ident@13..16 "tab"
+    Whitespace@16..17 " "
+    LParen@17..18 "("
+    ColumnList@18..24
+      Column@18..24
+        Ident@18..20 "id"
+        Datatype@20..24
+          Whitespace@20..21 " "
+          Keyword@21..24 "int"
+    RParen@24..25 ")"
+    Whitespace@25..26 " "
+    Ident@26..33 "SEGMENT"
+    Whitespace@33..34 " "
+    Ident@34..42 "CREATION"
+    Whitespace@42..43 " "
+    Ident@43..52 "IMMEDIATE"
+    SemiColon@52..53 ";"
+"#]],
+        )
+    }
+
     mod test_table_modifiers {
         use super::*;
 
