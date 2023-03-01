@@ -22,6 +22,60 @@ pub enum TokenKind {
     #[token("noneditionable", ignore(case))]
     NonEditionable,
 
+    #[token("global", ignore(case))]
+    GlobalKw,
+
+    #[token("private", ignore(case))]
+    PrivateKw,
+
+    #[token("temporary", ignore(case))]
+    TemporaryKw,
+
+    #[token("sharded", ignore(case))]
+    ShardedKw,
+
+    #[token("duplicated", ignore(case))]
+    DuplicatedKw,
+
+    #[token("immutable", ignore(case))]
+    ImmutableKw,
+
+    #[token("blockchain", ignore(case))]
+    BlockchainKw,
+
+    #[token("table", ignore(case))]
+    TableKw,
+
+    #[token("constraint", ignore(case))]
+    ConstraintKw,
+
+    #[token("unique", ignore(case))]
+    UniqueKw,
+
+    #[token("primary", ignore(case))]
+    PrimaryKw,
+
+    #[token("key", ignore(case))]
+    KeyKw,
+
+    #[token("check", ignore(case))]
+    CheckKw,
+
+    #[token("null", ignore(case))]
+    NullKw,
+
+    #[token("references", ignore(case))]
+    ReferencesKw,
+
+    #[token("on", ignore(case))]
+    OnKw,
+
+    #[token("delete", ignore(case))]
+    DeleteKw,
+
+    #[token("cascade", ignore(case))]
+    CascadeKw,
+
     #[token("procedure", ignore(case))]
     ProcedureKw,
 

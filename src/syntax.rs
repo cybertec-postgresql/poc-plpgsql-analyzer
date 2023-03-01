@@ -79,6 +79,14 @@ pub enum SyntaxKind {
     Param,
     /// A node that consists of multiple parameters
     ParamList,
+    /// A node that marks a full CREATE TABLE block
+    Table,
+    /// A single Column node, consisting of name, type and column modifiers
+    Column,
+    /// A node that consists of multiple columns
+    ColumnList,
+    /// A node that consists of an inline constraint
+    DefaultExpression,
     /// A node that marks a full CREATE [..] PROCEDURE block
     Procedure,
     /// A node that marks a PROCEDURE header with params
@@ -177,6 +185,24 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CreateKw => SyntaxKind::Keyword,
             TokenKind::Editionable => SyntaxKind::Keyword,
             TokenKind::NonEditionable => SyntaxKind::Keyword,
+            TokenKind::GlobalKw => SyntaxKind::Keyword,
+            TokenKind::PrivateKw => SyntaxKind::Keyword,
+            TokenKind::TemporaryKw => SyntaxKind::Keyword,
+            TokenKind::ShardedKw => SyntaxKind::Keyword,
+            TokenKind::DuplicatedKw => SyntaxKind::Keyword,
+            TokenKind::ImmutableKw => SyntaxKind::Keyword,
+            TokenKind::BlockchainKw => SyntaxKind::Keyword,
+            TokenKind::TableKw => SyntaxKind::Keyword,
+            TokenKind::UniqueKw => SyntaxKind::Keyword,
+            TokenKind::PrimaryKw => SyntaxKind::Keyword,
+            TokenKind::KeyKw => SyntaxKind::Keyword,
+            TokenKind::CheckKw => SyntaxKind::Keyword,
+            TokenKind::ReferencesKw => SyntaxKind::Keyword,
+            TokenKind::ConstraintKw => SyntaxKind::Keyword,
+            TokenKind::NullKw => SyntaxKind::Keyword,
+            TokenKind::OnKw => SyntaxKind::Keyword,
+            TokenKind::DeleteKw => SyntaxKind::Keyword,
+            TokenKind::CascadeKw => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::ReplaceKw => SyntaxKind::Keyword,

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -13,6 +13,7 @@ pub(crate) use function::*;
 pub(crate) use function_invocation::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
+pub(crate) use table::*;
 
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
@@ -24,6 +25,7 @@ mod function;
 mod function_invocation;
 mod procedure;
 mod query;
+mod table;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {
