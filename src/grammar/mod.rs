@@ -7,6 +7,7 @@
 
 use std::ops::Range;
 
+pub(crate) use datatype::*;
 pub(crate) use expressions::*;
 pub(crate) use function::*;
 pub(crate) use function_invocation::*;
@@ -17,6 +18,7 @@ use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
+mod datatype;
 mod expressions;
 mod function;
 mod function_invocation;
@@ -82,7 +84,7 @@ fn parse_var_decl_list(p: &mut Parser) {
         }
 
         while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
-            p.bump_any();
+            parse_datatype(p);
         }
 
         p.finish();
@@ -154,15 +156,6 @@ fn parse_ident_or_function_invocation(p: &mut Parser) {
     }
 }
 
-/// Parses a data type.
-fn parse_typename(p: &mut Parser) {
-    if !p.eat(TokenKind::NumberTyKw) && !p.eat(TokenKind::VarcharTyKw) {
-        parse_qualified_ident(p, 1..3);
-        p.expect(TokenKind::Percentage);
-        p.expect(TokenKind::TypeKw);
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use expect_test::{expect, Expect};
@@ -227,7 +220,8 @@ Root@0..12
   Param@0..12
     Ident@0..3 "p_1"
     Whitespace@3..4 " "
-    TypeName@4..12 "VARCHAR2"
+    Datatype@4..12
+      Keyword@4..12 "VARCHAR2"
 "#]],
         );
 
@@ -239,8 +233,11 @@ Root@0..14
     Whitespace@0..2 "  "
     Ident@2..5 "foo"
     Whitespace@5..6 " "
-    Ident@6..9 "bar"
-    Keyword@9..14 "%type"
+    Datatype@6..14
+      Ident@6..9 "bar"
+      TypeAttribute@9..14
+        Percentage@9..10 "%"
+        Keyword@10..14 "type"
 "#]],
         );
     }
@@ -254,11 +251,13 @@ Root@0..26
   Param@0..26
     Ident@0..2 "p2"
     Whitespace@2..3 " "
-    TypeName@3..11 "VARCHAR2"
-    Whitespace@11..12 " "
+    Datatype@3..12
+      Keyword@3..11 "VARCHAR2"
+      Whitespace@11..12 " "
     Assign@12..14 ":="
-    Whitespace@14..15 " "
-    QuotedLiteral@15..26 "'not empty'"
+    Expression@14..26
+      Whitespace@14..15 " "
+      QuotedLiteral@15..26 "'not empty'"
 "#]],
         );
     }
@@ -280,19 +279,36 @@ Root@0..101
     VariableDecl@5..31
       Ident@5..18 "l_total_sales"
       Whitespace@18..19 " "
-      TypeName@19..31 "NUMBER(15,2)"
+      Datatype@19..31
+        Keyword@19..25 "NUMBER"
+        LParen@25..26 "("
+        Integer@26..28 "15"
+        Comma@28..29 ","
+        Integer@29..30 "2"
+        RParen@30..31 ")"
     SemiColon@31..32 ";"
     Whitespace@32..37 "\n    "
     VariableDecl@37..65
       Ident@37..51 "l_credit_limit"
       Whitespace@51..52 " "
-      TypeName@52..65 "NUMBER (10,0)"
+      Datatype@52..65
+        Keyword@52..58 "NUMBER"
+        Whitespace@58..59 " "
+        LParen@59..60 "("
+        Integer@60..62 "10"
+        Comma@62..63 ","
+        Integer@63..64 "0"
+        RParen@64..65 ")"
     SemiColon@65..66 ";"
     Whitespace@66..71 "\n    "
     VariableDecl@71..99
       Ident@71..85 "l_contact_name"
       Whitespace@85..86 " "
-      TypeName@86..99 "VARCHAR2(255)"
+      Datatype@86..99
+        Keyword@86..94 "VARCHAR2"
+        LParen@94..95 "("
+        Integer@95..98 "255"
+        RParen@98..99 ")"
     SemiColon@99..100 ";"
     Whitespace@100..101 "\n"
 "#]],

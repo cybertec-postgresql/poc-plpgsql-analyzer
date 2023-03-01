@@ -142,23 +142,29 @@ Root@0..146
       Param@41..93
         Ident@41..49 "p_emp_id"
         Whitespace@49..59 "          "
-        QualifiedIdent@59..82
-          Ident@59..70 "job_history"
-          Dot@70..71 "."
-          Ident@71..82 "employee_id"
-        Keyword@82..87 "%type"
-        Whitespace@87..93 "\n     "
+        Datatype@59..93
+          QualifiedIdent@59..82
+            Ident@59..70 "job_history"
+            Dot@70..71 "."
+            Ident@71..82 "employee_id"
+          TypeAttribute@82..87
+            Percentage@82..83 "%"
+            Keyword@83..87 "type"
+          Whitespace@87..93 "\n     "
       Comma@93..94 ","
       Whitespace@94..95 " "
       Param@95..145
         Ident@95..107 "p_start_date"
         Whitespace@107..113 "      "
-        QualifiedIdent@113..135
-          Ident@113..124 "job_history"
-          Dot@124..125 "."
-          Ident@125..135 "start_date"
-        Keyword@135..140 "%type"
-        Whitespace@140..145 "\n    "
+        Datatype@113..145
+          QualifiedIdent@113..135
+            Ident@113..124 "job_history"
+            Dot@124..125 "."
+            Ident@125..135 "start_date"
+          TypeAttribute@135..140
+            Percentage@135..136 "%"
+            Keyword@136..140 "type"
+          Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],
         );
