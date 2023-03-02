@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements parsing of procedures from a token tree.
@@ -70,17 +70,17 @@ mod tests {
     #[test]
     fn test_parse_simple_select() {
         check(
-            parse("SELECT * FROM table", parse_query),
+            parse("SELECT * FROM tab", parse_query),
             expect![[r#"
-Root@0..19
-  SelectStmt@0..19
+Root@0..17
+  SelectStmt@0..17
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
     Asterisk@7..8 "*"
     Whitespace@8..9 " "
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
-    Ident@14..19 "table"
+    Ident@14..17 "tab"
 "#]],
         );
     }

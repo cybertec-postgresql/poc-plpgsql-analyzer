@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements parsing of functions from a token tree.
@@ -185,7 +185,7 @@ Root@0..31
   Keyword@4..9 "BEGIN"
   Whitespace@9..14 "\n    "
   FunctionBody@14..20
-    Ident@14..18 "NULL"
+    Keyword@14..18 "NULL"
     SemiColon@18..19 ";"
     Whitespace@19..20 "\n"
   Keyword@20..23 "END"

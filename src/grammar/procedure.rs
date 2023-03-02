@@ -188,7 +188,7 @@ Root@0..31
   Keyword@4..9 "BEGIN"
   Whitespace@9..14 "\n    "
   ProcedureBody@14..20
-    Ident@14..18 "NULL"
+    Keyword@14..18 "NULL"
     SemiColon@18..19 ";"
     Whitespace@19..20 "\n"
   Keyword@20..23 "END"
@@ -220,7 +220,7 @@ Root@0..98
     Keyword@44..49 "BEGIN"
     Whitespace@49..52 "\n  "
     ProcedureBody@52..69
-      Ident@52..56 "NULL"
+      Keyword@52..56 "NULL"
       SemiColon@56..57 ";"
       Whitespace@57..58 " "
       Comment@58..68 "-- メ メ"
@@ -259,7 +259,7 @@ Root@0..124
     Keyword@103..108 "BEGIN"
     Whitespace@108..113 "\n    "
     ProcedureBody@113..119
-      Ident@113..117 "NULL"
+      Keyword@113..117 "NULL"
       SemiColon@117..118 ";"
       Whitespace@118..119 "\n"
     Keyword@119..122 "END"
@@ -397,7 +397,7 @@ Root@0..176
     Keyword@136..141 "BEGIN"
     Whitespace@141..146 "\n    "
     ProcedureBody@146..152
-      Ident@146..150 "NULL"
+      Keyword@146..150 "NULL"
       SemiColon@150..151 ";"
       Whitespace@151..152 "\n"
     Keyword@152..155 "END"
@@ -439,7 +439,7 @@ Root@0..193
     Keyword@150..155 "BEGIN"
     Whitespace@155..160 "\n    "
     ProcedureBody@160..166
-      Ident@160..164 "NULL"
+      Keyword@160..164 "NULL"
       SemiColon@164..165 ";"
       Whitespace@165..166 "\n"
     Keyword@166..169 "END"
