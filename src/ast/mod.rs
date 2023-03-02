@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -12,6 +12,7 @@ pub use expressions::*;
 pub use function::*;
 pub use procedure::*;
 pub use query::*;
+pub use table::*;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
 use crate::util::SqlIdent;
@@ -21,6 +22,7 @@ mod expressions;
 mod function;
 mod procedure;
 mod query;
+mod table;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
@@ -117,6 +119,12 @@ impl Root {
     /// Finds the (next) `SELECT` query in this root node.
     pub fn query(&self) -> Option<SelectStmt> {
         self.syntax.children().find_map(SelectStmt::cast)
+    }
+
+    /// Finds the (next) table DDL in this root node.
+    #[allow(unused)]
+    pub fn table(&self) -> Option<Table> {
+        self.syntax.children().find_map(Table::cast)
     }
 }
 

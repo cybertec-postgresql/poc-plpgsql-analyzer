@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -76,6 +76,16 @@ pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
 
     // Expect a query `SELECT`
     grammar::parse_query(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+pub fn parse_table(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a table DDL
+    grammar::parse_table(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())
