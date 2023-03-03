@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements different logic/arithmetic SQL expression parser.
@@ -25,12 +25,12 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
     let token = p.current();
     match token {
-        TokenKind::Ident
-        | TokenKind::DelimitedIdent
+        TokenKind::UnquotedIdent
+        | TokenKind::QuotedIdent
         | TokenKind::QuotedLiteral
         | TokenKind::Integer => {
             match token {
-                TokenKind::Ident | TokenKind::DelimitedIdent => {
+                TokenKind::UnquotedIdent | TokenKind::QuotedIdent => {
                     parse_ident_or_function_invocation(p);
                 }
                 _ => {
@@ -60,8 +60,8 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
         }
         _ => {
             p.error(ParseError::ExpectedOneOfTokens(vec![
-                TokenKind::Ident,
-                TokenKind::DelimitedIdent,
+                TokenKind::UnquotedIdent,
+                TokenKind::QuotedIdent,
                 TokenKind::Integer,
                 TokenKind::LParen,
                 TokenKind::Minus,

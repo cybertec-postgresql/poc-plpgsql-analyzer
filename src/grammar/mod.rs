@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -86,7 +86,7 @@ fn parse_var_decl_list(p: &mut Parser) {
     while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
         p.start(SyntaxKind::VariableDecl);
 
-        if !p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) {
+        if !p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]) {
             break;
         }
 
@@ -105,7 +105,7 @@ fn parse_var_decl_list(p: &mut Parser) {
 
 /// Parses a single SQL identifier.
 fn parse_ident(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
+    p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
 }
 
 /// Parses a qualified SQL identifier.
@@ -152,7 +152,7 @@ fn parse_qualified_ident(p: &mut Parser, expected_components: Range<u8>) {
 }
 
 fn eat_ident(p: &mut Parser) {
-    p.eat_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]);
+    p.eat_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
 }
 
 fn parse_ident_or_function_invocation(p: &mut Parser) {
