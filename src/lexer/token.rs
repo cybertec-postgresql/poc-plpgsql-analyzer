@@ -223,7 +223,7 @@ pub enum TokenKind {
     #[regex(r"-?\d+", priority = 2)]
     Integer,
 
-    #[regex(r"(?i)[a-z_][a-z0-9_$]*", priority = 1)]
+    #[regex(r"(?i)[a-z_][a-z0-9_$#]*", priority = 1)]
     UnquotedIdent,
 
     #[regex(r#""(?:[^"]|"")+""#)]
@@ -317,7 +317,7 @@ mod tests {
 
     #[test]
     fn lex_ident() {
-        check("hello", TokenKind::UnquotedIdent);
+        check("hello1$#", TokenKind::UnquotedIdent);
     }
 
     #[test]
