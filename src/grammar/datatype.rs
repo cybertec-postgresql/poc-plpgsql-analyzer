@@ -111,7 +111,7 @@ pub fn parse_datatype(p: &mut Parser) {
                 _ => {}
             }
         }
-        TokenKind::Ident | TokenKind::DelimitedIdent => {
+        TokenKind::UnquotedIdent | TokenKind::QuotedIdent => {
             parse_qualified_ident(p, 1..3);
             let checkpoint = p.checkpoint();
             if p.eat(TokenKind::Percentage) {

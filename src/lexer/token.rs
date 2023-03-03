@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -224,10 +224,10 @@ pub enum TokenKind {
     Integer,
 
     #[regex(r"(?i)[a-z_][a-z0-9_$]*", priority = 1)]
-    Ident,
+    UnquotedIdent,
 
     #[regex(r#""(?:[^"]|"")+""#)]
-    DelimitedIdent,
+    QuotedIdent,
 
     // TODO: Escaped characters, esp. \'
     #[regex("'[^']*'")]
@@ -317,11 +317,11 @@ mod tests {
 
     #[test]
     fn lex_ident() {
-        check("hello", TokenKind::Ident);
+        check("hello", TokenKind::UnquotedIdent);
     }
 
     #[test]
     fn lex_quoted_ident() {
-        check(r#""读文👩🏼‍🔬""#, TokenKind::DelimitedIdent);
+        check(r#""读文👩🏼‍🔬""#, TokenKind::QuotedIdent);
     }
 }

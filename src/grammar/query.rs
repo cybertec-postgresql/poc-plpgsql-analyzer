@@ -46,9 +46,9 @@ fn parse_column_expr(p: &mut Parser) {
 }
 
 fn parse_from_list(p: &mut Parser) {
-    while p.expect_one_of(&[TokenKind::Ident, TokenKind::DelimitedIdent]) && p.eat(TokenKind::Comma)
-    {
-    }
+    while p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent])
+        && p.eat(TokenKind::Comma)
+    {}
 }
 
 fn parse_where_clause(p: &mut Parser) {
