@@ -1,15 +1,13 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
 //! Typed AST nodes for PL/SQL procedures.
 
-use crate::ast::{AstNode, AstToken, ParamList};
-use crate::syntax::SyntaxElement;
+use crate::ast::{AstNode, IdentGroup, ParamList};
 
 use super::typed_syntax_node;
-use super::Ident;
 
 typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
 
@@ -35,11 +33,7 @@ impl Procedure {
 impl ProcedureHeader {
     /// Returns the name of the procedure.
     pub fn name(&self) -> Option<String> {
-        self.syntax
-            .children_with_tokens()
-            .filter_map(SyntaxElement::into_token)
-            .find_map(Ident::cast)
-            .map(|ident| ident.text())
+        self.syntax.children().find_map(IdentGroup::cast)?.name()
     }
 
     pub fn param_list(&self) -> Option<ParamList> {

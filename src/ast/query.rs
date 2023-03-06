@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Typed AST nodes for PL/SQL procedures.
@@ -55,7 +55,7 @@ mod tests {
         let expr = clause.expression().unwrap();
 
         assert_eq!(
-            expr.filter_nodes(|t| t.kind() == SyntaxKind::QualifiedIdent)
+            expr.filter_nodes(|t| t.kind() == SyntaxKind::IdentGroup)
                 .next()
                 .map(|t| t.text().to_string()),
             Some("places.person_id".to_owned()),
@@ -69,7 +69,7 @@ mod tests {
         );
 
         assert_eq!(
-            expr.filter_nodes(|t| t.kind() == SyntaxKind::QualifiedIdent)
+            expr.filter_nodes(|t| t.kind() == SyntaxKind::IdentGroup)
                 .nth(1)
                 .map(|t| t.text().to_string()),
             Some("persons.id".to_owned()),

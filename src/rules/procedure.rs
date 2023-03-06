@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements procedure-specific rules for transpiling PL/SQL to PL/pgSQL.
 
-use rowan::TextRange;
+use rowan::NodeOrToken::Token;
+use rowan::{Direction, TextRange};
 
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
+use crate::rules::find_children_nodes;
 use crate::syntax::{SyntaxKind, SyntaxNode};
 
 use super::{
-    find_children_tokens, find_sibling_token, next_token, replace_token, RuleDefinition, RuleError,
-    RuleLocation,
+    find_children_tokens, next_token, replace_token, RuleDefinition, RuleError, RuleLocation,
 };
 
 pub(super) struct AddParamlistParenthesis;
@@ -37,7 +38,7 @@ impl RuleDefinition for AddParamlistParenthesis {
         if let Some(header) = ProcedureHeader::cast(node.clone()) {
             if header.param_list().is_none() {
                 let mut locations =
-                    find_children_tokens(header.syntax(), |t| t.kind() == SyntaxKind::Ident)
+                    find_children_nodes(header.syntax(), |t| t.kind() == SyntaxKind::IdentGroup)
                         .map(|t| TextRange::at(t.text_range().end(), 0.into()))
                         .collect::<Vec<TextRange>>();
 
@@ -135,17 +136,44 @@ impl RuleDefinition for ReplaceEpilogue {
     ) -> Result<Vec<TextRange>, RuleError> {
         if let Some(procedure) = Procedure::cast(node.clone()) {
             let mut locations = find_children_tokens(procedure.syntax(), |t| {
-                t.kind() == SyntaxKind::Keyword
-                    && t.text().to_lowercase() == "end"
-                    && next_token(t)
-                        .map(|t| t.kind() == SyntaxKind::Ident)
-                        .unwrap_or(true)
+                // find an `END` keyword
+                if !(t.kind() == SyntaxKind::Keyword
+                    && t.text().to_string().to_lowercase() == "end")
+                {
+                    return false;
+                }
+
+                // determine if the `LANGUAGE` epilogue has already been applied
+                t.next_sibling_or_token()
+                    .and_then(|t| match t.kind() {
+                        SyntaxKind::SemiColon => t.next_sibling_or_token(),
+                        _ => None,
+                    })
+                    .and_then(|t| match t.kind() {
+                        SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                        _ => None,
+                    })
+                    .and_then(|t| match t.kind() {
+                        SyntaxKind::DollarQuote => t.next_sibling_or_token(),
+                        _ => None,
+                    })
+                    .and_then(|t| match t.kind() {
+                        SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                        _ => None,
+                    })
+                    .and_then(|t| match t.kind() {
+                        SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
+                        _ => None,
+                    })
+                    .is_none()
             })
             .map(|t| {
-                let start = t.next_token().unwrap_or_else(|| t.clone());
-                let end = find_sibling_token(&start, |t| t.kind() == SyntaxKind::Ident)
-                    .unwrap_or_else(|| t.clone());
-                TextRange::new(start.text_range().start(), end.text_range().end())
+                let start = t.clone();
+                let end = t
+                    .siblings_with_tokens(Direction::Next)
+                    .find(|t| t.kind() == SyntaxKind::IdentGroup)
+                    .unwrap_or(Token(t));
+                TextRange::new(start.text_range().end(), end.text_range().end())
             })
             .collect::<Vec<TextRange>>();
 
@@ -316,7 +344,6 @@ mod tests {
         let result = rule.get_node(&root);
         assert!(result.is_ok(), "{:#?}", result);
         let node = result.unwrap();
-
         let result = rule.apply(
             &node,
             &RuleLocation::from(INPUT, location),

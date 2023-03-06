@@ -4,7 +4,7 @@
 
 //! Typed AST nodes for PL/SQL datatypes.
 
-use crate::ast::QualifiedIdent;
+use crate::ast::IdentGroup;
 use crate::syntax::SyntaxKind;
 use rowan::ast::AstNode;
 
@@ -14,7 +14,7 @@ typed_syntax_node!(Datatype);
 
 impl Datatype {
     /// Returns the identifiers referenced by the %TYPE attribute of the datatype.
-    pub fn referenced_type(&self) -> Option<QualifiedIdent> {
+    pub fn referenced_type(&self) -> Option<IdentGroup> {
         let type_attribute_exists = self
             .syntax
             .children()
@@ -25,7 +25,7 @@ impl Datatype {
                 .syntax
                 .children()
                 .find(|t| t.kind() != SyntaxKind::TypeAttribute)
-                .map(QualifiedIdent::cast)?,
+                .map(IdentGroup::cast)?,
             None => None,
         }
     }
