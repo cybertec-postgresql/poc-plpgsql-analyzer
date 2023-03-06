@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Typed AST nodes for PL/SQL functions.
 
-use crate::ast::{AstNode, AstToken, ParamList};
+use crate::ast::{AstNode, IdentGroup, ParamList};
 
 use super::typed_syntax_node;
-use super::Ident;
 
 typed_syntax_node!(Function, FunctionHeader, FunctionBody);
 
@@ -33,11 +32,7 @@ impl Function {
 impl FunctionHeader {
     /// Returns the name of the function.
     pub fn name(&self) -> Option<String> {
-        self.syntax
-            .children_with_tokens()
-            .filter_map(|it| it.into_token())
-            .find_map(Ident::cast)
-            .map(|ident| ident.text())
+        self.syntax.children().find_map(IdentGroup::cast)?.name()
     }
 
     pub fn param_list(&self) -> Option<ParamList> {

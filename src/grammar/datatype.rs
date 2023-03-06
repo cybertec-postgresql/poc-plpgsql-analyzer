@@ -5,7 +5,7 @@
 //! A lax implementation for parsing datatypes from a token tree.
 //! See https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/Data-Types.html#GUID-A3C0D836-BADB-44E5-A5D4-265BA5968483
 
-use crate::grammar::{parse_expr, parse_qualified_ident};
+use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -106,13 +106,13 @@ pub fn parse_datatype(p: &mut Parser) {
                 TokenKind::CharacterKw => {
                     p.bump_any();
                     p.expect(TokenKind::SetKw);
-                    parse_qualified_ident(p, 1..3);
+                    parse_ident(p, 1..3);
                 }
                 _ => {}
             }
         }
         TokenKind::UnquotedIdent | TokenKind::QuotedIdent => {
-            parse_qualified_ident(p, 1..3);
+            parse_ident(p, 1..3);
             let checkpoint = p.checkpoint();
             if p.eat(TokenKind::Percentage) {
                 p.expect(TokenKind::TypeKw);
@@ -334,7 +334,7 @@ Root@0..26
             expect![[r#"
 Root@0..11
   Datatype@0..11
-    QualifiedIdent@0..11
+    IdentGroup@0..11
       Ident@0..3 "sys"
       Dot@3..4 "."
       Ident@4..11 "anytype"
@@ -349,7 +349,7 @@ Root@0..11
             expect![[r#"
 Root@0..17
   Datatype@0..17
-    QualifiedIdent@0..17
+    IdentGroup@0..17
       Ident@0..9 "my_schema"
       Dot@9..10 "."
       Ident@10..17 "my_type"
@@ -364,7 +364,7 @@ Root@0..17
             expect![[r#"
 Root@0..33
   Datatype@0..33
-    QualifiedIdent@0..28
+    IdentGroup@0..28
       Ident@0..9 "my_schema"
       Dot@9..10 "."
       Ident@10..18 "my_table"

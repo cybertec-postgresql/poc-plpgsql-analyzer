@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -34,7 +34,7 @@ fn parse_header(p: &mut Parser) {
 
     p.expect(TokenKind::ProcedureKw);
 
-    parse_qualified_ident(p, 1..2);
+    parse_ident(p, 1..2);
     parse_param_list(p);
     p.finish();
 }
@@ -75,7 +75,8 @@ Root@0..22
     Whitespace@6..7 " "
     Keyword@7..16 "PROCEDURE"
     Whitespace@16..17 " "
-    Ident@17..22 "hello"
+    IdentGroup@17..22
+      Ident@17..22 "hello"
 "#]],
         );
     }
@@ -91,7 +92,8 @@ Root@0..40
     Whitespace@6..7 " "
     Error@7..35
       Text@7..35 "Expected token 'Proce ..."
-    Ident@35..40 "hello"
+    IdentGroup@35..40
+      Ident@35..40 "hello"
 "#]],
         );
     }
@@ -112,7 +114,8 @@ Root@0..32
     Whitespace@17..18 " "
     Keyword@18..27 "PROCEDURE"
     Whitespace@27..28 " "
-    Ident@28..32 "test"
+    IdentGroup@28..32
+      Ident@28..32 "test"
 "#]],
         );
     }
@@ -134,16 +137,18 @@ Root@0..146
     Whitespace@7..8 " "
     Keyword@8..17 "PROCEDURE"
     Whitespace@17..18 " "
-    Ident@18..33 "add_job_history"
+    IdentGroup@18..33
+      Ident@18..33 "add_job_history"
     Whitespace@33..38 "\n    "
     ParamList@38..146
       LParen@38..39 "("
       Whitespace@39..41 "  "
       Param@41..93
-        Ident@41..49 "p_emp_id"
+        IdentGroup@41..49
+          Ident@41..49 "p_emp_id"
         Whitespace@49..59 "          "
         Datatype@59..93
-          QualifiedIdent@59..82
+          IdentGroup@59..82
             Ident@59..70 "job_history"
             Dot@70..71 "."
             Ident@71..82 "employee_id"
@@ -154,10 +159,11 @@ Root@0..146
       Comma@93..94 ","
       Whitespace@94..95 " "
       Param@95..145
-        Ident@95..107 "p_start_date"
+        IdentGroup@95..107
+          Ident@95..107 "p_start_date"
         Whitespace@107..113 "      "
         Datatype@113..145
-          QualifiedIdent@113..135
+          IdentGroup@113..135
             Ident@113..124 "job_history"
             Dot@124..125 "."
             Ident@125..135 "start_date"
@@ -193,7 +199,8 @@ Root@0..31
     Whitespace@19..20 "\n"
   Keyword@20..23 "END"
   Whitespace@23..24 " "
-  Ident@24..29 "hello"
+  IdentGroup@24..29
+    Ident@24..29 "hello"
   SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
@@ -213,7 +220,8 @@ Root@0..98
       Whitespace@6..7 " "
       Keyword@7..16 "PROCEDURE"
       Whitespace@16..17 " "
-      Ident@17..40 "\"读文👩🏼\u{200d}🔬\""
+      IdentGroup@17..40
+        Ident@17..40 "\"读文👩🏼\u{200d}🔬\""
       Whitespace@40..41 "\n"
     Keyword@41..43 "IS"
     Whitespace@43..44 " "
@@ -227,7 +235,8 @@ Root@0..98
       Whitespace@68..69 "\n"
     Keyword@69..72 "END"
     Whitespace@72..73 " "
-    Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
+    IdentGroup@73..96
+      Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
     SemiColon@96..97 ";"
     Whitespace@97..98 "\n"
 "#]],
@@ -248,8 +257,8 @@ Root@0..124
       Keyword@59..65 "CREATE"
       Whitespace@65..66 " "
       Keyword@66..75 "PROCEDURE"
-      QualifiedIdent@75..99
-        Whitespace@75..76 " "
+      Whitespace@75..76 " "
+      IdentGroup@76..99
         Ident@76..94 "\"alternate_SCHEMA\""
         Dot@94..95 "."
         Ident@95..99 "proc"
@@ -283,7 +292,8 @@ Root@0..304
       Whitespace@6..7 " "
       Keyword@7..16 "PROCEDURE"
       Whitespace@16..17 " "
-      Ident@17..27 "secure_dml"
+      IdentGroup@17..27
+        Ident@17..27 "secure_dml"
       ParamList@27..29
         LParen@27..28 "("
         RParen@28..29 ")"
@@ -390,7 +400,8 @@ Root@0..176
       Whitespace@103..104 " "
       Keyword@104..113 "PROCEDURE"
       Whitespace@113..114 " "
-      Ident@114..132 "ignore_editionable"
+      IdentGroup@114..132
+        Ident@114..132 "ignore_editionable"
       Whitespace@132..133 "\n"
     Keyword@133..135 "IS"
     Whitespace@135..136 "\n"
@@ -402,7 +413,8 @@ Root@0..176
       Whitespace@151..152 "\n"
     Keyword@152..155 "END"
     Whitespace@155..156 " "
-    Ident@156..174 "ignore_editionable"
+    IdentGroup@156..174
+      Ident@156..174 "ignore_editionable"
     SemiColon@174..175 ";"
     Whitespace@175..176 "\n"
 "#]],
@@ -432,7 +444,8 @@ Root@0..193
       Whitespace@114..115 " "
       Keyword@115..124 "PROCEDURE"
       Whitespace@124..125 " "
-      Ident@125..146 "ignore_noneditionable"
+      IdentGroup@125..146
+        Ident@125..146 "ignore_noneditionable"
       Whitespace@146..147 "\n"
     Keyword@147..149 "IS"
     Whitespace@149..150 "\n"
@@ -444,7 +457,8 @@ Root@0..193
       Whitespace@165..166 "\n"
     Keyword@166..169 "END"
     Whitespace@169..170 " "
-    Ident@170..191 "ignore_noneditionable"
+    IdentGroup@170..191
+      Ident@170..191 "ignore_noneditionable"
     SemiColon@191..192 ";"
     Whitespace@192..193 "\n"
 "#]],

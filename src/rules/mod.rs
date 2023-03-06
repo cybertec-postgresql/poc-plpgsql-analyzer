@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements rules for transpiling PL/SQL to PL/pgSQL
@@ -242,6 +242,20 @@ where
         .filter(token_pred)
 }
 
+/// Finds all child nodes within an AST node.
+///
+/// # Arguments
+///
+/// `node`: The parent node to find children node(s) in.
+///
+/// `node_pred`: A closure returning `true` for all nodes to return.
+fn find_children_nodes<P>(node: &SyntaxNode, node_pred: P) -> impl Iterator<Item = SyntaxNode>
+where
+    P: Fn(&SyntaxNode) -> bool,
+{
+    node.children().filter(node_pred)
+}
+
 /// Finds all (direct and indirect children) tokens within a syntax tree.
 ///
 /// # Arguments
@@ -258,6 +272,7 @@ where
         .filter(token_pred)
 }
 
+#[allow(unused)]
 fn find_sibling_token<P>(node: &SyntaxToken, token_pred: P) -> Option<SyntaxToken>
 where
     P: Fn(&SyntaxToken) -> bool,
@@ -344,8 +359,7 @@ fn replace_token(
             })
             .collect::<Vec<NodeOrToken<GreenNode, GreenToken>>>();
 
-        let child =
-            SyntaxNode::new_root(rowan::GreenNode::new(kind.into(), children)).clone_for_update();
+        let child = SyntaxNode::new_root(GreenNode::new(kind.into(), children)).clone_for_update();
 
         // Now insert it as one single node into the original AST.
         node.splice_children(to_delete, vec![SyntaxElement::Node(child.clone())]);
@@ -397,12 +411,15 @@ fn check_parameter_types(node: &SyntaxNode, ctx: &DboAnalyzeContext) -> Result<(
 fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> Result<(), RuleError> {
     for param in params {
         if let Some(ident) = param.type_reference() {
-            if let (Some(t), Some(c)) = (ident.qualifier(), ident.name()) {
-                if ctx.table_column(&t, &c).is_none() {
-                    return Err(RuleError::NoTableInfo(t.to_string()));
+            if let (Some(t), Some(c)) = (ident.nth(0), ident.nth(1)) {
+                if ctx
+                    .table_column(&t.text().to_string().into(), &c.text().to_string().into())
+                    .is_none()
+                {
+                    return Err(RuleError::NoTableInfo(t.text()));
                 }
             } else {
-                return Err(RuleError::InvalidTypeRef(ident.text()));
+                return Err(RuleError::InvalidTypeRef(ident.name().unwrap()));
             }
         }
     }

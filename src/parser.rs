@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -148,15 +148,15 @@ impl<'a> Parser<'a> {
 
     /// Lookahead operation: returns the kind of the next nth token.
     pub fn nth(&mut self, mut n: usize) -> Option<TokenKind> {
-        let mut i = 1;
+        let mut i = 0;
         loop {
             match &self.tokens.iter().rev().peekable().nth(i) {
                 Some(token) => {
                     if !token.kind.is_trivia() {
-                        n -= 1;
                         if n == 0 {
                             return Some(token.kind);
                         }
+                        n -= 1;
                     }
                     i += 1;
                 }

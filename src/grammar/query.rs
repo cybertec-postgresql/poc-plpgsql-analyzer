@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements parsing of procedures from a token tree.
@@ -97,11 +97,13 @@ Root@0..38
     SelectClause@7..28
       ColumnExpr@7..28
         FunctionInvocation@7..27
-          Ident@7..12 "trunc"
+          IdentGroup@7..12
+            Ident@7..12 "trunc"
           LParen@12..13 "("
           ArgumentList@13..26
             Argument@13..20
-              Ident@13..20 "SYSDATE"
+              IdentGroup@13..20
+                Ident@13..20 "SYSDATE"
             Comma@20..21 ","
             Whitespace@21..22 " "
             Argument@22..26
@@ -142,7 +144,7 @@ Root@0..328
         Whitespace@35..38 "\n  "
         Comment@38..58 "-- LEFT (OUTER) JOIN"
         Whitespace@58..61 "\n  "
-        QualifiedIdent@61..77
+        IdentGroup@61..77
           Ident@61..67 "places"
           Dot@67..68 "."
           Ident@68..77 "person_id"
@@ -150,7 +152,7 @@ Root@0..328
         Whitespace@80..81 " "
         ComparisonOp@81..82 "="
         Whitespace@82..83 " "
-        QualifiedIdent@83..93
+        IdentGroup@83..93
           Ident@83..90 "persons"
           Dot@90..91 "."
           Ident@91..93 "id"
@@ -204,14 +206,16 @@ Root@0..72
           Whitespace@31..32 " "
           ComparisonOp@32..33 "<"
           Whitespace@33..34 " "
-          Ident@34..35 "a"
+          IdentGroup@34..35
+            Ident@34..35 "a"
           Whitespace@35..38 "\n  "
         LogicOp@38..41 "AND"
         Whitespace@41..42 " "
         LParen@42..43 "("
         Expression@43..68
           Expression@43..51
-            Ident@43..44 "b"
+            IdentGroup@43..44
+              Ident@43..44 "b"
             Whitespace@44..45 " "
             ComparisonOp@45..47 "<="
             Whitespace@47..48 " "
@@ -220,7 +224,8 @@ Root@0..72
           LogicOp@51..53 "OR"
           Expression@53..68
             Whitespace@53..54 " "
-            Ident@54..55 "c"
+            IdentGroup@54..55
+              Ident@54..55 "c"
             Whitespace@55..56 " "
             ComparisonOp@56..60 "LIKE"
             Whitespace@60..61 " "

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements parsing of functions from a token tree.
@@ -33,7 +33,7 @@ fn parse_header(p: &mut Parser) {
 
     p.expect(TokenKind::FunctionKw);
 
-    parse_qualified_ident(p, 1..2);
+    parse_ident(p, 1..2);
 
     parse_param_list(p);
     parse_return_type(p);
@@ -88,7 +88,8 @@ Root@0..21
     Whitespace@6..7 " "
     Keyword@7..15 "FUNCTION"
     Whitespace@15..16 " "
-    Ident@16..21 "hello"
+    IdentGroup@16..21
+      Ident@16..21 "hello"
 "#]],
         );
     }
@@ -109,7 +110,8 @@ Root@0..31
     Whitespace@17..18 " "
     Keyword@18..26 "FUNCTION"
     Whitespace@26..27 " "
-    Ident@27..31 "test"
+    IdentGroup@27..31
+      Ident@27..31 "test"
 "#]],
         );
     }
@@ -131,16 +133,18 @@ Root@0..145
     Whitespace@7..8 " "
     Keyword@8..16 "FUNCTION"
     Whitespace@16..17 " "
-    Ident@17..32 "add_job_history"
+    IdentGroup@17..32
+      Ident@17..32 "add_job_history"
     Whitespace@32..37 "\n    "
     ParamList@37..145
       LParen@37..38 "("
       Whitespace@38..40 "  "
       Param@40..92
-        Ident@40..48 "p_emp_id"
+        IdentGroup@40..48
+          Ident@40..48 "p_emp_id"
         Whitespace@48..58 "          "
         Datatype@58..92
-          QualifiedIdent@58..81
+          IdentGroup@58..81
             Ident@58..69 "job_history"
             Dot@69..70 "."
             Ident@70..81 "employee_id"
@@ -151,10 +155,11 @@ Root@0..145
       Comma@92..93 ","
       Whitespace@93..94 " "
       Param@94..144
-        Ident@94..106 "p_start_date"
+        IdentGroup@94..106
+          Ident@94..106 "p_start_date"
         Whitespace@106..112 "      "
         Datatype@112..144
-          QualifiedIdent@112..134
+          IdentGroup@112..134
             Ident@112..123 "job_history"
             Dot@123..124 "."
             Ident@124..134 "start_date"
@@ -190,7 +195,8 @@ Root@0..31
     Whitespace@19..20 "\n"
   Keyword@20..23 "END"
   Whitespace@23..24 " "
-  Ident@24..29 "hello"
+  IdentGroup@24..29
+    Ident@24..29 "hello"
   SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
@@ -219,7 +225,8 @@ Root@0..171
       Whitespace@103..104 " "
       Keyword@104..112 "FUNCTION"
       Whitespace@112..113 " "
-      Ident@113..131 "ignore_editionable"
+      IdentGroup@113..131
+        Ident@113..131 "ignore_editionable"
       Whitespace@131..132 "\n"
       Keyword@132..138 "RETURN"
       Datatype@138..146
@@ -266,7 +273,8 @@ Root@0..180
       Whitespace@109..110 " "
       Keyword@110..118 "FUNCTION"
       Whitespace@118..119 " "
-      Ident@119..140 "ignore_noneditionable"
+      IdentGroup@119..140
+        Ident@119..140 "ignore_noneditionable"
       Whitespace@140..141 "\n"
       Keyword@141..147 "RETURN"
       Datatype@147..155

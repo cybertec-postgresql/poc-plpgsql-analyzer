@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -14,7 +14,6 @@ pub use procedure::*;
 pub use query::*;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
-use crate::util::SqlIdent;
 
 mod datatype;
 mod expressions;
@@ -100,7 +99,7 @@ pub trait AstToken {
     }
 }
 
-typed_syntax_node!(Root, ParamList, Param, QualifiedIdent);
+typed_syntax_node!(Root, IdentGroup, ParamList, Param);
 typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
@@ -120,14 +119,8 @@ impl Root {
     }
 }
 
-// TODO: Access of identifiers using at least three components
-impl QualifiedIdent {
-    /// Returns the fully qualified identifier name itself.
-    pub fn text(&self) -> String {
-        self.syntax.text().to_string()
-    }
-
-    pub fn name(&self) -> Option<SqlIdent> {
+impl IdentGroup {
+    pub fn name(&self) -> Option<String> {
         self.syntax
             .children_with_tokens()
             .filter_map(|it| it.into_token())
@@ -136,12 +129,13 @@ impl QualifiedIdent {
             .map(|it| it.text().into())
     }
 
-    pub fn qualifier(&self) -> Option<SqlIdent> {
+    // TODO: implement a `last_nth` method
+    pub fn nth(&self, n: usize) -> Option<Ident> {
         self.syntax
             .children_with_tokens()
-            .filter_map(|it| it.into_token())
-            .find(|it| it.kind() == SyntaxKind::Ident)
-            .map(|it| it.text().into())
+            .filter_map(|t| t.into_token())
+            .filter_map(Ident::cast)
+            .nth(n)
     }
 }
 
@@ -172,7 +166,7 @@ impl Param {
         self.syntax.children().find_map(Datatype::cast)
     }
 
-    pub fn type_reference(&self) -> Option<QualifiedIdent> {
+    pub fn type_reference(&self) -> Option<IdentGroup> {
         self.datatype()?.referenced_type()
     }
 }

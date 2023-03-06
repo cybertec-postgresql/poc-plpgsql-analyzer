@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 // SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
@@ -47,10 +47,10 @@ pub enum SyntaxKind {
     Whitespace,
     /// A SQL keyword, e.g. "CREATE"
     Keyword,
-    /// An identifier, e.g. secure_dml or parameter name
+    /// An identifier group, consisting of multiple idents
+    IdentGroup,
+    /// An identifier, either quoted or unquoted
     Ident,
-    /// A qualified identifier, e.g. <schema>.<procedure>, <schema>.<table>.<column>
-    QualifiedIdent,
     /// A type name
     TypeName,
     /// A single dot

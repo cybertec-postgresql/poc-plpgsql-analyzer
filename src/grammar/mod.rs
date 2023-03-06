@@ -57,7 +57,7 @@ fn parse_param_list(p: &mut Parser) {
 ///   p2 VARCHAR2 := 'not empty'
 fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
-    parse_ident(p);
+    parse_ident(p, 1..1);
 
     if !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
         p.eat(TokenKind::InKw);
@@ -103,11 +103,6 @@ fn parse_var_decl_list(p: &mut Parser) {
     p.finish();
 }
 
-/// Parses a single SQL identifier.
-fn parse_ident(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
-}
-
 /// Parses a qualified SQL identifier.
 ///
 /// # Arguments
@@ -128,38 +123,44 @@ fn parse_ident(p: &mut Parser) {
 /// // Matches <identifier>.<identifier>.<identifier>
 /// // parse_qualified_ident(p, 3..3);
 /// ```
-fn parse_qualified_ident(p: &mut Parser, expected_components: Range<u8>) {
+fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
     assert!(expected_components.start > 0);
-    let checkpoint = p.checkpoint();
-    parse_ident(p);
+    assert!(expected_components.start <= expected_components.end);
+
+    p.eat_ws();
+    p.start(SyntaxKind::IdentGroup);
+    p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
 
     let mut i: u8 = 1;
     while i < expected_components.end {
         if i < expected_components.start {
             p.expect(TokenKind::Dot);
-        } else if !p.eat(TokenKind::Dot) {
+        } else if p.nth(0) != Some(TokenKind::Dot) {
             break;
         }
 
-        parse_ident(p);
+        p.expect(TokenKind::Dot);
+        p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
         i += 1;
     }
 
-    if i > 1 {
-        p.start_node_at(checkpoint, SyntaxKind::QualifiedIdent);
-        p.finish();
-    }
+    p.finish();
 }
 
 fn eat_ident(p: &mut Parser) {
-    p.eat_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
+    p.eat_ws();
+    let checkpoint = p.checkpoint();
+    if p.eat_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]) {
+        p.start_node_at(checkpoint, SyntaxKind::IdentGroup);
+        p.finish();
+    }
 }
 
 fn parse_ident_or_function_invocation(p: &mut Parser) {
     if p.nth(1) == Some(TokenKind::LParen) {
         parse_function_invocation(p);
     } else {
-        parse_qualified_ident(p, 1..3);
+        parse_ident(p, 1..3);
     }
 }
 
@@ -190,10 +191,11 @@ mod tests {
     #[test]
     fn test_parse_ident() {
         check(
-            parse("hello", parse_ident),
+            parse("hello", |p| parse_ident(p, 1..1)),
             expect![[r#"
 Root@0..5
-  Ident@0..5 "hello"
+  IdentGroup@0..5
+    Ident@0..5 "hello"
 "#]],
         );
     }
@@ -201,13 +203,14 @@ Root@0..5
     #[test]
     fn test_parse_ident_with_trivia() {
         check(
-            parse(" -- hello\n  foo", parse_ident),
+            parse(" -- hello\n  foo", |p| parse_ident(p, 1..1)),
             expect![[r#"
 Root@0..15
   Whitespace@0..1 " "
   Comment@1..9 "-- hello"
   Whitespace@9..12 "\n  "
-  Ident@12..15 "foo"
+  IdentGroup@12..15
+    Ident@12..15 "foo"
 "#]],
         );
     }
@@ -225,7 +228,8 @@ Root@0..15
             expect![[r#"
 Root@0..12
   Param@0..12
-    Ident@0..3 "p_1"
+    IdentGroup@0..3
+      Ident@0..3 "p_1"
     Whitespace@3..4 " "
     Datatype@4..12
       Keyword@4..12 "VARCHAR2"
@@ -238,10 +242,12 @@ Root@0..12
 Root@0..14
   Param@0..14
     Whitespace@0..2 "  "
-    Ident@2..5 "foo"
+    IdentGroup@2..5
+      Ident@2..5 "foo"
     Whitespace@5..6 " "
     Datatype@6..14
-      Ident@6..9 "bar"
+      IdentGroup@6..9
+        Ident@6..9 "bar"
       TypeAttribute@9..14
         Percentage@9..10 "%"
         Keyword@10..14 "type"
@@ -256,7 +262,8 @@ Root@0..14
             expect![[r#"
 Root@0..26
   Param@0..26
-    Ident@0..2 "p2"
+    IdentGroup@0..2
+      Ident@0..2 "p2"
     Whitespace@2..3 " "
     Datatype@3..12
       Keyword@3..11 "VARCHAR2"

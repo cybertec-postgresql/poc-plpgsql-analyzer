@@ -174,7 +174,8 @@ Root@0..1
 Root@0..2
   Expression@0..2
     ArithmeticOp@0..1 "-"
-    Ident@1..2 "a"
+    IdentGroup@1..2
+      Ident@1..2 "a"
 "#]],
         );
     }
@@ -186,7 +187,8 @@ Root@0..2
             expect![[r#"
 Root@0..2
   Expression@0..2
-    Ident@0..1 "a"
+    IdentGroup@0..1
+      Ident@0..1 "a"
     Exclam@1..2 "!"
 "#]],
         );
@@ -201,7 +203,8 @@ Root@0..3
   Expression@0..3
     ArithmeticOp@0..1 "-"
     Expression@1..3
-      Ident@1..2 "a"
+      IdentGroup@1..2
+        Ident@1..2 "a"
       Exclam@2..3 "!"
 "#]],
         );
@@ -219,7 +222,8 @@ Root@0..11
       LParen@1..2 "("
       Expression@2..4
         ArithmeticOp@2..3 "-"
-        Ident@3..4 "a"
+        IdentGroup@3..4
+          Ident@3..4 "a"
       RParen@4..5 ")"
       Exclam@5..6 "!"
     RParen@6..7 ")"
@@ -253,7 +257,8 @@ Root@0..22
       Whitespace@13..14 " "
       LogicOp@14..17 "NOT"
       Whitespace@17..18 " "
-      Ident@18..22 "true"
+      IdentGroup@18..22
+        Ident@18..22 "true"
 "#]],
         );
     }
@@ -269,7 +274,8 @@ Root@0..5
     Whitespace@1..2 " "
     ArithmeticOp@2..3 "+"
     Whitespace@3..4 " "
-    Ident@4..5 "a"
+    IdentGroup@4..5
+      Ident@4..5 "a"
 "#]],
         );
     }
@@ -286,7 +292,8 @@ Root@0..9
     ArithmeticOp@2..3 "+"
     Expression@3..9
       Whitespace@3..4 " "
-      Ident@4..5 "a"
+      IdentGroup@4..5
+        Ident@4..5 "a"
       Whitespace@5..6 " "
       ArithmeticOp@6..7 "*"
       Whitespace@7..8 " "
@@ -338,7 +345,8 @@ Root@0..7
     Whitespace@2..3 " "
     ArithmeticOp@3..4 "+"
     Whitespace@4..5 " "
-    Ident@5..6 "a"
+    IdentGroup@5..6
+      Ident@5..6 "a"
   RParen@6..7 ")"
 "#]],
         );
@@ -369,7 +377,8 @@ Root@0..7
 Root@0..15
   Expression@0..15
     Expression@0..12
-      Ident@0..1 "a"
+      IdentGroup@0..1
+        Ident@0..1 "a"
       Whitespace@1..2 " "
       ArithmeticOp@2..3 "*"
       Whitespace@3..4 " "
@@ -384,7 +393,8 @@ Root@0..15
       Whitespace@11..12 " "
     ArithmeticOp@12..13 "/"
     Whitespace@13..14 " "
-    Ident@14..15 "b"
+    IdentGroup@14..15
+      Ident@14..15 "b"
 "#]],
         );
     }
@@ -430,7 +440,8 @@ Root@0..17
 Root@0..75
   Expression@0..75
     Expression@0..8
-      Ident@0..1 "a"
+      IdentGroup@0..1
+        Ident@0..1 "a"
       Whitespace@1..2 " "
       ComparisonOp@2..3 "<"
       Whitespace@3..4 " "
@@ -445,7 +456,8 @@ Root@0..75
         Whitespace@15..16 " "
         ComparisonOp@16..18 "<>"
         Whitespace@18..19 " "
-        Ident@19..20 "b"
+        IdentGroup@19..20
+          Ident@19..20 "b"
         Whitespace@20..21 " "
       LogicOp@21..23 "OR"
       Expression@23..74
@@ -453,7 +465,8 @@ Root@0..75
         LParen@24..25 "("
         Expression@25..48
           Expression@25..35
-            Ident@25..26 "c"
+            IdentGroup@25..26
+              Ident@25..26 "c"
             Whitespace@26..27 " "
             ComparisonOp@27..28 "="
             Whitespace@28..29 " "
@@ -462,7 +475,8 @@ Root@0..75
           LogicOp@35..38 "AND"
           Expression@38..48
             Whitespace@38..39 " "
-            Ident@39..42 "bar"
+            IdentGroup@39..42
+              Ident@39..42 "bar"
             Whitespace@42..43 " "
             ComparisonOp@43..45 ">="
             Whitespace@45..46 " "
@@ -472,7 +486,8 @@ Root@0..75
         LogicOp@50..53 "AND"
         Expression@53..74
           Whitespace@53..54 " "
-          Ident@54..57 "foo"
+          IdentGroup@54..57
+            Ident@54..57 "foo"
           Whitespace@57..58 " "
           ComparisonOp@58..63 "ILIKE"
           Whitespace@63..64 " "
@@ -490,7 +505,8 @@ Root@0..75
 Root@0..38
   LParen@0..1 "("
   Expression@1..8
-    Ident@1..2 "a"
+    IdentGroup@1..2
+      Ident@1..2 "a"
     Whitespace@2..3 " "
     ComparisonOp@3..4 "<"
     Whitespace@4..5 " "
@@ -510,7 +526,8 @@ Root@0..38
 Root@0..67
   LParen@0..1 "("
   Expression@1..8
-    Ident@1..2 "a"
+    IdentGroup@1..2
+      Ident@1..2 "a"
     Whitespace@2..3 " "
     ComparisonOp@3..4 "<"
     Whitespace@4..5 " "
