@@ -56,7 +56,7 @@ mod tests {
     #[test]
     fn check_ast_node_to_procedure() {
         const INPUT: &str = r#"
-            CREATE OR REPLACE PROCEDURE multiple_parameters(
+            CREATE OR REPLACE PROCEDURE schema.multiple_parameters(
                 p1 VARCHAR2
                 , p2 VARCHAR2
             )
@@ -73,7 +73,7 @@ mod tests {
         assert!(procedure.is_some());
         assert_eq!(
             procedure.unwrap().name(),
-            Some("multiple_parameters".to_string())
+            Some("schema.multiple_parameters".to_string())
         );
     }
 }

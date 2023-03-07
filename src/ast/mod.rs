@@ -124,9 +124,9 @@ impl IdentGroup {
         self.syntax
             .children_with_tokens()
             .filter_map(|it| it.into_token())
-            .filter(|it| it.kind() == SyntaxKind::Ident)
-            .last()
-            .map(|it| it.text().into())
+            .filter(|it| it.kind() == SyntaxKind::Ident || it.kind() == SyntaxKind::Dot)
+            .map(|it| Some(it.text().to_string()))
+            .collect()
     }
 
     // TODO: implement a `last_nth` method
