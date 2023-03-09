@@ -20,6 +20,9 @@ pub enum ParseError {
     /// A token could not be parsed by the lexer
     #[error("Unknown token found: {0}")]
     UnknownToken(String),
+    /// The parser expected an identifier, as defined in [`TokenKind::is_ident`]
+    #[error("Expected identifier")]
+    ExpectedIdent,
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
