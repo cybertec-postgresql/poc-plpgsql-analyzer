@@ -132,38 +132,6 @@ pub enum SyntaxKind {
     Root,
 }
 
-impl SyntaxKind {
-    /// Returns true when the [`SyntaxKind`] are not syntactically important.
-    #[allow(unused)]
-    pub(crate) fn is_trivia(self) -> bool {
-        matches!(self, Self::Whitespace | Self::Comment)
-    }
-
-    /// Returns true if the [`SyntaxKind`] is a keyword
-    #[allow(unused)]
-    pub(crate) fn is_keyword(self) -> bool {
-        matches!(self, SyntaxKind::Keyword)
-    }
-
-    #[allow(unused)]
-    pub(crate) fn is_punct(self) -> bool {
-        matches!(
-            self,
-            Self::LParen
-                | Self::RParen
-                | Self::Percentage
-                | Self::Slash
-                | Self::Dot
-                | Self::Comma
-                | Self::SemiColon
-                | Self::Colon
-                | Self::Asterisk
-                | Self::ComparisonOp
-                | Self::Concat
-        )
-    }
-}
-
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
         rowan::SyntaxKind(kind.to_u16().unwrap())
