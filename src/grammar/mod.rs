@@ -17,6 +17,7 @@ pub(crate) use query::*;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
+use crate::ParseError;
 
 mod datatype;
 mod expressions;
@@ -109,6 +110,7 @@ fn parse_var_decl_list(p: &mut Parser) {
 ///
 /// * `p`: The parser struct
 /// * `expected_components`: A range of the minimum and maximum expected components that should be present in the identifier.
+///     To allow an optional identifier, pass a range starting with `0`.
 ///
 /// returns: ()
 ///
@@ -124,12 +126,18 @@ fn parse_var_decl_list(p: &mut Parser) {
 /// // parse_qualified_ident(p, 3..3);
 /// ```
 fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
-    assert!(expected_components.start > 0);
+    assert!(expected_components.end > 0);
     assert!(expected_components.start <= expected_components.end);
 
     p.eat_ws();
+
+    if expected_components.start == 0 && !p.current().is_ident() {
+        return;
+    }
+
     p.start(SyntaxKind::IdentGroup);
-    p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
+
+    parse_single_ident(p);
 
     let mut i: u8 = 1;
     while i < expected_components.end {
@@ -140,19 +148,19 @@ fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
         }
 
         p.expect(TokenKind::Dot);
-        p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]);
+        parse_single_ident(p);
         i += 1;
     }
 
     p.finish();
 }
 
-fn eat_ident(p: &mut Parser) {
-    p.eat_ws();
-    let checkpoint = p.checkpoint();
-    if p.eat_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]) {
-        p.start_node_at(checkpoint, SyntaxKind::IdentGroup);
-        p.finish();
+/// Helper function for [`parse_ident`]
+fn parse_single_ident(p: &mut Parser) {
+    if p.current().is_ident() {
+        p.bump_any_map(SyntaxKind::Ident)
+    } else {
+        p.error(ParseError::ExpectedIdent)
     }
 }
 
@@ -196,6 +204,18 @@ mod tests {
 Root@0..5
   IdentGroup@0..5
     Ident@0..5 "hello"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_keyword_as_ident() {
+        check(
+            parse("procedure", |p| parse_ident(p, 1..1)),
+            expect![[r#"
+Root@0..9
+  IdentGroup@0..9
+    Ident@0..9 "procedure"
 "#]],
         );
     }

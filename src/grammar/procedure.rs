@@ -52,7 +52,7 @@ fn parse_body(p: &mut Parser) {
     p.finish();
 
     p.expect(TokenKind::EndKw);
-    eat_ident(p);
+    parse_ident(p, 0..1);
     p.expect(TokenKind::SemiColon);
     p.eat_ws();
 }
