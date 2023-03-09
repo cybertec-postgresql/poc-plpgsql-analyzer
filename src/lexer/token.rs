@@ -289,6 +289,33 @@ impl TokenKind {
     pub fn is_trivia(self) -> bool {
         matches!(self, Self::Whitespace | Self::Comment)
     }
+
+    pub fn is_punct(self) -> bool {
+        matches!(
+            self,
+            Self::Assign
+                | Self::Asterisk
+                | Self::Comma
+                | Self::ComparisonOp
+                | Self::DollarQuote
+                | Self::Dot
+                | Self::DoublePipe
+                | Self::LParen
+                | Self::Percentage
+                | Self::RParen
+                | Self::SemiColon
+                | Self::Slash
+        )
+    }
+
+    pub fn is_ident(self) -> bool {
+        !(self.is_trivia()
+            || self.is_punct()
+            || matches!(
+                self,
+                Self::Eof | Self::Error | Self::Integer | Self::OracleJoinKw
+            ))
+    }
 }
 
 impl fmt::Display for TokenKind {
