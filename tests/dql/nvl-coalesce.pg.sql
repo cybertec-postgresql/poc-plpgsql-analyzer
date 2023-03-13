@@ -1,1 +1,1 @@
-SELECT coalesce(dummy, 'John'), JOHN.NVL() from dual;
+SELECT coalesce(coalesce(dummy, dummy), 'John'), JOHN.NVL() from dual;
