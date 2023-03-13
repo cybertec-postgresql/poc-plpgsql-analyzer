@@ -10,6 +10,7 @@ pub use rowan::ast::AstNode;
 pub use datatype::*;
 pub use expressions::*;
 pub use function::*;
+pub use function_invocation::*;
 pub use procedure::*;
 pub use query::*;
 
@@ -18,6 +19,7 @@ use crate::syntax::{SyntaxKind, SyntaxToken};
 mod datatype;
 mod expressions;
 mod function;
+mod function_invocation;
 mod procedure;
 mod query;
 
