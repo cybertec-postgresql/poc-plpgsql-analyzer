@@ -40,6 +40,7 @@ lazy_static::lazy_static! {
             "CYAR-0003" => procedure::ReplaceEpilogue,
             "CYAR-0004" => builtins::FixTrunc,
             "CYAR-0005" => builtins::ReplaceSysdate,
+            "CYAR-0006" => builtins::ReplaceNvl,
         }
     };
 }
@@ -272,6 +273,13 @@ where
         .filter(token_pred)
 }
 
+fn find_descendants_nodes<P>(node: &SyntaxNode, node_pred: P) -> impl Iterator<Item = SyntaxNode>
+where
+    P: Fn(&SyntaxNode) -> bool,
+{
+    node.descendants().filter(node_pred)
+}
+
 #[allow(unused)]
 fn find_sibling_token<P>(node: &SyntaxToken, token_pred: P) -> Option<SyntaxToken>
 where
@@ -342,7 +350,7 @@ fn replace_token(
 
     // Check carefully that we also have a valid index range, as
     // `.splice_children()` will straight up panic with out-of-bounds indices.
-    if to_delete.end > last {
+    if to_delete.end > last + 1 {
         return Err(RuleError::InvalidLocation(location.clone()));
     }
 
