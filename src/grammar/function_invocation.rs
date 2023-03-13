@@ -9,6 +9,16 @@ use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
+/// Looks ahead the token tree to determine if a function invocation
+pub(crate) fn look_ahead_function_invocation(p: &mut Parser) -> bool {
+    (p.at(TokenKind::QuotedIdent) || p.at(TokenKind::UnquotedIdent))
+        && (p.nth(1) == Some(TokenKind::LParen)
+            || p.nth(1) == Some(TokenKind::Dot)
+                && (p.nth(2) == Some(TokenKind::QuotedIdent)
+                    || p.nth(2) == Some(TokenKind::UnquotedIdent))
+                && p.nth(3) == Some(TokenKind::LParen))
+}
+
 pub(crate) fn parse_function_invocation(p: &mut Parser) {
     p.start(SyntaxKind::FunctionInvocation);
     parse_ident(p, 1..2);

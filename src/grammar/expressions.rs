@@ -498,6 +498,32 @@ Root@0..75
     }
 
     #[test]
+    fn test_parse_qualified_function_invocation() {
+        check(
+            parse("JOHN.NVL(first_name, 'John')", parse_expr),
+            expect![[r#"
+Root@0..28
+  Expression@0..28
+    FunctionInvocation@0..28
+      IdentGroup@0..8
+        Ident@0..4 "JOHN"
+        Dot@4..5 "."
+        Ident@5..8 "NVL"
+      LParen@8..9 "("
+      ArgumentList@9..27
+        Argument@9..19
+          IdentGroup@9..19
+            Ident@9..19 "first_name"
+        Comma@19..20 ","
+        Whitespace@20..21 " "
+        Argument@21..27
+          QuotedLiteral@21..27 "'John'"
+      RParen@27..28 ")"
+"#]],
+        );
+    }
+
+    #[test]
     fn test_parse_unbalanced_rparen() {
         check(
             parse("(a < 100))", parse_expr),
