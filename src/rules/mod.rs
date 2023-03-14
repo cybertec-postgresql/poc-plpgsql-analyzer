@@ -41,6 +41,7 @@ lazy_static::lazy_static! {
             "CYAR-0004" => builtins::FixTrunc,
             "CYAR-0005" => builtins::ReplaceSysdate,
             "CYAR-0006" => builtins::ReplaceNvl,
+            "CYAR-0007" => procedure::RemoveEditionable,
         }
     };
 }
