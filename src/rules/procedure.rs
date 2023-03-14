@@ -198,6 +198,55 @@ impl RuleDefinition for ReplaceEpilogue {
     }
 }
 
+pub(super) struct RemoveEditionable;
+
+impl RuleDefinition for RemoveEditionable {
+    fn short_desc(&self) -> &'static str {
+        "Remove `EDITIONABLE` or `NONEDITIONABLE`"
+    }
+
+    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
+        if let Some(header) = root.procedure().and_then(|p| p.header()) {
+            return Ok(header.syntax().clone());
+        }
+
+        if let Some(header) = root.function().and_then(|p| p.header()) {
+            return Ok(header.syntax().clone());
+        }
+
+        Err(RuleError::NoSuchItem("Procedure or function"))
+    }
+
+    fn find(
+        &self,
+        node: &SyntaxNode,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<TextRange>, RuleError> {
+        let locations = find_children_tokens(node, |t| {
+            t.kind() == SyntaxKind::Keyword
+                && (t.text().to_lowercase() == "editionable"
+                    || t.text().to_lowercase() == "noneditionable")
+        })
+        .map(|t| t.text_range())
+        .collect::<Vec<TextRange>>();
+
+        if locations.is_empty() {
+            Err(RuleError::NoChange)
+        } else {
+            Ok(locations)
+        }
+    }
+
+    fn apply(
+        &self,
+        node: &SyntaxNode,
+        location: &RuleLocation,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<TextRange, RuleError> {
+        replace_token(node, location, "", None, 0..2)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use expect_test::{expect, Expect};
@@ -210,6 +259,57 @@ mod tests {
 
     fn check(node: SyntaxNode, expect: Expect) {
         expect.assert_eq(&node.to_string());
+    }
+
+    #[test]
+    fn test_replace_editionable() {
+        const INPUT: &str =
+            include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
+
+        let parse = crate::parse_procedure(INPUT).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap();
+        let rule = RemoveEditionable;
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.find(&node, &DboAnalyzeContext::default());
+        assert!(result.is_ok(), "{:#?}", result);
+
+        let mut locations = result.unwrap();
+        assert_eq!(locations.len(), 1);
+        let location = locations.pop().unwrap();
+        assert_eq!(location, TextRange::new(92.into(), 103.into()));
+        assert_eq!(&root.syntax().to_string()[location], "EDITIONABLE");
+
+        let root = root.clone_for_update();
+
+        let result = rule.get_node(&root);
+        assert!(result.is_ok(), "{:#?}", result);
+        let node = result.unwrap();
+
+        let result = rule.apply(
+            &node,
+            &RuleLocation::from(INPUT, location),
+            &DboAnalyzeContext::default(),
+        );
+        assert!(result.is_ok(), "{:#?}", result);
+
+        let location = result.unwrap();
+        check(
+            root.syntax().clone(),
+            expect![[r#"
+-- test: ignore EDITIONABLE keyword, there is no equivalent in PostgreSQL
+CREATE OR REPLACE PROCEDURE ignore_editionable
+IS
+BEGIN
+    NULL;
+END ignore_editionable;
+"#]],
+        );
+        assert_eq!(location, TextRange::new(92.into(), 92.into()));
+        assert_eq!(&root.syntax().to_string()[location], "");
     }
 
     #[test]
