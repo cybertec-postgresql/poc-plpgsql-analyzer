@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
 
 //! Implements parsing of procedures from a token tree.
 
@@ -12,11 +13,12 @@ use crate::syntax::SyntaxKind;
 /// Looks ahead the token tree to determine if a function invocation
 pub(crate) fn look_ahead_function_invocation(p: &mut Parser) -> bool {
     (p.at(TokenKind::QuotedIdent) || p.at(TokenKind::UnquotedIdent))
-        && (p.nth(1) == Some(TokenKind::LParen)
-            || p.nth(1) == Some(TokenKind::Dot)
-                && (p.nth(2) == Some(TokenKind::QuotedIdent)
-                    || p.nth(2) == Some(TokenKind::UnquotedIdent))
-                && p.nth(3) == Some(TokenKind::LParen))
+        && matches!(
+            p.lookahead(3).as_slice(),
+            &[TokenKind::LParen, ..]
+                | &[TokenKind::Dot, TokenKind::QuotedIdent, TokenKind::LParen]
+                | &[TokenKind::Dot, TokenKind::UnquotedIdent, TokenKind::LParen]
+        )
 }
 
 pub(crate) fn parse_function_invocation(p: &mut Parser) {
