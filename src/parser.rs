@@ -170,6 +170,13 @@ impl<'a> Parser<'a> {
         }
     }
 
+    /// Lookahead operation, returns `count` items if present.
+    pub fn lookahead(&mut self, count: usize) -> Vec<TokenKind> {
+        (1..=count)
+            .filter_map(|index| self.nth(index))
+            .collect::<Vec<_>>()
+    }
+
     /// Returns the current [`TokenKind`] if there is a token.
     pub fn current(&mut self) -> TokenKind {
         self.eat_ws();
