@@ -1,0 +1,1 @@
+SET CLIENT_MIN_MESSAGES = 'debug';
