@@ -1,0 +1,5 @@
+SET CLIENT_MIN_MESSAGES = 'debug';
+DO $$
+  BEGIN
+    RAISE DEBUG USING MESSAGE := 'Test Text';
+  END $$;
