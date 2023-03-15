@@ -1,0 +1,1 @@
+SELECT EXTRACT(year FROM age('2020-01-01' , '2019-03-12'))*12 + EXTRACT(month FROM age('2020-01-01' , '2019-03-12'));
