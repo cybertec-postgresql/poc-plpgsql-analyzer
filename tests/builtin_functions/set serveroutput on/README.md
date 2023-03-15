@@ -3,4 +3,4 @@
 Enable serveroutput to display Notifications!
 
 PG:
-## Raise
+## CLIENT_MIN_MESSAGES
