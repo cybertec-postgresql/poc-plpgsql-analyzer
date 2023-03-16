@@ -10,6 +10,15 @@ use crate::syntax::SyntaxKind;
 
 use super::parse_expr;
 
+/// Looks ahead and parses a query if applicable
+pub(crate) fn opt_query(p: &mut Parser) -> bool {
+    if p.at(TokenKind::SelectKw) {
+        parse_query(p);
+        return true;
+    }
+    false
+}
+
 pub(crate) fn parse_query(p: &mut Parser) {
     p.start(SyntaxKind::SelectStmt);
     p.expect(TokenKind::SelectKw);
