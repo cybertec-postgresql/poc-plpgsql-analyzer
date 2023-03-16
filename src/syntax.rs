@@ -107,6 +107,8 @@ pub enum SyntaxKind {
     ColumnExpr,
     /// A node that contains the whole SELECT clause of a query
     SelectClause,
+    /// A node that contains an `INTO` clause of a SELECT statement
+    IntoClause,
     /// Represent a complete `WHERE` clause expression
     WhereClause,
     /// A node that marks a variable declaration as part of a function or
@@ -161,6 +163,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
+            TokenKind::IntoKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,

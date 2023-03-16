@@ -4,6 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
+use crate::grammar::parse_ident;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -11,18 +12,19 @@ use crate::syntax::SyntaxKind;
 use super::parse_expr;
 
 /// Looks ahead and parses a query if applicable
-pub(crate) fn opt_query(p: &mut Parser) -> bool {
+pub(crate) fn opt_query(p: &mut Parser, expect_into_clause: bool) -> bool {
     if p.at(TokenKind::SelectKw) {
-        parse_query(p);
+        parse_query(p, expect_into_clause);
         return true;
     }
     false
 }
 
-pub(crate) fn parse_query(p: &mut Parser) {
+pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
     p.expect(TokenKind::SelectKw);
     parse_column_expr(p);
+    parse_into_clause(p, expect_into_clause);
     p.expect(TokenKind::FromKw);
     parse_from_list(p);
 
@@ -41,7 +43,11 @@ fn parse_column_expr(p: &mut Parser) {
 
     p.start(SyntaxKind::SelectClause);
 
-    while !p.at(TokenKind::FromKw) && !p.at(TokenKind::Eof) && !p.at(TokenKind::SemiColon) {
+    while !p.at(TokenKind::IntoKw)
+        && !p.at(TokenKind::FromKw)
+        && !p.at(TokenKind::Eof)
+        && !p.at(TokenKind::SemiColon)
+    {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
@@ -51,6 +57,23 @@ fn parse_column_expr(p: &mut Parser) {
         p.eat(TokenKind::Comma);
     }
 
+    p.finish();
+}
+
+fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
+    let checkpoint = p.checkpoint();
+    if expect_into_clause {
+        p.expect(TokenKind::IntoKw);
+    } else if !p.eat(TokenKind::IntoKw) {
+        return;
+    }
+
+    parse_ident(p, 1..1);
+    while p.eat(TokenKind::Comma) {
+        parse_ident(p, 1..1);
+    }
+
+    p.start_node_at(checkpoint, SyntaxKind::IntoClause);
     p.finish();
 }
 
@@ -79,7 +102,7 @@ mod tests {
     #[test]
     fn test_parse_simple_select() {
         check(
-            parse("SELECT * FROM table", parse_query),
+            parse("SELECT * FROM table", |p| parse_query(p, false)),
             expect![[r#"
 Root@0..19
   SelectStmt@0..19
@@ -95,9 +118,37 @@ Root@0..19
     }
 
     #[test]
+    fn test_select_into_clause() {
+        check(
+            parse("SELECT 1 INTO x FROM table", |p| parse_query(p, false)),
+            expect![[r#"
+Root@0..26
+  SelectStmt@0..26
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..9
+      ColumnExpr@7..9
+        Integer@7..8 "1"
+        Whitespace@8..9 " "
+    IntoClause@9..16
+      Keyword@9..13 "INTO"
+      Whitespace@13..14 " "
+      IdentGroup@14..15
+        Ident@14..15 "x"
+      Whitespace@15..16 " "
+    Keyword@16..20 "FROM"
+    Whitespace@20..21 " "
+    Ident@21..26 "table"
+"#]],
+        );
+    }
+
+    #[test]
     fn test_parse_function_invocation() {
         check(
-            parse("SELECT trunc(SYSDATE, 'MM') FROM DUAL;", parse_query),
+            parse("SELECT trunc(SYSDATE, 'MM') FROM DUAL;", |p| {
+                parse_query(p, false)
+            }),
             expect![[r#"
 Root@0..38
   SelectStmt@0..38
@@ -132,7 +183,7 @@ Root@0..38
         const INPUT: &str = include_str!("../../tests/dql/select_left_join.ora.sql");
 
         check(
-            parse(INPUT, parse_query),
+            parse(INPUT, |p| parse_query(p, false)),
             expect![[r#"
 Root@0..328
   SelectStmt@0..94
@@ -188,7 +239,7 @@ Root@0..328
         const INPUT: &str = include_str!("../../tests/dql/multiple_where_conditions.ora.sql");
 
         check(
-            parse(INPUT, parse_query),
+            parse(INPUT, |p| parse_query(p, false)),
             expect![[r#"
 Root@0..72
   SelectStmt@0..71
