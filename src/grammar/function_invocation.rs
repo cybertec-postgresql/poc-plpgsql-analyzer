@@ -10,15 +10,20 @@ use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
-/// Looks ahead the token tree to determine if a function invocation
-pub(crate) fn look_ahead_function_invocation(p: &mut Parser) -> bool {
-    (p.at(TokenKind::QuotedIdent) || p.at(TokenKind::UnquotedIdent))
+/// Looks ahead and parses a function invocation if applicable
+pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
+    if (p.at(TokenKind::QuotedIdent) || p.at(TokenKind::UnquotedIdent))
         && matches!(
             p.lookahead(3).as_slice(),
             &[TokenKind::LParen, ..]
                 | &[TokenKind::Dot, TokenKind::QuotedIdent, TokenKind::LParen]
                 | &[TokenKind::Dot, TokenKind::UnquotedIdent, TokenKind::LParen]
         )
+    {
+        parse_function_invocation(p);
+        return true;
+    }
+    false
 }
 
 pub(crate) fn parse_function_invocation(p: &mut Parser) {

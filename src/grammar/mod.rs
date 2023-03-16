@@ -165,9 +165,7 @@ fn parse_single_ident(p: &mut Parser) {
 }
 
 fn parse_ident_or_function_invocation(p: &mut Parser) {
-    if look_ahead_function_invocation(p) {
-        parse_function_invocation(p);
-    } else {
+    if !opt_function_invocation(p) {
         parse_ident(p, 1..3);
     }
 }
