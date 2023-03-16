@@ -78,7 +78,7 @@ pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a query `SELECT`
-    grammar::parse_query(&mut parser);
+    grammar::parse_query(&mut parser, false);
 
     // TODO handle any errors here
     Ok(parser.build())
