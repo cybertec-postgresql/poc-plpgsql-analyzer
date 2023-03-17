@@ -121,14 +121,14 @@ fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
 fn prefix_bp(op: TokenKind) -> Option<(u8, Option<SyntaxKind>)> {
     match op {
         TokenKind::NotKw => Some((5, Some(SyntaxKind::LogicOp))),
-        TokenKind::Plus | TokenKind::Minus => Some((15, None)),
+        TokenKind::Plus | TokenKind::Minus => Some((17, None)),
         _ => None,
     }
 }
 
 fn postfix_bp(op: TokenKind) -> Option<(u8, Option<SyntaxKind>)> {
     match op {
-        TokenKind::Exclam => Some((17, None)),
+        TokenKind::Exclam => Some((19, None)),
         _ => None,
     }
 }
@@ -139,9 +139,10 @@ fn infix_bp(op: TokenKind) -> Option<((u8, u8), Option<SyntaxKind>)> {
         TokenKind::AndKw => Some(((3, 4), Some(SyntaxKind::LogicOp))),
         TokenKind::ComparisonOp => Some(((7, 8), None)),
         TokenKind::LikeKw => Some(((9, 10), None)),
-        TokenKind::Plus | TokenKind::Minus => Some(((11, 12), None)),
+        TokenKind::DoublePipe => Some(((11, 12), None)),
+        TokenKind::Plus | TokenKind::Minus => Some(((13, 14), None)),
         TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
-            Some(((13, 14), Some(SyntaxKind::ArithmeticOp)))
+            Some(((15, 16), Some(SyntaxKind::ArithmeticOp)))
         }
         _ => None,
     }
@@ -276,6 +277,23 @@ Root@0..5
     Whitespace@3..4 " "
     IdentGroup@4..5
       Ident@4..5 "a"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_string_concat() {
+        check(
+            parse("'1' || a", parse_expr),
+            expect![[r#"
+Root@0..8
+  Expression@0..8
+    QuotedLiteral@0..3 "'1'"
+    Whitespace@3..4 " "
+    Concat@4..6 "||"
+    Whitespace@6..7 " "
+    IdentGroup@7..8
+      Ident@7..8 "a"
 "#]],
         );
     }
