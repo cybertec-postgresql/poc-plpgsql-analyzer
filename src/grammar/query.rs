@@ -9,7 +9,7 @@ use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
-use super::parse_expr;
+use super::expr;
 
 /// Looks ahead and parses a query if applicable
 pub(crate) fn opt_query(p: &mut Parser, expect_into_clause: bool) -> bool {
@@ -50,7 +50,7 @@ fn parse_column_expr(p: &mut Parser) {
     {
         p.start(SyntaxKind::ColumnExpr);
 
-        parse_expr(p);
+        expr(p);
 
         p.finish();
 
@@ -88,7 +88,7 @@ fn parse_where_clause(p: &mut Parser) {
     p.start(SyntaxKind::WhereClause);
     p.expect(TokenKind::WhereKw);
 
-    parse_expr(p);
+    expr(p);
 
     p.finish();
 }

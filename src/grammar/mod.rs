@@ -69,26 +69,8 @@ fn parse_param(p: &mut Parser) {
         } else {
             parse_datatype(p);
             if p.eat_one_of(&[TokenKind::Assign, TokenKind::DefaultKw]) {
-                parse_expr(p);
+                expr(p);
             }
-        }
-    }
-
-    p.finish();
-}
-
-/// <https://docs.oracle.com/cd/B28359_01/appdev.111/b28370/block.htm#CJAIABJJ>
-fn parse_var_decl_list(p: &mut Parser) {
-    if p.at(TokenKind::BeginKw) {
-        return;
-    }
-
-    p.start(SyntaxKind::VariableDeclList);
-    while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
-        p.start(SyntaxKind::VariableDecl);
-
-        if !p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]) {
-            break;
         }
 
         while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
