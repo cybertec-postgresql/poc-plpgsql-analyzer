@@ -169,6 +169,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::OrKw => SyntaxKind::Keyword,
             TokenKind::NotKw => SyntaxKind::Keyword,
+            TokenKind::BetweenKw => SyntaxKind::Keyword,
             TokenKind::LikeKw => SyntaxKind::ComparisonOp,
             TokenKind::OracleJoinKw => SyntaxKind::Keyword,
             TokenKind::IntervalKw => SyntaxKind::Keyword,

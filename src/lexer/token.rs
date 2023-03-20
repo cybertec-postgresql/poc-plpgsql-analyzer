@@ -88,6 +88,9 @@ pub enum TokenKind {
     #[token("not", ignore(case))]
     NotKw,
 
+    #[token("between", ignore(case))]
+    BetweenKw,
+
     #[regex(r"(?i)i?like")]
     LikeKw,
 
