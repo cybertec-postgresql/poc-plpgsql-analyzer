@@ -62,9 +62,11 @@ fn parse_column_expr(p: &mut Parser) {
 
 fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
     let checkpoint = p.checkpoint();
+
     if expect_into_clause {
-        p.expect(TokenKind::IntoKw);
-        return;
+        if !p.expect(TokenKind::IntoKw) {
+            return;
+        }
     } else if !p.eat(TokenKind::IntoKw) {
         return;
     }
