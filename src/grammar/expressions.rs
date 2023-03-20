@@ -16,11 +16,19 @@ use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
 
-pub(crate) fn parse_expr(p: &mut Parser) {
-    expr_bp(p, 0);
+/// Attempts to parse an expression if applicable
+pub(crate) fn opt_expr(p: &mut Parser) -> bool {
+    expr_bp(p, 0).is_ok()
 }
 
-fn expr_bp(p: &mut Parser, min_bp: u8) {
+/// Parses an expression
+pub(crate) fn expr(p: &mut Parser) {
+    if let Err(err) = expr_bp(p, 0) {
+        p.error(err);
+    }
+}
+
+fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
     let checkpoint = p.checkpoint();
 
     let token = p.current();
@@ -44,7 +52,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
         }
         TokenKind::LParen => {
             p.bump_any();
-            expr_bp(p, 0);
+            let _ = expr_bp(p, 0);
             if !p.expect(TokenKind::RParen) {
                 p.error(ParseError::UnbalancedParens);
             }
@@ -59,7 +67,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
             }
         }
         _ => {
-            p.error(ParseError::ExpectedOneOfTokens(vec![
+            return Err(ParseError::ExpectedOneOfTokens(vec![
                 TokenKind::UnquotedIdent,
                 TokenKind::QuotedIdent,
                 TokenKind::Integer,
@@ -69,7 +77,6 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
                 TokenKind::Plus,
                 TokenKind::QuotedLiteral,
             ]));
-            return;
         }
     }
 
@@ -106,13 +113,14 @@ fn expr_bp(p: &mut Parser, min_bp: u8) {
 
         break;
     }
+    Ok(())
 }
 
 fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
     p.start_node_at(checkpoint, SyntaxKind::Expression);
 
     if let Some(min_bp) = sub_expr {
-        expr_bp(p, min_bp)
+        let _ = expr_bp(p, min_bp);
     };
 
     p.finish();
@@ -158,7 +166,7 @@ mod tests {
     #[test]
     fn test_parse_literal() {
         check(
-            parse("1", parse_expr),
+            parse("1", expr),
             expect![[r#"
 Root@0..1
   Expression@0..1
@@ -170,7 +178,7 @@ Root@0..1
     #[test]
     fn test_parse_prefix_expr() {
         check(
-            parse("-a", parse_expr),
+            parse("-a", expr),
             expect![[r#"
 Root@0..2
   Expression@0..2
@@ -184,7 +192,7 @@ Root@0..2
     #[test]
     fn test_parse_postfix_expr() {
         check(
-            parse("a!", parse_expr),
+            parse("a!", expr),
             expect![[r#"
 Root@0..2
   Expression@0..2
@@ -198,7 +206,7 @@ Root@0..2
     #[test]
     fn test_parse_pre_and_postfix_expr() {
         check(
-            parse("-a!", parse_expr),
+            parse("-a!", expr),
             expect![[r#"
 Root@0..3
   Expression@0..3
@@ -214,7 +222,7 @@ Root@0..3
     #[test]
     fn test_unary_op_in_paren() {
         check(
-            parse("((-a)!) + 2", parse_expr),
+            parse("((-a)!) + 2", expr),
             expect![[r#"
 Root@0..11
   Expression@0..11
@@ -239,7 +247,7 @@ Root@0..11
     #[test]
     fn test_not_precedence() {
         check(
-            parse("NOT 1 > 2 AND NOT true", parse_expr),
+            parse("NOT 1 > 2 AND NOT true", expr),
             expect![[r#"
 Root@0..22
   Expression@0..22
@@ -267,7 +275,7 @@ Root@0..22
     #[test]
     fn test_parse_simple_expr() {
         check(
-            parse("1 + a", parse_expr),
+            parse("1 + a", expr),
             expect![[r#"
 Root@0..5
   Expression@0..5
@@ -284,7 +292,7 @@ Root@0..5
     #[test]
     fn test_parse_string_concat() {
         check(
-            parse("'1' || a", parse_expr),
+            parse("'1' || a", expr),
             expect![[r#"
 Root@0..8
   Expression@0..8
@@ -301,7 +309,7 @@ Root@0..8
     #[test]
     fn test_parse_op_precedence() {
         check(
-            parse("1 + a * 2", parse_expr),
+            parse("1 + a * 2", expr),
             expect![[r#"
 Root@0..9
   Expression@0..9
@@ -323,7 +331,7 @@ Root@0..9
     #[test]
     fn test_parse_mirrored_op_precedence() {
         check(
-            parse("1 + 2 * 3 / 4 - 5", parse_expr),
+            parse("1 + 2 * 3 / 4 - 5", expr),
             expect![[r#"
 Root@0..17
   Expression@0..17
@@ -354,7 +362,7 @@ Root@0..17
     #[test]
     fn test_parse_simple_paren_expr() {
         check(
-            parse("(1 + a)", parse_expr),
+            parse("(1 + a)", expr),
             expect![[r#"
 Root@0..7
   LParen@0..1 "("
@@ -373,7 +381,7 @@ Root@0..7
     #[test]
     fn test_redundant_parens() {
         check(
-            parse("(((1)))", parse_expr),
+            parse("(((1)))", expr),
             expect![[r#"
 Root@0..7
   LParen@0..1 "("
@@ -390,7 +398,7 @@ Root@0..7
     #[test]
     fn test_paren_precedence() {
         check(
-            parse("a * (1 + 2) / b", parse_expr),
+            parse("a * (1 + 2) / b", expr),
             expect![[r#"
 Root@0..15
   Expression@0..15
@@ -420,7 +428,7 @@ Root@0..15
     #[test]
     fn test_nested_paren() {
         check(
-            parse("1 * (2 + (3 + 4))", parse_expr),
+            parse("1 * (2 + (3 + 4))", expr),
             expect![[r#"
 Root@0..17
   Expression@0..17
@@ -452,7 +460,7 @@ Root@0..17
         check(
             parse(
                 "a < 100 AND (10 <> b OR (c = 'foo' AND bar >= 42) AND foo ILIKE '%stonks%')",
-                parse_expr,
+                expr,
             ),
             expect![[r#"
 Root@0..75
@@ -518,7 +526,7 @@ Root@0..75
     #[test]
     fn test_parse_qualified_function_invocation() {
         check(
-            parse("JOHN.NVL(first_name, 'John')", parse_expr),
+            parse("JOHN.NVL(first_name, 'John')", expr),
             expect![[r#"
 Root@0..28
   Expression@0..28
@@ -544,7 +552,7 @@ Root@0..28
     #[test]
     fn test_parse_unbalanced_rparen() {
         check(
-            parse("(a < 100))", parse_expr),
+            parse("(a < 100))", expr),
             expect![[r#"
 Root@0..38
   LParen@0..1 "("
@@ -565,7 +573,7 @@ Root@0..38
     #[test]
     fn test_parse_unbalanced_lparen() {
         check(
-            parse("(a < 100", parse_expr),
+            parse("(a < 100", expr),
             expect![[r#"
 Root@0..67
   LParen@0..1 "("
