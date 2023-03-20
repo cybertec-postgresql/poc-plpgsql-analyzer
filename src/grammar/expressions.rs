@@ -81,6 +81,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
     }
 
     while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
+        p.eat(TokenKind::NotKw);
         let op = p.current();
 
         if let Some((l_bp, syntax_kind)) = postfix_bp(op) {
@@ -97,7 +98,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             continue;
         }
 
-        if let Some(((l_bp, r_bp), syntax_kind)) = infix_bp(op) {
+        if let Some(((l_bp, r_bp), syntax_kind, cb)) = infix_bp(op) {
             if l_bp < min_bp {
                 break;
             }
@@ -105,6 +106,10 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             match syntax_kind {
                 Some(syntax_kind) => p.bump_any_map(syntax_kind),
                 None => p.bump_any(),
+            }
+
+            if let Some(cb) = cb {
+                cb(p, r_bp);
             }
 
             add_expr_node(p, checkpoint, Some(r_bp));
@@ -141,19 +146,50 @@ fn postfix_bp(op: TokenKind) -> Option<(u8, Option<SyntaxKind>)> {
     }
 }
 
-fn infix_bp(op: TokenKind) -> Option<((u8, u8), Option<SyntaxKind>)> {
+#[allow(clippy::type_complexity)]
+fn infix_bp(
+    op: TokenKind,
+) -> Option<(
+    (u8, u8),
+    Option<SyntaxKind>,
+    Option<&'static dyn Fn(&mut Parser, u8)>,
+)> {
     match op {
-        TokenKind::OrKw => Some(((1, 2), Some(SyntaxKind::LogicOp))),
-        TokenKind::AndKw => Some(((3, 4), Some(SyntaxKind::LogicOp))),
-        TokenKind::ComparisonOp => Some(((7, 8), None)),
-        TokenKind::LikeKw => Some(((9, 10), None)),
-        TokenKind::DoublePipe => Some(((11, 12), None)),
-        TokenKind::Plus | TokenKind::Minus => Some(((13, 14), None)),
+        TokenKind::OrKw => Some(((1, 2), Some(SyntaxKind::LogicOp), None)),
+        TokenKind::AndKw => Some(((3, 4), Some(SyntaxKind::LogicOp), None)),
+        TokenKind::ComparisonOp => Some(((7, 8), None, None)),
+        TokenKind::LikeKw | TokenKind::BetweenKw | TokenKind::InKw => Some((
+            (9, 10),
+            None,
+            match op {
+                TokenKind::BetweenKw => Some(&between_cond),
+                TokenKind::InKw => Some(&in_cond),
+                _ => None,
+            },
+        )),
+        TokenKind::DoublePipe => Some(((11, 12), None, None)),
+        TokenKind::Plus | TokenKind::Minus => Some(((13, 14), None, None)),
         TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
-            Some(((15, 16), Some(SyntaxKind::ArithmeticOp)))
+            Some(((15, 16), Some(SyntaxKind::ArithmeticOp), None))
         }
         _ => None,
     }
+}
+
+fn between_cond(p: &mut Parser, min_bp: u8) {
+    let _ = expr_bp(p, min_bp);
+    p.expect(TokenKind::AndKw);
+    let _ = expr_bp(p, min_bp);
+}
+
+fn in_cond(p: &mut Parser, min_bp: u8) {
+    p.expect(TokenKind::LParen);
+
+    let _ = expr_bp(p, min_bp);
+    while p.eat(TokenKind::Comma) {
+        let _ = expr_bp(p, min_bp);
+    }
+    p.expect(TokenKind::RParen);
 }
 
 #[cfg(test)]
@@ -302,6 +338,137 @@ Root@0..8
     Whitespace@6..7 " "
     IdentGroup@7..8
       Ident@7..8 "a"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_between_expr() {
+        check(
+            parse("x not between trunc(2) and (1 + 2)", expr),
+            expect![[r#"
+Root@0..34
+  Expression@0..34
+    IdentGroup@0..1
+      Ident@0..1 "x"
+    Whitespace@1..2 " "
+    Keyword@2..5 "not"
+    Whitespace@5..6 " "
+    Keyword@6..13 "between"
+    Whitespace@13..14 " "
+    FunctionInvocation@14..22
+      IdentGroup@14..19
+        Ident@14..19 "trunc"
+      LParen@19..20 "("
+      ArgumentList@20..21
+        Argument@20..21
+          Integer@20..21 "2"
+      RParen@21..22 ")"
+    Whitespace@22..23 " "
+    Keyword@23..26 "and"
+    Whitespace@26..27 " "
+    LParen@27..28 "("
+    Expression@28..33
+      Integer@28..29 "1"
+      Whitespace@29..30 " "
+      ArithmeticOp@30..31 "+"
+      Whitespace@31..32 " "
+      Integer@32..33 "2"
+    RParen@33..34 ")"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_in_condition() {
+        check(
+            parse("x not in (1+1, 3)", expr),
+            expect![[r#"
+Root@0..17
+  Expression@0..17
+    IdentGroup@0..1
+      Ident@0..1 "x"
+    Whitespace@1..2 " "
+    Keyword@2..5 "not"
+    Whitespace@5..6 " "
+    Keyword@6..8 "in"
+    Whitespace@8..9 " "
+    LParen@9..10 "("
+    Expression@10..13
+      Integer@10..11 "1"
+      ArithmeticOp@11..12 "+"
+      Integer@12..13 "1"
+    Comma@13..14 ","
+    Whitespace@14..15 " "
+    Integer@15..16 "3"
+    RParen@16..17 ")"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_bool_expr() {
+        check(
+            parse(
+                "TO_CHAR (SYSDATE, 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
+        OR TO_CHAR (SYSDATE, 'DY') IN ('SAT', 'SUN')",
+                expr,
+            ),
+            expect![[r#"
+Root@0..113
+  Expression@0..113
+    Expression@0..69
+      FunctionInvocation@0..28
+        IdentGroup@0..7
+          Ident@0..7 "TO_CHAR"
+        Whitespace@7..8 " "
+        LParen@8..9 "("
+        ArgumentList@9..27
+          Argument@9..16
+            IdentGroup@9..16
+              Ident@9..16 "SYSDATE"
+          Comma@16..17 ","
+          Whitespace@17..18 " "
+          Argument@18..27
+            QuotedLiteral@18..27 "'HH24:MI'"
+        RParen@27..28 ")"
+      Whitespace@28..29 " "
+      Keyword@29..32 "NOT"
+      Whitespace@32..33 " "
+      Keyword@33..40 "BETWEEN"
+      Whitespace@40..41 " "
+      QuotedLiteral@41..48 "'08:00'"
+      Whitespace@48..49 " "
+      Keyword@49..52 "AND"
+      Whitespace@52..53 " "
+      QuotedLiteral@53..60 "'18:00'"
+      Whitespace@60..69 "\n        "
+    LogicOp@69..71 "OR"
+    Expression@71..113
+      Whitespace@71..72 " "
+      FunctionInvocation@72..95
+        IdentGroup@72..79
+          Ident@72..79 "TO_CHAR"
+        Whitespace@79..80 " "
+        LParen@80..81 "("
+        ArgumentList@81..94
+          Argument@81..88
+            IdentGroup@81..88
+              Ident@81..88 "SYSDATE"
+          Comma@88..89 ","
+          Whitespace@89..90 " "
+          Argument@90..94
+            QuotedLiteral@90..94 "'DY'"
+        RParen@94..95 ")"
+      Whitespace@95..96 " "
+      Keyword@96..98 "IN"
+      Whitespace@98..99 " "
+      LParen@99..100 "("
+      QuotedLiteral@100..105 "'SAT'"
+      Comma@105..106 ","
+      Whitespace@106..107 " "
+      QuotedLiteral@107..112 "'SUN'"
+      RParen@112..113 ")"
 "#]],
         );
     }
