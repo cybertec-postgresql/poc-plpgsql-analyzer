@@ -88,6 +88,12 @@ pub enum SyntaxKind {
     /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` &
     /// `END;`
     ProcedureBody,
+    /// A node that marks a block
+    Block,
+    /// A node that marks an individual statement inside a block
+    BlockStatement,
+    /// A node that marks the declare section of a block
+    DeclareSection,
     /// An invocation of a function, from the identifier and the opening bracket to the closing bracket
     FunctionInvocation,
     /// A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas
@@ -152,7 +158,13 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::ReplaceKw => SyntaxKind::Keyword,
+            TokenKind::DeclareKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
+            TokenKind::NullKw => SyntaxKind::Keyword,
+            TokenKind::IfKw => SyntaxKind::Keyword,
+            TokenKind::ThenKw => SyntaxKind::Keyword,
+            TokenKind::ElsifKw => SyntaxKind::Keyword,
+            TokenKind::ElseKw => SyntaxKind::Keyword,
             TokenKind::IsKw => SyntaxKind::Keyword,
             TokenKind::AsKw => SyntaxKind::Keyword,
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,

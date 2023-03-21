@@ -101,7 +101,7 @@ pub trait AstToken {
     }
 }
 
-typed_syntax_node!(Root, IdentGroup, ParamList, Param);
+typed_syntax_node!(Root, IdentGroup, ParamList, Param, Block);
 typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
@@ -170,5 +170,11 @@ impl Param {
 
     pub fn type_reference(&self) -> Option<IdentGroup> {
         self.datatype()?.referenced_type()
+    }
+}
+
+impl Block {
+    pub fn text(&self) -> String {
+        self.syntax.text().to_string()
     }
 }
