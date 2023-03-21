@@ -12,6 +12,7 @@ use super::Expression;
 typed_syntax_node!(SelectClause, SelectStmt, ColumnExpr, WhereClause);
 
 impl SelectStmt {
+    #[allow(unused)]
     pub fn select_clause(&self) -> Option<SelectClause> {
         self.syntax.children().find_map(SelectClause::cast)
     }
