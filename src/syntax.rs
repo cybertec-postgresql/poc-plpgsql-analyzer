@@ -103,6 +103,8 @@ pub enum SyntaxKind {
     FunctionBody,
     /// A node that marks a full SELECT statement
     SelectStmt,
+    /// A node that marks a full INSERT statement
+    InsertStmt,
     /// A single column expression, as part of an SELECT clause
     ColumnExpr,
     /// A node that contains the whole SELECT clause of a query
@@ -163,6 +165,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
+            TokenKind::InsertKw => SyntaxKind::Keyword,
+            TokenKind::ValuesKw => SyntaxKind::Keyword,
             TokenKind::IntoKw => SyntaxKind::Keyword,
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,

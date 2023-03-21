@@ -70,6 +70,12 @@ pub enum TokenKind {
     #[token("select", ignore(case))]
     SelectKw,
 
+    #[token("insert", ignore(case))]
+    InsertKw,
+
+    #[token("values", ignore(case))]
+    ValuesKw,
+
     #[token("into", ignore(case))]
     IntoKw,
 
