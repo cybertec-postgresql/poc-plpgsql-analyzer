@@ -265,6 +265,7 @@ where
 /// `node`: The parent node to find children token(s) in.
 ///
 /// `token_pred`: A closure returning `true` for all tokens to return.
+#[allow(unused)]
 fn find_descendants_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
 where
     P: Fn(&SyntaxToken) -> bool,
@@ -274,6 +275,7 @@ where
         .filter(token_pred)
 }
 
+#[allow(unused)]
 fn find_descendants_nodes<P>(node: &SyntaxNode, node_pred: P) -> impl Iterator<Item = SyntaxNode>
 where
     P: Fn(&SyntaxNode) -> bool,
