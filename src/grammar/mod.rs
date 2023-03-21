@@ -74,17 +74,8 @@ fn parse_param(p: &mut Parser) {
                 expr(p);
             }
         }
-
-        while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
-            parse_datatype(p);
-        }
-
-        p.finish();
-
-        if !p.eat(TokenKind::SemiColon) {
-            break;
-        }
     }
+
     p.finish();
 }
 
