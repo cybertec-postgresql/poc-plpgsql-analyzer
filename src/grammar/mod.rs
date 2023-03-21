@@ -7,6 +7,7 @@
 
 use std::ops::Range;
 
+pub(crate) use block::*;
 pub(crate) use datatype::*;
 pub(crate) use expressions::*;
 pub(crate) use function::*;
@@ -19,6 +20,7 @@ use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
 
+mod block;
 mod datatype;
 mod expressions;
 mod function;
@@ -272,59 +274,6 @@ Root@0..26
     Expression@14..26
       Whitespace@14..15 " "
       QuotedLiteral@15..26 "'not empty'"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_parse_variable_declaration_list() {
-        const INPUT: &str = "
-    l_total_sales NUMBER(15,2);
-    l_credit_limit NUMBER (10,0);
-    l_contact_name VARCHAR2(255);
-";
-
-        check(
-            parse(INPUT, parse_var_decl_list),
-            expect![[r#"
-Root@0..101
-  Whitespace@0..5 "\n    "
-  VariableDeclList@5..101
-    VariableDecl@5..31
-      Ident@5..18 "l_total_sales"
-      Whitespace@18..19 " "
-      Datatype@19..31
-        Keyword@19..25 "NUMBER"
-        LParen@25..26 "("
-        Integer@26..28 "15"
-        Comma@28..29 ","
-        Integer@29..30 "2"
-        RParen@30..31 ")"
-    SemiColon@31..32 ";"
-    Whitespace@32..37 "\n    "
-    VariableDecl@37..65
-      Ident@37..51 "l_credit_limit"
-      Whitespace@51..52 " "
-      Datatype@52..65
-        Keyword@52..58 "NUMBER"
-        Whitespace@58..59 " "
-        LParen@59..60 "("
-        Integer@60..62 "10"
-        Comma@62..63 ","
-        Integer@63..64 "0"
-        RParen@64..65 ")"
-    SemiColon@65..66 ";"
-    Whitespace@66..71 "\n    "
-    VariableDecl@71..99
-      Ident@71..85 "l_contact_name"
-      Whitespace@85..86 " "
-      Datatype@86..99
-        Keyword@86..94 "VARCHAR2"
-        LParen@94..95 "("
-        Integer@95..98 "255"
-        RParen@98..99 ")"
-    SemiColon@99..100 ";"
-    Whitespace@100..101 "\n"
 "#]],
         );
     }

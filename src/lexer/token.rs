@@ -31,8 +31,26 @@ pub enum TokenKind {
     #[token("replace", ignore(case))]
     ReplaceKw,
 
+    #[token("declare", ignore(case))]
+    DeclareKw,
+
     #[token("begin", ignore(case))]
     BeginKw,
+
+    #[token("null", ignore(case))]
+    NullKw,
+
+    #[token("if", ignore(case))]
+    IfKw,
+
+    #[token("then", ignore(case))]
+    ThenKw,
+
+    #[token("elsif", ignore(case))]
+    ElsifKw,
+
+    #[token("else", ignore(case))]
+    ElseKw,
 
     #[token("is", ignore(case))]
     IsKw,

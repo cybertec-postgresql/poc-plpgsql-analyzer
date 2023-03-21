@@ -23,6 +23,9 @@ pub enum ParseError {
     /// The parser expected an identifier, as defined in [`TokenKind::is_ident`]
     #[error("Expected identifier")]
     ExpectedIdent,
+    /// The parser expected a statement
+    #[error("Expected statement")]
+    ExpectedStatement,
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
