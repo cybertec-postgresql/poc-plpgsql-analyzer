@@ -39,7 +39,7 @@ describe('try to parse and analyze Oracle function', () => {
     const content = fs.readFileSync('../function/heading/function_heading_example.ora.sql', 'utf8');
     const metaData = analyze(DboType.Function, content, { tables: {} });
 
-    expect(metaData.function.linesOfCode).toEqual(1);
+    expect(metaData.function.linesOfCode).toEqual(3);
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.procedure).toBeUndefined();
     expect(metaData.query).toBeUndefined();
@@ -76,7 +76,7 @@ describe('try to parse and analyze Oracle procedures', () => {
     const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
     const metaData = analyze(DboType.Procedure, content, { tables: {} });
 
-    expect(metaData.procedure.linesOfCode).toEqual(3);
+    expect(metaData.procedure.linesOfCode).toEqual(5);
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.query).toBeUndefined();
@@ -128,7 +128,7 @@ describe('passing type context information into analyzer', () => {
 
     const metaData = analyze(DboType.Procedure, content, context);
     expect(metaData.procedure.name).toEqual('log_last_login_fuzzy');
-    expect(metaData.procedure.linesOfCode).toEqual(2);
+    expect(metaData.procedure.linesOfCode).toEqual(5);
 
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.rules.length).toEqual(2);
