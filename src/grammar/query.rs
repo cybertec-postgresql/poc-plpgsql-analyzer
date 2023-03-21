@@ -4,7 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::parse_ident;
+use crate::grammar::{opt_expr, parse_ident};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -15,9 +15,10 @@ use super::expr;
 pub(crate) fn opt_query(p: &mut Parser, expect_into_clause: bool) -> bool {
     if p.at(TokenKind::SelectKw) {
         parse_query(p, expect_into_clause);
-        return true;
+        true
+    } else {
+        false
     }
-    false
 }
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
@@ -31,6 +32,45 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     if p.at(TokenKind::WhereKw) {
         parse_where_clause(p);
     }
+
+    p.eat(TokenKind::SemiColon);
+    p.finish();
+}
+
+/// Looks ahead and parses an insert if applicable
+pub(crate) fn opt_insert(p: &mut Parser) -> bool {
+    if p.at(TokenKind::InsertKw) {
+        parse_insert(p);
+        true
+    } else {
+        false
+    }
+}
+
+pub(crate) fn parse_insert(p: &mut Parser) {
+    p.start(SyntaxKind::InsertStmt);
+    p.expect(TokenKind::InsertKw);
+    p.expect(TokenKind::IntoKw);
+    parse_ident(p, 1..2);
+    parse_ident(p, 0..1);
+
+    if p.eat(TokenKind::LParen) {
+        parse_ident(p, 1..1);
+        while p.eat(TokenKind::Comma) {
+            parse_ident(p, 1..1);
+        }
+        p.expect(TokenKind::RParen);
+    }
+
+    p.expect(TokenKind::ValuesKw);
+    p.expect(TokenKind::LParen);
+    expr(p);
+    while p.eat(TokenKind::Comma) {
+        if !opt_expr(p) {
+            p.expect(TokenKind::DefaultKw);
+        }
+    }
+    p.expect(TokenKind::RParen);
 
     p.eat(TokenKind::SemiColon);
     p.finish();
@@ -297,6 +337,48 @@ Root@0..72
         Whitespace@69..70 "\n"
     SemiColon@70..71 ";"
   Whitespace@71..72 "\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_insert() {
+        check(
+            parse(
+                r#"INSERT INTO job_history j (id, d_id) VALUES(p_emp_id, DEFAULT);"#,
+                parse_insert,
+            ),
+            expect![[r#"
+Root@0..63
+  InsertStmt@0..63
+    Keyword@0..6 "INSERT"
+    Whitespace@6..7 " "
+    Keyword@7..11 "INTO"
+    Whitespace@11..12 " "
+    IdentGroup@12..23
+      Ident@12..23 "job_history"
+    Whitespace@23..24 " "
+    IdentGroup@24..25
+      Ident@24..25 "j"
+    Whitespace@25..26 " "
+    LParen@26..27 "("
+    IdentGroup@27..29
+      Ident@27..29 "id"
+    Comma@29..30 ","
+    Whitespace@30..31 " "
+    IdentGroup@31..35
+      Ident@31..35 "d_id"
+    RParen@35..36 ")"
+    Whitespace@36..37 " "
+    Keyword@37..43 "VALUES"
+    LParen@43..44 "("
+    IdentGroup@44..52
+      Ident@44..52 "p_emp_id"
+    Comma@52..53 ","
+    Whitespace@53..54 " "
+    Keyword@54..61 "DEFAULT"
+    RParen@61..62 ")"
+    SemiColon@62..63 ";"
 "#]],
         );
     }
