@@ -140,26 +140,7 @@ impl RuleDefinition for ReplaceEpilogue {
             if !(t.kind() == SyntaxKind::Keyword && t.text().to_string().to_lowercase() == "end") {
                 return false;
             }
-            dbg!(&t
-                .parent()
-                .unwrap()
-                .next_sibling_or_token()
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::DollarQuote => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
-                    _ => None,
-                }));
+
             // determine if the `LANGUAGE` epilogue has already been applied
             t.parent()
                 .unwrap()
