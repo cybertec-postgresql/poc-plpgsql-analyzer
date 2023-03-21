@@ -4,11 +4,11 @@
 
 //! Typed AST nodes for PL/SQL functions.
 
-use crate::ast::{AstNode, IdentGroup, ParamList};
+use crate::ast::{AstNode, Block, IdentGroup, ParamList};
 
 use super::typed_syntax_node;
 
-typed_syntax_node!(Function, FunctionHeader, FunctionBody);
+typed_syntax_node!(Function, FunctionHeader);
 
 impl Function {
     /// Returns the name of the function.
@@ -24,8 +24,8 @@ impl Function {
     }
 
     /// Returns the body of the function.
-    pub fn body(&self) -> Option<FunctionBody> {
-        self.syntax.children().find_map(FunctionBody::cast)
+    pub fn body(&self) -> Option<Block> {
+        self.syntax.children().find_map(Block::cast)
     }
 }
 
@@ -37,12 +37,6 @@ impl FunctionHeader {
 
     pub fn param_list(&self) -> Option<ParamList> {
         self.syntax.children().find_map(ParamList::cast)
-    }
-}
-
-impl FunctionBody {
-    pub fn text(&self) -> String {
-        self.syntax.text().to_string()
     }
 }
 

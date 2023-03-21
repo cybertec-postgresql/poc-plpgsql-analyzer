@@ -56,17 +56,9 @@ fn parse_attributes(p: &mut Parser) {
 fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
     p.eat(TokenKind::DollarQuote);
-    parse_var_decl_list(p);
-    p.expect(TokenKind::BeginKw);
-    p.eat_ws();
 
-    p.start(SyntaxKind::FunctionBody);
-    p.until_last(TokenKind::EndKw);
-    p.finish();
+    parse_block(p);
 
-    p.expect(TokenKind::EndKw);
-    parse_ident(p, 0..1);
-    p.expect(TokenKind::SemiColon);
     p.eat_ws();
 }
 
@@ -174,31 +166,24 @@ Root@0..145
 
     #[test]
     fn test_parse_body() {
-        const INPUT: &str = r#"
-IS
-BEGIN
-    NULL;
-END hello;
-"#;
         check(
-            parse(INPUT, parse_body),
+            parse(r#"IS BEGIN NULL; END hello;"#, parse_body),
             expect![[r#"
-Root@0..31
-  Whitespace@0..1 "\n"
-  Keyword@1..3 "IS"
-  Whitespace@3..4 "\n"
-  Keyword@4..9 "BEGIN"
-  Whitespace@9..14 "\n    "
-  FunctionBody@14..20
-    Ident@14..18 "NULL"
-    SemiColon@18..19 ";"
-    Whitespace@19..20 "\n"
-  Keyword@20..23 "END"
-  Whitespace@23..24 " "
-  IdentGroup@24..29
-    Ident@24..29 "hello"
-  SemiColon@29..30 ";"
-  Whitespace@30..31 "\n"
+Root@0..25
+  Keyword@0..2 "IS"
+  Whitespace@2..3 " "
+  Block@3..25
+    Keyword@3..8 "BEGIN"
+    Whitespace@8..9 " "
+    BlockStatement@9..14
+      Keyword@9..13 "NULL"
+      SemiColon@13..14 ";"
+    Whitespace@14..15 " "
+    Keyword@15..18 "END"
+    Whitespace@18..19 " "
+    IdentGroup@19..24
+      Ident@19..24 "hello"
+    SemiColon@24..25 ";"
 "#]],
         );
     }
@@ -235,16 +220,18 @@ Root@0..171
         Whitespace@145..146 " "
     Keyword@146..148 "IS"
     Whitespace@148..149 "\n"
-    Keyword@149..154 "BEGIN"
-    Whitespace@154..156 "\n "
-    FunctionBody@156..166
-      Keyword@156..162 "RETURN"
-      Whitespace@162..163 " "
-      Integer@163..164 "1"
-      SemiColon@164..165 ";"
+    Block@149..170
+      Keyword@149..154 "BEGIN"
+      Whitespace@154..156 "\n "
+      BlockStatement@156..165
+        Keyword@156..162 "RETURN"
+        Expression@162..164
+          Whitespace@162..163 " "
+          Integer@163..164 "1"
+        SemiColon@164..165 ";"
       Whitespace@165..166 "\n"
-    Keyword@166..169 "END"
-    SemiColon@169..170 ";"
+      Keyword@166..169 "END"
+      SemiColon@169..170 ";"
     Whitespace@170..171 "\n"
 "#]],
         );
@@ -283,16 +270,18 @@ Root@0..180
         Whitespace@154..155 " "
     Keyword@155..157 "IS"
     Whitespace@157..158 "\n"
-    Keyword@158..163 "BEGIN"
-    Whitespace@163..165 "\n "
-    FunctionBody@165..175
-      Keyword@165..171 "RETURN"
-      Whitespace@171..172 " "
-      Integer@172..173 "1"
-      SemiColon@173..174 ";"
+    Block@158..179
+      Keyword@158..163 "BEGIN"
+      Whitespace@163..165 "\n "
+      BlockStatement@165..174
+        Keyword@165..171 "RETURN"
+        Expression@171..173
+          Whitespace@171..172 " "
+          Integer@172..173 "1"
+        SemiColon@173..174 ";"
       Whitespace@174..175 "\n"
-    Keyword@175..178 "END"
-    SemiColon@178..179 ";"
+      Keyword@175..178 "END"
+      SemiColon@178..179 ";"
     Whitespace@179..180 "\n"
 "#]],
         );

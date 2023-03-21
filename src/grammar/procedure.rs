@@ -43,17 +43,9 @@ fn parse_header(p: &mut Parser) {
 fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
     p.eat(TokenKind::DollarQuote);
-    parse_var_decl_list(p);
-    p.expect(TokenKind::BeginKw);
-    p.eat_ws();
 
-    p.start(SyntaxKind::ProcedureBody);
-    p.until_last(TokenKind::EndKw);
-    p.finish();
+    parse_block(p);
 
-    p.expect(TokenKind::EndKw);
-    parse_ident(p, 0..1);
-    p.expect(TokenKind::SemiColon);
     p.eat_ws();
 }
 
@@ -191,17 +183,18 @@ Root@0..31
   Whitespace@0..1 "\n"
   Keyword@1..3 "IS"
   Whitespace@3..4 "\n"
-  Keyword@4..9 "BEGIN"
-  Whitespace@9..14 "\n    "
-  ProcedureBody@14..20
-    Ident@14..18 "NULL"
-    SemiColon@18..19 ";"
+  Block@4..30
+    Keyword@4..9 "BEGIN"
+    Whitespace@9..14 "\n    "
+    BlockStatement@14..19
+      Keyword@14..18 "NULL"
+      SemiColon@18..19 ";"
     Whitespace@19..20 "\n"
-  Keyword@20..23 "END"
-  Whitespace@23..24 " "
-  IdentGroup@24..29
-    Ident@24..29 "hello"
-  SemiColon@29..30 ";"
+    Keyword@20..23 "END"
+    Whitespace@23..24 " "
+    IdentGroup@24..29
+      Ident@24..29 "hello"
+    SemiColon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
         );
@@ -225,19 +218,20 @@ Root@0..98
       Whitespace@40..41 "\n"
     Keyword@41..43 "IS"
     Whitespace@43..44 " "
-    Keyword@44..49 "BEGIN"
-    Whitespace@49..52 "\n  "
-    ProcedureBody@52..69
-      Ident@52..56 "NULL"
-      SemiColon@56..57 ";"
+    Block@44..97
+      Keyword@44..49 "BEGIN"
+      Whitespace@49..52 "\n  "
+      BlockStatement@52..57
+        Keyword@52..56 "NULL"
+        SemiColon@56..57 ";"
       Whitespace@57..58 " "
       Comment@58..68 "-- メ メ"
       Whitespace@68..69 "\n"
-    Keyword@69..72 "END"
-    Whitespace@72..73 " "
-    IdentGroup@73..96
-      Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
-    SemiColon@96..97 ";"
+      Keyword@69..72 "END"
+      Whitespace@72..73 " "
+      IdentGroup@73..96
+        Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
+      SemiColon@96..97 ";"
     Whitespace@97..98 "\n"
 "#]],
         );
@@ -265,14 +259,15 @@ Root@0..124
       Whitespace@99..100 "\n"
     Keyword@100..102 "IS"
     Whitespace@102..103 "\n"
-    Keyword@103..108 "BEGIN"
-    Whitespace@108..113 "\n    "
-    ProcedureBody@113..119
-      Ident@113..117 "NULL"
-      SemiColon@117..118 ";"
+    Block@103..123
+      Keyword@103..108 "BEGIN"
+      Whitespace@108..113 "\n    "
+      BlockStatement@113..118
+        Keyword@113..117 "NULL"
+        SemiColon@117..118 ";"
       Whitespace@118..119 "\n"
-    Keyword@119..122 "END"
-    SemiColon@122..123 ";"
+      Keyword@119..122 "END"
+      SemiColon@122..123 ";"
     Whitespace@123..124 "\n"
 "#]],
         );
@@ -301,70 +296,92 @@ Root@0..304
     Keyword@30..32 "AS"
     Whitespace@32..33 " "
     DollarQuote@33..35 "$$"
-    Whitespace@35..36 "\n"
-    Keyword@36..41 "BEGIN"
-    Whitespace@41..44 "\n  "
-    ProcedureBody@44..278
-      Ident@44..46 "IF"
-      Whitespace@46..47 " "
-      Ident@47..54 "TO_CHAR"
-      Whitespace@54..55 " "
-      LParen@55..56 "("
-      Ident@56..63 "SYSDATE"
-      Comma@63..64 ","
-      Whitespace@64..65 " "
-      QuotedLiteral@65..74 "'HH24:MI'"
-      RParen@74..75 ")"
-      Whitespace@75..76 " "
-      Keyword@76..79 "NOT"
-      Whitespace@79..80 " "
-      Ident@80..87 "BETWEEN"
-      Whitespace@87..88 " "
-      QuotedLiteral@88..95 "'08:00'"
-      Whitespace@95..96 " "
-      Keyword@96..99 "AND"
-      Whitespace@99..100 " "
-      QuotedLiteral@100..107 "'18:00'"
-      Whitespace@107..116 "\n        "
-      Keyword@116..118 "OR"
-      Whitespace@118..119 " "
-      Ident@119..126 "TO_CHAR"
-      Whitespace@126..127 " "
-      LParen@127..128 "("
-      Ident@128..135 "SYSDATE"
-      Comma@135..136 ","
-      Whitespace@136..137 " "
-      QuotedLiteral@137..141 "'DY'"
-      RParen@141..142 ")"
-      Whitespace@142..143 " "
-      Keyword@143..145 "IN"
-      Whitespace@145..146 " "
-      LParen@146..147 "("
-      QuotedLiteral@147..152 "'SAT'"
-      Comma@152..153 ","
-      Whitespace@153..154 " "
-      QuotedLiteral@154..159 "'SUN'"
-      RParen@159..160 ")"
-      Whitespace@160..161 " "
-      Ident@161..165 "THEN"
-      Whitespace@165..170 "\n    "
-      Ident@170..193 "RAISE_APPLICATION_ERROR"
-      Whitespace@193..194 " "
-      LParen@194..195 "("
-      Integer@195..201 "-20205"
-      Comma@201..202 ","
-      Whitespace@202..211 "\n        "
-      QuotedLiteral@211..265 "'You may only make ch ..."
-      RParen@265..266 ")"
-      SemiColon@266..267 ";"
-      Whitespace@267..270 "\n  "
-      Keyword@270..273 "END"
-      Whitespace@273..274 " "
-      Ident@274..276 "IF"
-      SemiColon@276..277 ";"
+    Block@35..282
+      Whitespace@35..36 "\n"
+      Keyword@36..41 "BEGIN"
+      Whitespace@41..44 "\n  "
+      BlockStatement@44..277
+        Keyword@44..46 "IF"
+        Expression@46..161
+          Expression@46..116
+            Whitespace@46..47 " "
+            FunctionInvocation@47..75
+              IdentGroup@47..54
+                Ident@47..54 "TO_CHAR"
+              Whitespace@54..55 " "
+              LParen@55..56 "("
+              ArgumentList@56..74
+                Argument@56..63
+                  IdentGroup@56..63
+                    Ident@56..63 "SYSDATE"
+                Comma@63..64 ","
+                Whitespace@64..65 " "
+                Argument@65..74
+                  QuotedLiteral@65..74 "'HH24:MI'"
+              RParen@74..75 ")"
+            Whitespace@75..76 " "
+            Keyword@76..79 "NOT"
+            Whitespace@79..80 " "
+            Keyword@80..87 "BETWEEN"
+            Whitespace@87..88 " "
+            QuotedLiteral@88..95 "'08:00'"
+            Whitespace@95..96 " "
+            Keyword@96..99 "AND"
+            Whitespace@99..100 " "
+            QuotedLiteral@100..107 "'18:00'"
+            Whitespace@107..116 "\n        "
+          LogicOp@116..118 "OR"
+          Expression@118..161
+            Whitespace@118..119 " "
+            FunctionInvocation@119..142
+              IdentGroup@119..126
+                Ident@119..126 "TO_CHAR"
+              Whitespace@126..127 " "
+              LParen@127..128 "("
+              ArgumentList@128..141
+                Argument@128..135
+                  IdentGroup@128..135
+                    Ident@128..135 "SYSDATE"
+                Comma@135..136 ","
+                Whitespace@136..137 " "
+                Argument@137..141
+                  QuotedLiteral@137..141 "'DY'"
+              RParen@141..142 ")"
+            Whitespace@142..143 " "
+            Keyword@143..145 "IN"
+            Whitespace@145..146 " "
+            LParen@146..147 "("
+            QuotedLiteral@147..152 "'SAT'"
+            Comma@152..153 ","
+            Whitespace@153..154 " "
+            QuotedLiteral@154..159 "'SUN'"
+            RParen@159..160 ")"
+            Whitespace@160..161 " "
+        Keyword@161..165 "THEN"
+        Whitespace@165..170 "\n    "
+        BlockStatement@170..267
+          FunctionInvocation@170..266
+            IdentGroup@170..193
+              Ident@170..193 "RAISE_APPLICATION_ERROR"
+            Whitespace@193..194 " "
+            LParen@194..195 "("
+            ArgumentList@195..265
+              Argument@195..201
+                Integer@195..201 "-20205"
+              Comma@201..202 ","
+              Whitespace@202..211 "\n        "
+              Argument@211..265
+                QuotedLiteral@211..265 "'You may only make ch ..."
+            RParen@265..266 ")"
+          SemiColon@266..267 ";"
+        Whitespace@267..270 "\n  "
+        Keyword@270..273 "END"
+        Whitespace@273..274 " "
+        Keyword@274..276 "IF"
+        SemiColon@276..277 ";"
       Whitespace@277..278 "\n"
-    Keyword@278..281 "END"
-    SemiColon@281..282 ";"
+      Keyword@278..281 "END"
+      SemiColon@281..282 ";"
     Whitespace@282..283 "\n"
     DollarQuote@283..285 "$$"
     Whitespace@285..286 " "
@@ -405,17 +422,18 @@ Root@0..176
       Whitespace@132..133 "\n"
     Keyword@133..135 "IS"
     Whitespace@135..136 "\n"
-    Keyword@136..141 "BEGIN"
-    Whitespace@141..146 "\n    "
-    ProcedureBody@146..152
-      Ident@146..150 "NULL"
-      SemiColon@150..151 ";"
+    Block@136..175
+      Keyword@136..141 "BEGIN"
+      Whitespace@141..146 "\n    "
+      BlockStatement@146..151
+        Keyword@146..150 "NULL"
+        SemiColon@150..151 ";"
       Whitespace@151..152 "\n"
-    Keyword@152..155 "END"
-    Whitespace@155..156 " "
-    IdentGroup@156..174
-      Ident@156..174 "ignore_editionable"
-    SemiColon@174..175 ";"
+      Keyword@152..155 "END"
+      Whitespace@155..156 " "
+      IdentGroup@156..174
+        Ident@156..174 "ignore_editionable"
+      SemiColon@174..175 ";"
     Whitespace@175..176 "\n"
 "#]],
         );
@@ -449,17 +467,18 @@ Root@0..193
       Whitespace@146..147 "\n"
     Keyword@147..149 "IS"
     Whitespace@149..150 "\n"
-    Keyword@150..155 "BEGIN"
-    Whitespace@155..160 "\n    "
-    ProcedureBody@160..166
-      Ident@160..164 "NULL"
-      SemiColon@164..165 ";"
+    Block@150..192
+      Keyword@150..155 "BEGIN"
+      Whitespace@155..160 "\n    "
+      BlockStatement@160..165
+        Keyword@160..164 "NULL"
+        SemiColon@164..165 ";"
       Whitespace@165..166 "\n"
-    Keyword@166..169 "END"
-    Whitespace@169..170 " "
-    IdentGroup@170..191
-      Ident@170..191 "ignore_noneditionable"
-    SemiColon@191..192 ";"
+      Keyword@166..169 "END"
+      Whitespace@169..170 " "
+      IdentGroup@170..191
+        Ident@170..191 "ignore_noneditionable"
+      SemiColon@191..192 ";"
     Whitespace@192..193 "\n"
 "#]],
         );

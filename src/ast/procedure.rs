@@ -5,11 +5,11 @@
 
 //! Typed AST nodes for PL/SQL procedures.
 
-use crate::ast::{AstNode, IdentGroup, ParamList};
+use crate::ast::{AstNode, Block, IdentGroup, ParamList};
 
 use super::typed_syntax_node;
 
-typed_syntax_node!(Procedure, ProcedureHeader, ProcedureBody);
+typed_syntax_node!(Procedure, ProcedureHeader);
 
 impl Procedure {
     /// Returns the name of the procedure.
@@ -25,8 +25,8 @@ impl Procedure {
     }
 
     /// Returns the name of the procedure.
-    pub fn body(&self) -> Option<ProcedureBody> {
-        self.syntax.children().find_map(ProcedureBody::cast)
+    pub fn body(&self) -> Option<Block> {
+        self.syntax.children().find_map(Block::cast)
     }
 }
 
@@ -38,12 +38,6 @@ impl ProcedureHeader {
 
     pub fn param_list(&self) -> Option<ParamList> {
         self.syntax.children().find_map(ParamList::cast)
-    }
-}
-
-impl ProcedureBody {
-    pub fn text(&self) -> String {
-        self.syntax.text().to_string()
     }
 }
 
