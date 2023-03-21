@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Implements parameter-specific rules for transpiling PL/SQL to PL/pgSQL.
@@ -8,13 +8,9 @@ use rowan::TextRange;
 
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, FunctionInvocation, IdentGroup, Root};
-use crate::rules::find_descendants_nodes;
-use crate::syntax::{SyntaxKind, SyntaxNode};
+use crate::syntax::SyntaxNode;
 
-use super::{
-    check_parameter_types, find_descendants_tokens, replace_token, RuleDefinition, RuleError,
-    RuleLocation,
-};
+use super::{check_parameter_types, replace_token, RuleDefinition, RuleError, RuleLocation};
 
 /// Dummy rule for demonstrating passing in analyzer context and type checking.
 ///
@@ -52,6 +48,12 @@ impl RuleDefinition for FixTrunc {
     }
 }
 
+fn get_sysdate_nodes(node: &SyntaxNode) -> impl Iterator<Item = IdentGroup> + Sized {
+    node.descendants()
+        .filter_map(IdentGroup::cast)
+        .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
+}
+
 pub(super) struct ReplaceSysdate;
 
 impl RuleDefinition for ReplaceSysdate {
@@ -60,21 +62,7 @@ impl RuleDefinition for ReplaceSysdate {
     }
 
     fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        if let Some(body) = root.procedure().and_then(|p| p.body()) {
-            return Ok(body.syntax().clone());
-        }
-
-        if let Some(body) = root.function().and_then(|p| p.body()) {
-            return Ok(body.syntax().clone());
-        }
-
-        if let Some(clause) = root.query().and_then(|p| p.select_clause()) {
-            return Ok(clause.syntax().clone());
-        }
-
-        Err(RuleError::NoSuchItem(
-            "Procedure body, function body or SELECT clause",
-        ))
+        Ok(root.syntax().clone())
     }
 
     fn find(
@@ -82,11 +70,9 @@ impl RuleDefinition for ReplaceSysdate {
         node: &SyntaxNode,
         _ctx: &DboAnalyzeContext,
     ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = find_descendants_tokens(node, |t| {
-            t.kind() == SyntaxKind::Ident && t.text().to_lowercase() == "sysdate"
-        })
-        .map(|t| t.text_range())
-        .collect::<Vec<TextRange>>();
+        let locations = get_sysdate_nodes(node)
+            .map(|i| i.syntax().text_range())
+            .collect::<Vec<TextRange>>();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
@@ -101,12 +87,15 @@ impl RuleDefinition for ReplaceSysdate {
         location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, "clock_timestamp()", None, 0..1)
+        let node = get_sysdate_nodes(node)
+            .find(|i| i.syntax().text_range() == location.text_range())
+            .unwrap();
+        replace_token(node.syntax(), location, "clock_timestamp()", None, 0..1)
     }
 }
 
 fn get_nvl_nodes(node: &SyntaxNode) -> impl Iterator<Item = IdentGroup> + Sized {
-    find_descendants_nodes(node, |n| FunctionInvocation::cast(n.clone()).is_some())
+    node.descendants()
         .filter_map(FunctionInvocation::cast)
         .filter_map(|f| f.ident())
         .filter(|i| i.name().unwrap().to_lowercase() == "nvl")

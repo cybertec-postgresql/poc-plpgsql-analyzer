@@ -212,7 +212,7 @@ fn analyze_function(
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function body".to_owned()))?;
 
     let name = function.name().unwrap_or_else(|| "<unknown>".to_string());
-    let lines_of_code = body.matches('\n').count();
+    let lines_of_code = body.matches('\n').count() + 1;
 
     Ok(DboMetaData {
         rules: find_applicable_rules(input, &root, ctx),
@@ -240,7 +240,7 @@ fn analyze_procedure(
         .ok_or_else(|| AnalyzeError::ParseError("failed to find procedure body".to_owned()))?;
 
     let name = procedure.name().unwrap_or_else(|| "<unknown>".to_string());
-    let lines_of_code = body.matches('\n').count();
+    let lines_of_code = body.matches('\n').count() + 1;
 
     Ok(DboMetaData {
         rules: find_applicable_rules(input, &root, ctx),
@@ -308,7 +308,7 @@ mod tests {
                 assert_eq!(procedure, None);
                 assert_eq!(query, None);
                 assert_eq!(name, "function_heading_example");
-                assert_eq!(lines_of_code, 1);
+                assert_eq!(lines_of_code, 3);
             }
             _ => unreachable!(),
         }
@@ -340,7 +340,7 @@ mod tests {
                 assert_eq!(function, None);
                 assert_eq!(query, None);
                 assert_eq!(name, "add_job_history");
-                assert_eq!(lines_of_code, 3);
+                assert_eq!(lines_of_code, 5);
             }
             _ => unreachable!(),
         }
@@ -369,7 +369,7 @@ mod tests {
                 assert_eq!(function, None);
                 assert_eq!(query, None);
                 assert_eq!(name, "secure_dml");
-                assert_eq!(lines_of_code, 5);
+                assert_eq!(lines_of_code, 7);
             }
             _ => unreachable!(),
         }

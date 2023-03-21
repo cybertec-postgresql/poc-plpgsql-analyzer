@@ -125,6 +125,7 @@ impl RuleDefinition for ReplaceEpilogue {
 
     fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
         root.procedure()
+            .and_then(|p| p.body())
             .map(|p| p.syntax().clone())
             .ok_or(RuleError::NoSuchItem("Procedure"))
     }
@@ -134,58 +135,68 @@ impl RuleDefinition for ReplaceEpilogue {
         node: &SyntaxNode,
         _ctx: &DboAnalyzeContext,
     ) -> Result<Vec<TextRange>, RuleError> {
-        if let Some(procedure) = Procedure::cast(node.clone()) {
-            let mut locations = find_children_tokens(procedure.syntax(), |t| {
-                // find an `END` keyword
-                if !(t.kind() == SyntaxKind::Keyword
-                    && t.text().to_string().to_lowercase() == "end")
-                {
-                    return false;
-                }
-
-                // determine if the `LANGUAGE` epilogue has already been applied
-                t.next_sibling_or_token()
-                    .and_then(|t| match t.kind() {
-                        SyntaxKind::SemiColon => t.next_sibling_or_token(),
-                        _ => None,
-                    })
-                    .and_then(|t| match t.kind() {
-                        SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                        _ => None,
-                    })
-                    .and_then(|t| match t.kind() {
-                        SyntaxKind::DollarQuote => t.next_sibling_or_token(),
-                        _ => None,
-                    })
-                    .and_then(|t| match t.kind() {
-                        SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                        _ => None,
-                    })
-                    .and_then(|t| match t.kind() {
-                        SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
-                        _ => None,
-                    })
-                    .is_none()
-            })
-            .map(|t| {
-                let start = t.clone();
-                let end = t
-                    .siblings_with_tokens(Direction::Next)
-                    .find(|t| t.kind() == SyntaxKind::IdentGroup)
-                    .unwrap_or(Token(t));
-                TextRange::new(start.text_range().end(), end.text_range().end())
-            })
-            .collect::<Vec<TextRange>>();
-
-            if locations.is_empty() {
-                return Err(RuleError::NoChange);
-            } else {
-                locations.truncate(1);
-                return Ok(locations);
+        let locations = find_children_tokens(node, |t| {
+            // find an `END` keyword
+            if !(t.kind() == SyntaxKind::Keyword && t.text().to_string().to_lowercase() == "end") {
+                return false;
             }
-        }
+            dbg!(&t
+                .parent()
+                .unwrap()
+                .next_sibling_or_token()
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::DollarQuote => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
+                    _ => None,
+                }));
+            // determine if the `LANGUAGE` epilogue has already been applied
+            t.parent()
+                .unwrap()
+                .next_sibling_or_token()
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::DollarQuote => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                    _ => None,
+                })
+                .and_then(|t| match t.kind() {
+                    SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
+                    _ => None,
+                })
+                .is_none()
+        })
+        .map(|t| {
+            let start = t.clone();
+            let end = t
+                .siblings_with_tokens(Direction::Next)
+                .find(|t| t.kind() == SyntaxKind::IdentGroup)
+                .unwrap_or(Token(t));
+            TextRange::new(start.text_range().end(), end.text_range().end())
+        })
+        .collect::<Vec<TextRange>>();
 
-        Err(RuleError::NoSuchItem("Procedure epilogue"))
+        if locations.is_empty() {
+            Err(RuleError::NoChange)
+        } else {
+            Ok(locations)
+        }
     }
 
     fn apply(
@@ -194,7 +205,26 @@ impl RuleDefinition for ReplaceEpilogue {
         location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        replace_token(node, location, ";\n$$ LANGUAGE plpgsql", None, 0..2)
+        // removes the block identifier if present
+        if location.offset.start < location.offset.end {
+            replace_token(node, location, "", None, 0..2)?;
+        }
+
+        // find the the offset for the end of the block
+        let block_end = node.text_range().end();
+
+        let text_range = replace_token(
+            &node.parent().unwrap(),
+            &RuleLocation {
+                offset: block_end.into()..block_end.into(),
+                start: location.clone().start,
+                end: location.clone().start,
+            },
+            "\n$$ LANGUAGE plpgsql;",
+            None,
+            0..0,
+        )?;
+        Ok(text_range)
     }
 }
 
@@ -467,10 +497,10 @@ END ignore_editionable;
                 $$ LANGUAGE plpgsql;
             "#]],
         );
-        assert_eq!(location, TextRange::new(276.into(), 297.into()));
+        assert_eq!(location, TextRange::new(277.into(), 298.into()));
         assert_eq!(
             &root.syntax().to_string()[location],
-            ";\n$$ LANGUAGE plpgsql"
+            "\n$$ LANGUAGE plpgsql;"
         );
     }
 
