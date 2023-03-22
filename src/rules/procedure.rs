@@ -8,13 +8,11 @@ use rowan::NodeOrToken::Token;
 use rowan::{Direction, TextRange};
 
 use crate::analyze::DboAnalyzeContext;
-use crate::ast::{AstNode, Procedure, ProcedureHeader, Root};
-use crate::rules::find_children_nodes;
-use crate::syntax::{SyntaxKind, SyntaxNode};
+use crate::ast::{AstNode, Function, Procedure, Root};
+use crate::rules::RuleMatch;
+use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 
-use super::{
-    find_children_tokens, next_token, replace_token, RuleDefinition, RuleError, RuleLocation,
-};
+use super::{next_token, replace_token, RuleDefinition, RuleError, RuleLocation};
 
 pub(super) struct AddParamlistParenthesis;
 
@@ -23,37 +21,29 @@ impl RuleDefinition for AddParamlistParenthesis {
         "Add parameter list parentheses"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        root.procedure()
-            .and_then(|p| p.header())
-            .map(|h| h.syntax().clone())
-            .ok_or(RuleError::NoSuchItem("Procedure header"))
-    }
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(Procedure::cast)
+            .filter_map(|p| p.header())
+            .filter(|h| h.param_list().is_none())
+            .map(|h| {
+                RuleMatch::new(
+                    h.syntax().clone(),
+                    TextRange::at(
+                        h.identifier().unwrap().syntax().text_range().end(),
+                        0.into(),
+                    ),
+                )
+            })
+            .collect();
 
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        if let Some(header) = ProcedureHeader::cast(node.clone()) {
-            if header.param_list().is_none() {
-                let mut locations =
-                    find_children_nodes(header.syntax(), |t| t.kind() == SyntaxKind::IdentGroup)
-                        .map(|t| TextRange::at(t.text_range().end(), 0.into()))
-                        .collect::<Vec<TextRange>>();
-
-                if locations.is_empty() {
-                    return Err(RuleError::NoSuchItem("Procedure identifier"));
-                } else {
-                    locations.truncate(1);
-                    return Ok(locations);
-                }
-            } else {
-                return Err(RuleError::NoChange);
-            }
+        if locations.is_empty() {
+            Err(RuleError::NoChange)
+        } else {
+            Ok(locations)
         }
-
-        Err(RuleError::NoSuchItem("Procedure header"))
     }
 
     fn apply(
@@ -73,37 +63,31 @@ impl RuleDefinition for ReplacePrologue {
         "Replace procedure prologue"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        root.procedure()
-            .map(|p| p.syntax().clone())
-            .ok_or(RuleError::NoSuchItem("Procedure"))
-    }
-
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        if let Some(procedure) = Procedure::cast(node.clone()) {
-            let mut locations = find_children_tokens(procedure.syntax(), |t| {
-                t.kind() == SyntaxKind::Keyword
-                    && ["is", "as"].contains(&t.text().to_lowercase().as_str())
-                    && next_token(t)
-                        .map(|t| t.kind() != SyntaxKind::DollarQuote)
-                        .unwrap_or(true)
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(Procedure::cast)
+            .filter_map(|p| {
+                p.syntax()
+                    .children_with_tokens()
+                    .filter_map(SyntaxElement::into_token)
+                    .find(|t| {
+                        t.kind() == SyntaxKind::Keyword
+                            && ["is", "as"].contains(&t.text().to_lowercase().as_str())
+                            && next_token(t)
+                                .map(|t| t.kind() != SyntaxKind::DollarQuote)
+                                .unwrap_or(true)
+                    })
+                    .map(|t| RuleMatch::new(p.syntax().clone(), t.text_range()))
             })
-            .map(|t| t.text_range())
-            .collect::<Vec<TextRange>>();
+            .collect();
 
-            if locations.is_empty() {
-                return Err(RuleError::NoChange);
-            } else {
-                locations.truncate(1);
-                return Ok(locations);
-            }
+        if locations.is_empty() {
+            Err(RuleError::NoChange)
+        } else {
+            Ok(locations)
         }
-
-        Err(RuleError::NoSuchItem("Procedure prologue"))
     }
 
     fn apply(
@@ -123,55 +107,61 @@ impl RuleDefinition for ReplaceEpilogue {
         "Replace procedure epilogue"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        root.procedure()
-            .and_then(|p| p.body())
-            .map(|p| p.syntax().clone())
-            .ok_or(RuleError::NoSuchItem("Procedure"))
-    }
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(Procedure::cast)
+            .filter_map(|p| p.body())
+            .filter_map(|p| {
+                p.syntax()
+                    .children_with_tokens()
+                    .filter_map(SyntaxElement::into_token)
+                    .find(|t| {
+                        // find an `END` keyword
+                        if !(t.kind() == SyntaxKind::Keyword
+                            && t.text().to_string().to_lowercase() == "end")
+                        {
+                            return false;
+                        }
 
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = find_children_tokens(node, |t| {
-            // find an `END` keyword
-            if !(t.kind() == SyntaxKind::Keyword && t.text().to_string().to_lowercase() == "end") {
-                return false;
-            }
-
-            // determine if the `LANGUAGE` epilogue has already been applied
-            t.parent()
-                .unwrap()
-                .next_sibling_or_token()
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::DollarQuote => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                    _ => None,
-                })
-                .and_then(|t| match t.kind() {
-                    SyntaxKind::Ident => Some(t.to_string().to_lowercase() == "language"),
-                    _ => None,
-                })
-                .is_none()
-        })
-        .map(|t| {
-            let start = t.clone();
-            let end = t
-                .siblings_with_tokens(Direction::Next)
-                .find(|t| t.kind() == SyntaxKind::IdentGroup)
-                .unwrap_or(Token(t));
-            TextRange::new(start.text_range().end(), end.text_range().end())
-        })
-        .collect::<Vec<TextRange>>();
+                        // determine if the `LANGUAGE` epilogue has already been applied
+                        t.parent()
+                            .unwrap()
+                            .next_sibling_or_token()
+                            .and_then(|t| match t.kind() {
+                                SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                                _ => None,
+                            })
+                            .and_then(|t| match t.kind() {
+                                SyntaxKind::DollarQuote => t.next_sibling_or_token(),
+                                _ => None,
+                            })
+                            .and_then(|t| match t.kind() {
+                                SyntaxKind::Whitespace => t.next_sibling_or_token(),
+                                _ => None,
+                            })
+                            .and_then(|t| match t.kind() {
+                                SyntaxKind::Ident => {
+                                    Some(t.to_string().to_lowercase() == "language")
+                                }
+                                _ => None,
+                            })
+                            .is_none()
+                    })
+                    .map(|t| {
+                        let start = t.clone();
+                        let end = t
+                            .siblings_with_tokens(Direction::Next)
+                            .find(|t| t.kind() == SyntaxKind::IdentGroup)
+                            .unwrap_or(Token(t));
+                        RuleMatch::new(
+                            p.syntax().clone(),
+                            TextRange::new(start.text_range().end(), end.text_range().end()),
+                        )
+                    })
+            })
+            .collect();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
@@ -216,30 +206,30 @@ impl RuleDefinition for RemoveEditionable {
         "Remove `EDITIONABLE` or `NONEDITIONABLE`"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        if let Some(header) = root.procedure().and_then(|p| p.header()) {
-            return Ok(header.syntax().clone());
-        }
-
-        if let Some(header) = root.function().and_then(|p| p.header()) {
-            return Ok(header.syntax().clone());
-        }
-
-        Err(RuleError::NoSuchItem("Procedure or function"))
-    }
-
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = find_children_tokens(node, |t| {
-            t.kind() == SyntaxKind::Keyword
-                && (t.text().to_lowercase() == "editionable"
-                    || t.text().to_lowercase() == "noneditionable")
-        })
-        .map(|t| t.text_range())
-        .collect::<Vec<TextRange>>();
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(|n| {
+                if let Some(procedure) = Procedure::cast(n.clone()) {
+                    procedure.header().map(|p| p.syntax().clone())
+                } else if let Some(function) = Function::cast(n) {
+                    function.header().map(|f| f.syntax().clone())
+                } else {
+                    None
+                }
+            })
+            .filter_map(|n| {
+                n.children_with_tokens()
+                    .filter_map(SyntaxElement::into_token)
+                    .find(|t| {
+                        t.kind() == SyntaxKind::Keyword
+                            && (t.text().to_lowercase() == "editionable"
+                                || t.text().to_lowercase() == "noneditionable")
+                    })
+                    .map(|t| RuleMatch::new(n.clone(), t.text_range()))
+            })
+            .collect();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
@@ -278,31 +268,23 @@ mod tests {
             include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = RemoveEditionable;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let mut locations = result.unwrap();
+        let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(92.into(), 103.into()));
-        assert_eq!(&root.syntax().to_string()[location], "EDITIONABLE");
-
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        assert_eq!(locations[0].range, TextRange::new(92.into(), 103.into()));
+        assert_eq!(
+            &root.syntax().to_string()[locations[0].range],
+            "EDITIONABLE"
+        );
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, location),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
@@ -311,13 +293,13 @@ mod tests {
         check(
             root.syntax().clone(),
             expect![[r#"
--- test: ignore EDITIONABLE keyword, there is no equivalent in PostgreSQL
-CREATE OR REPLACE PROCEDURE ignore_editionable
-IS
-BEGIN
-    NULL;
-END ignore_editionable;
-"#]],
+    -- test: ignore EDITIONABLE keyword, there is no equivalent in PostgreSQL
+    CREATE OR REPLACE PROCEDURE ignore_editionable
+    IS
+    BEGIN
+        NULL;
+    END ignore_editionable;
+    "#]],
         );
         assert_eq!(location, TextRange::new(92.into(), 92.into()));
         assert_eq!(&root.syntax().to_string()[location], "");
@@ -328,31 +310,22 @@ END ignore_editionable;
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = AddParamlistParenthesis;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let mut locations = result.unwrap();
+        let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(27.into(), 27.into()));
-        assert_eq!(&root.syntax().to_string()[location], "");
+        assert_eq!(locations[0].range, TextRange::new(27.into(), 27.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "");
 
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        // let root = root.clone_for_update();
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, location),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
@@ -381,31 +354,20 @@ END ignore_editionable;
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let mut locations = result.unwrap();
+        let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(28.into(), 30.into()));
-        assert_eq!(&root.syntax().to_string()[location], "IS");
-
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        assert_eq!(locations[0].range, TextRange::new(28.into(), 30.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "IS");
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, location),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
@@ -434,30 +396,23 @@ END ignore_editionable;
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceEpilogue;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let mut locations = result.unwrap();
+        let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(276.into(), 287.into()));
-        assert_eq!(&root.syntax().to_string()[location], " secure_dml");
+        assert_eq!(locations[0].range, TextRange::new(276.into(), 287.into()));
+        assert_eq!(
+            &root.syntax().to_string()[locations[0].range],
+            " secure_dml"
+        );
 
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, location),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
@@ -493,11 +448,7 @@ END ignore_editionable;
         let root = Root::cast(parse.syntax()).unwrap();
         let rule = AddParamlistParenthesis;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert_eq!(result, Err(RuleError::NoChange));
     }
 
@@ -506,31 +457,20 @@ END ignore_editionable;
         const INPUT: &str = include_str!("../../tests/procedure/heading/procedure_as.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
-        let mut locations = result.unwrap();
+        let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        let location = locations.pop().unwrap();
-        assert_eq!(location, TextRange::new(74.into(), 76.into()));
-        assert_eq!(&root.syntax().to_string()[location], "AS");
-
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        assert_eq!(locations[0].range, TextRange::new(74.into(), 76.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "AS");
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, location),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);

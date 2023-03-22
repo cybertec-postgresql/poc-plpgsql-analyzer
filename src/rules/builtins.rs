@@ -8,6 +8,7 @@ use rowan::TextRange;
 
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, FunctionInvocation, IdentGroup, Root};
+use crate::rules::RuleMatch;
 use crate::syntax::SyntaxNode;
 
 use super::{check_parameter_types, replace_token, RuleDefinition, RuleError, RuleLocation};
@@ -22,17 +23,11 @@ impl RuleDefinition for FixTrunc {
         "Fix `trunc()` usage based on type"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        root.procedure()
+    fn find(&self, root: &Root, ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let node = &root
+            .procedure()
             .map(|p| p.syntax().clone())
-            .ok_or(RuleError::NoSuchItem("Procedure"))
-    }
-
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
+            .ok_or(RuleError::NoSuchItem("Procedure"))?;
         check_parameter_types(node, ctx)?;
 
         Err(RuleError::NoChange)
@@ -48,12 +43,6 @@ impl RuleDefinition for FixTrunc {
     }
 }
 
-fn get_sysdate_nodes(node: &SyntaxNode) -> impl Iterator<Item = IdentGroup> + Sized {
-    node.descendants()
-        .filter_map(IdentGroup::cast)
-        .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
-}
-
 pub(super) struct ReplaceSysdate;
 
 impl RuleDefinition for ReplaceSysdate {
@@ -61,18 +50,14 @@ impl RuleDefinition for ReplaceSysdate {
         "Replace `SYSDATE` with PostgreSQL's `clock_timestamp()`"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        Ok(root.syntax().clone())
-    }
-
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = get_sysdate_nodes(node)
-            .map(|i| i.syntax().text_range())
-            .collect::<Vec<TextRange>>();
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(IdentGroup::cast)
+            .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
+            .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
+            .collect();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
@@ -87,18 +72,8 @@ impl RuleDefinition for ReplaceSysdate {
         location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        let node = get_sysdate_nodes(node)
-            .find(|i| i.syntax().text_range() == location.text_range())
-            .unwrap();
-        replace_token(node.syntax(), location, "clock_timestamp()", None, 0..1)
+        replace_token(node, location, "clock_timestamp()", None, 0..1)
     }
-}
-
-fn get_nvl_nodes(node: &SyntaxNode) -> impl Iterator<Item = IdentGroup> + Sized {
-    node.descendants()
-        .filter_map(FunctionInvocation::cast)
-        .filter_map(|f| f.ident())
-        .filter(|i| i.name().unwrap().to_lowercase() == "nvl")
 }
 
 pub(super) struct ReplaceNvl;
@@ -108,18 +83,15 @@ impl RuleDefinition for ReplaceNvl {
         "Replace `NVL` with PostgreSQL's `coalesce`"
     }
 
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError> {
-        Ok(root.syntax().clone())
-    }
-
-    fn find(
-        &self,
-        node: &SyntaxNode,
-        _ctx: &DboAnalyzeContext,
-    ) -> Result<Vec<TextRange>, RuleError> {
-        let locations = get_nvl_nodes(node)
-            .map(|i| i.syntax().text_range())
-            .collect::<Vec<TextRange>>();
+    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+        let locations: Vec<RuleMatch> = root
+            .syntax()
+            .descendants()
+            .filter_map(FunctionInvocation::cast)
+            .filter_map(|f| f.ident())
+            .filter(|i| i.name().unwrap().to_lowercase() == "nvl")
+            .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
+            .collect();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
@@ -134,10 +106,7 @@ impl RuleDefinition for ReplaceNvl {
         location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        let node = get_nvl_nodes(node)
-            .find(|i| i.syntax().text_range() == location.text_range())
-            .unwrap();
-        replace_token(node.syntax(), location, "coalesce", None, 0..1)
+        replace_token(node, location, "coalesce", None, 0..1)
     }
 }
 
@@ -163,14 +132,10 @@ mod tests {
         const INPUT: &str = include_str!("../../tests/fixtures/log_last_login_fuzzy.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = FixTrunc;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert_eq!(result, Err(RuleError::NoTableInfo("persons".to_owned())));
 
         let mut columns = HashMap::new();
@@ -188,7 +153,7 @@ mod tests {
         let mut tables = HashMap::new();
         tables.insert("persons".into(), DboTable::new(columns));
         let ctx = DboAnalyzeContext::new(tables);
-        let result = rule.find(&node, &ctx);
+        let result = rule.find(&root, &ctx);
         assert_eq!(result, Err(RuleError::NoChange));
     }
 
@@ -197,32 +162,22 @@ mod tests {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
 
         let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceSysdate;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
         assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0], TextRange::new(51.into(), 58.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0]], "SYSDATE");
-        assert_eq!(locations[1], TextRange::new(123.into(), 130.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0]], "SYSDATE");
-
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        assert_eq!(locations[0].range, TextRange::new(51.into(), 58.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
+        assert_eq!(locations[1].range, TextRange::new(123.into(), 130.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, locations[0]),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         let location = result.unwrap();
@@ -243,16 +198,16 @@ mod tests {
         assert_eq!(location, TextRange::new(51.into(), 68.into()));
         assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
 
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0], TextRange::new(133.into(), 140.into()));
+        assert_eq!(locations[0].range, TextRange::new(133.into(), 140.into()));
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0]),
+            &locations[0].node,
+            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
@@ -281,31 +236,21 @@ mod tests {
         const INPUT: &str = include_str!("../../tests/dql/nvl-coalesce.ora.sql");
 
         let parse = crate::parse_query(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceNvl;
 
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
-
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
         assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0], TextRange::new(7.into(), 10.into()));
-        assert_eq!(locations[1], TextRange::new(11.into(), 14.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0]], "NVL");
-
-        let root = root.clone_for_update();
-
-        let result = rule.get_node(&root);
-        assert!(result.is_ok(), "{:#?}", result);
-        let node = result.unwrap();
+        assert_eq!(locations[0].range, TextRange::new(7.into(), 10.into()));
+        assert_eq!(locations[1].range, TextRange::new(11.into(), 14.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(INPUT, locations[0]),
+            &locations[0].node,
+            &RuleLocation::from(INPUT, locations[0].range),
             &DboAnalyzeContext::default(),
         );
         let location = result.unwrap();
@@ -316,27 +261,27 @@ mod tests {
             "#]],
         );
 
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0], TextRange::new(16.into(), 19.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0]], "NVL");
+        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
+        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
 
         assert_eq!(location, TextRange::new(7.into(), 15.into()));
         assert_eq!(&root.syntax().to_string()[location], "coalesce");
 
-        let result = rule.find(&node, &DboAnalyzeContext::default());
+        let result = rule.find(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
         assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0], TextRange::new(16.into(), 19.into()));
+        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
 
         let result = rule.apply(
-            &node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0]),
+            &locations[0].node,
+            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
             &DboAnalyzeContext::default(),
         );
         assert!(result.is_ok(), "{:#?}", result);
