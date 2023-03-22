@@ -8,7 +8,7 @@ use rowan::TextRange;
 
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, FunctionInvocation, IdentGroup, Root};
-use crate::rules::RuleMatch;
+use crate::rules::{filter_map_descendant_nodes, RuleMatch};
 use crate::syntax::SyntaxNode;
 
 use super::{check_parameter_types, replace_token, RuleDefinition, RuleError, RuleLocation};
@@ -51,10 +51,7 @@ impl RuleDefinition for ReplaceSysdate {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(IdentGroup::cast)
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, IdentGroup::cast)
             .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
             .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
             .collect();
@@ -84,10 +81,7 @@ impl RuleDefinition for ReplaceNvl {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(FunctionInvocation::cast)
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, FunctionInvocation::cast)
             .filter_map(|f| f.ident())
             .filter(|i| i.name().unwrap().to_lowercase() == "nvl")
             .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
