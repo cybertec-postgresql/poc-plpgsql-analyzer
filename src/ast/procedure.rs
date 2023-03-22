@@ -17,6 +17,7 @@ impl Procedure {
         self.syntax
             .children()
             .find_map(ProcedureHeader::cast)?
+            .identifier()?
             .name()
     }
 
@@ -32,8 +33,8 @@ impl Procedure {
 
 impl ProcedureHeader {
     /// Returns the name of the procedure.
-    pub fn name(&self) -> Option<String> {
-        self.syntax.children().find_map(IdentGroup::cast)?.name()
+    pub fn identifier(&self) -> Option<IdentGroup> {
+        self.syntax.children().find_map(IdentGroup::cast)
     }
 
     pub fn param_list(&self) -> Option<ParamList> {

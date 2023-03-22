@@ -69,9 +69,7 @@ pub enum RuleError {
 
 trait RuleDefinition {
     fn short_desc(&self) -> &'static str;
-    fn get_node(&self, root: &Root) -> Result<SyntaxNode, RuleError>;
-    fn find(&self, node: &SyntaxNode, ctx: &DboAnalyzeContext)
-        -> Result<Vec<TextRange>, RuleError>;
+    fn find(&self, root: &Root, ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError>;
     fn apply(
         &self,
         node: &SyntaxNode,
@@ -154,16 +152,14 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
     ANALYZER_RULES
         .iter()
         .filter_map(|(name, rule)| {
-            rule.get_node(root)
-                .and_then(|node| {
-                    rule.find(&node, ctx).map(|ranges| RuleHint {
-                        name: (*name).to_owned(),
-                        locations: ranges
-                            .into_iter()
-                            .map(|r| RuleLocation::from(input, r))
-                            .collect(),
-                        short_desc: rule.short_desc(),
-                    })
+            rule.find(root, ctx)
+                .map(|ranges| RuleHint {
+                    name: (*name).to_owned(),
+                    locations: ranges
+                        .into_iter()
+                        .map(|r| RuleLocation::from(input, r.range))
+                        .collect(),
+                    short_desc: rule.short_desc(),
                 })
                 .ok()
         })
@@ -186,22 +182,25 @@ pub fn apply_rule(
             .ok_or_else(|| RuleError::ParseError("failed to find root node".to_owned()))?
             .clone_for_update();
 
-        let node = rule.get_node(&root)?;
-
         if let Some(location) = location {
-            let range = rule.apply(&node, location, ctx)?;
+            // find the node that matches the given location
+            let occurrences = &rule.find(&root, ctx).unwrap();
+            let node = occurrences
+                .iter()
+                .find(|p| (p.range.start().into()..p.range.end().into()) == location.offset);
+            let range = rule.apply(&node.unwrap().node, location, ctx)?;
             let text = root.syntax().to_string();
             let location = RuleLocation::from(&text, range);
             Ok((root.syntax().to_string(), vec![location]))
         } else {
             let mut result = Vec::new();
-            while let Ok(locations) = rule.find(&node, ctx) {
+            while let Ok(locations) = rule.find(&root, ctx) {
                 if locations.is_empty() {
                     break;
                 }
 
-                let location = RuleLocation::from(&root.syntax().to_string(), locations[0]);
-                let range = rule.apply(&node, &location, ctx)?;
+                let location = RuleLocation::from(&root.syntax().to_string(), locations[0].range);
+                let range = rule.apply(&locations[0].node, &location, ctx)?;
                 result.push(range);
             }
 
