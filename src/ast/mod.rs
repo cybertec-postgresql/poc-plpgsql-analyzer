@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
-// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@ferrous-systems.com>
 
 //! Implements a typed AST for PL/SQL.
 

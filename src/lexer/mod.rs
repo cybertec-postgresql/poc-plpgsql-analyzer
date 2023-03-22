@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
-// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@asquera.de>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@ferrous-systems.com>
 
 //! Implements a Lexer based on the [`logos`] crate.
 
