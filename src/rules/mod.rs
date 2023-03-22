@@ -239,6 +239,14 @@ pub fn js_apply_rule(
     }
 }
 
+/// Finds all descendant nodes within an AST node that fulfill the predicate
+fn filter_map_descendant_nodes<B, F>(root: &Root, f: F) -> impl Iterator<Item = B>
+where
+    F: Fn(SyntaxNode) -> Option<B>,
+{
+    root.syntax().descendants().filter_map(f)
+}
+
 /// Finds all child tokens within an AST node.
 ///
 /// # Arguments

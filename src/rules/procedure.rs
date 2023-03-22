@@ -9,7 +9,7 @@ use rowan::{Direction, TextRange};
 
 use crate::analyze::DboAnalyzeContext;
 use crate::ast::{AstNode, Function, Procedure, Root};
-use crate::rules::RuleMatch;
+use crate::rules::{filter_map_descendant_nodes, RuleMatch};
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};
 
 use super::{next_token, replace_token, RuleDefinition, RuleError, RuleLocation};
@@ -22,10 +22,7 @@ impl RuleDefinition for AddParamlistParenthesis {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(Procedure::cast)
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| p.header())
             .filter(|h| h.param_list().is_none())
             .map(|h| {
@@ -64,10 +61,7 @@ impl RuleDefinition for ReplacePrologue {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(Procedure::cast)
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| {
                 p.syntax()
                     .children_with_tokens()
@@ -108,10 +102,7 @@ impl RuleDefinition for ReplaceEpilogue {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(Procedure::cast)
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| p.body())
             .filter_map(|p| {
                 p.syntax()
@@ -207,29 +198,26 @@ impl RuleDefinition for RemoveEditionable {
     }
 
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
-        let locations: Vec<RuleMatch> = root
-            .syntax()
-            .descendants()
-            .filter_map(|n| {
-                if let Some(procedure) = Procedure::cast(n.clone()) {
-                    procedure.header().map(|p| p.syntax().clone())
-                } else if let Some(function) = Function::cast(n) {
-                    function.header().map(|f| f.syntax().clone())
-                } else {
-                    None
-                }
-            })
-            .filter_map(|n| {
-                n.children_with_tokens()
-                    .filter_map(SyntaxElement::into_token)
-                    .find(|t| {
-                        t.kind() == SyntaxKind::Keyword
-                            && (t.text().to_lowercase() == "editionable"
-                                || t.text().to_lowercase() == "noneditionable")
-                    })
-                    .map(|t| RuleMatch::new(n.clone(), t.text_range()))
-            })
-            .collect();
+        let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, |n| {
+            if let Some(procedure) = Procedure::cast(n.clone()) {
+                procedure.header().map(|p| p.syntax().clone())
+            } else if let Some(function) = Function::cast(n) {
+                function.header().map(|f| f.syntax().clone())
+            } else {
+                None
+            }
+        })
+        .filter_map(|n| {
+            n.children_with_tokens()
+                .filter_map(SyntaxElement::into_token)
+                .find(|t| {
+                    t.kind() == SyntaxKind::Keyword
+                        && (t.text().to_lowercase() == "editionable"
+                            || t.text().to_lowercase() == "noneditionable")
+                })
+                .map(|t| RuleMatch::new(n.clone(), t.text_range()))
+        })
+        .collect();
 
         if locations.is_empty() {
             Err(RuleError::NoChange)
