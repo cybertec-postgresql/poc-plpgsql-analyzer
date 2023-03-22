@@ -53,7 +53,7 @@ impl RuleDefinition for ReplaceSysdate {
     fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, IdentGroup::cast)
             .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
-            .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
+            .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
         if locations.is_empty() {
@@ -84,7 +84,7 @@ impl RuleDefinition for ReplaceNvl {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, FunctionInvocation::cast)
             .filter_map(|f| f.ident())
             .filter(|i| i.name().unwrap().to_lowercase() == "nvl")
-            .map(|i| RuleMatch::new(i.syntax().clone(), i.syntax().text_range()))
+            .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
         if locations.is_empty() {
