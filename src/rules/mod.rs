@@ -97,7 +97,7 @@ pub struct RuleLocation {
     end: LineCol,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct LineCol {
     line: u32,
     col: u32,

@@ -179,8 +179,8 @@ impl RuleDefinition for ReplaceEpilogue {
             &node.parent().unwrap(),
             &RuleLocation {
                 offset: block_end.into()..block_end.into(),
-                start: location.clone().start,
-                end: location.clone().start,
+                start: location.start,
+                end: location.start,
             },
             "\n$$ LANGUAGE plpgsql;",
             None,
