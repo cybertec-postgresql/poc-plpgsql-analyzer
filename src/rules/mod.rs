@@ -88,6 +88,12 @@ impl RuleMatch {
     pub fn new(node: SyntaxNode, range: TextRange) -> Self {
         Self { node, range }
     }
+    pub fn from_node(node: &SyntaxNode) -> Self {
+        Self {
+            node: node.clone(),
+            range: node.text_range(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
