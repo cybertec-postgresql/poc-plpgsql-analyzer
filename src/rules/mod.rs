@@ -80,6 +80,18 @@ trait RuleDefinition {
     ) -> Result<TextRange, RuleError>;
 }
 
+#[derive(Debug, Eq, PartialEq)]
+struct RuleMatch {
+    node: SyntaxNode,
+    range: TextRange,
+}
+
+impl RuleMatch {
+    pub fn new(node: SyntaxNode, range: TextRange) -> Self {
+        Self { node, range }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
 pub struct RuleLocation {
     offset: Range<u32>,
