@@ -28,6 +28,21 @@ pub(crate) fn expr(p: &mut Parser) {
     }
 }
 
+/// # Arguments
+///
+/// * `p`: Mutable reference to the parser instance
+/// * `min_bp`: The minimum binding power
+///
+/// "Binding power" describes the precedence of operators, ranging from weak (low binding power) to strong (high binding power).
+///
+/// The term `l_bp` (left binding power) refers to the token precedence itself,
+/// while `r_bp` (right binding power) describes the subexpression precedence.
+///
+/// During the main loop, the `l_bp` of the next token is compared to the current `r_bp`.
+/// Depending on the result, we may either finish the expression node, or create a sub-expression.
+///
+/// A binding power of `0` is used to start off the recursion, as well as after encountering parenthesis.
+///
 fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
     let checkpoint = p.checkpoint();
 
