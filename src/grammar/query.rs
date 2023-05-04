@@ -4,12 +4,10 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{opt_expr, parse_ident};
+use crate::grammar::{opt_expr, parse_expr, parse_ident};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-
-use super::expr;
 
 /// Looks ahead and parses a query if applicable
 pub(crate) fn opt_query(p: &mut Parser, expect_into_clause: bool) -> bool {
@@ -64,7 +62,7 @@ pub(crate) fn parse_insert(p: &mut Parser) {
 
     p.expect(TokenKind::ValuesKw);
     p.expect(TokenKind::LParen);
-    expr(p);
+    parse_expr(p);
     while p.eat(TokenKind::Comma) {
         if !opt_expr(p) {
             p.expect(TokenKind::DefaultKw);
@@ -90,7 +88,7 @@ fn parse_column_expr(p: &mut Parser) {
     {
         p.start(SyntaxKind::ColumnExpr);
 
-        expr(p);
+        parse_expr(p);
 
         p.finish();
 
@@ -130,7 +128,7 @@ fn parse_where_clause(p: &mut Parser) {
     p.start(SyntaxKind::WhereClause);
     p.expect(TokenKind::WhereKw);
 
-    expr(p);
+    parse_expr(p);
 
     p.finish();
 }

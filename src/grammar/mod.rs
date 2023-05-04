@@ -71,7 +71,7 @@ fn parse_param(p: &mut Parser) {
         } else {
             parse_datatype(p);
             if p.eat_one_of(&[TokenKind::Assign, TokenKind::DefaultKw]) {
-                expr(p);
+                parse_expr(p);
             }
         }
     }

@@ -5,7 +5,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{expr, parse_ident};
+use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -44,7 +44,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
                 }
                 _ => {
                     p.start(SyntaxKind::Argument);
-                    expr(p);
+                    parse_expr(p);
                     p.finish();
                 }
             }
