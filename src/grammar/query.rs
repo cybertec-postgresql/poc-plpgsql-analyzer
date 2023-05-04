@@ -9,16 +9,6 @@ use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
-/// Looks ahead and parses a query if applicable
-pub(crate) fn opt_query(p: &mut Parser, expect_into_clause: bool) -> bool {
-    if p.at(TokenKind::SelectKw) {
-        parse_query(p, expect_into_clause);
-        true
-    } else {
-        false
-    }
-}
-
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
     p.expect(TokenKind::SelectKw);
@@ -33,16 +23,6 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
 
     p.eat(TokenKind::SemiColon);
     p.finish();
-}
-
-/// Looks ahead and parses an insert if applicable
-pub(crate) fn opt_insert(p: &mut Parser) -> bool {
-    if p.at(TokenKind::InsertKw) {
-        parse_insert(p);
-        true
-    } else {
-        false
-    }
 }
 
 pub(crate) fn parse_insert(p: &mut Parser) {

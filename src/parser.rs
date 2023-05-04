@@ -24,8 +24,8 @@ pub enum ParseError {
     #[error("Expected identifier")]
     ExpectedIdent,
     /// The parser expected a statement
-    #[error("Expected statement")]
-    ExpectedStatement,
+    #[error("Expected statement, found: {0}")]
+    ExpectedStatement(TokenKind),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),

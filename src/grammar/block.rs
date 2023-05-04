@@ -5,22 +5,13 @@
 //! Implements parsing of SQL blocks from a token tree.
 
 use crate::grammar::{
-    opt_expr, opt_function_invocation, opt_insert, opt_query, parse_datatype, parse_expr,
-    parse_ident,
+    opt_expr, opt_function_invocation, parse_datatype, parse_expr, parse_ident, parse_insert,
+    parse_query,
 };
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
-
-/// Looks ahead and parses a block if applicable
-pub(crate) fn opt_block(p: &mut Parser) -> bool {
-    if p.at(TokenKind::DeclareKw) || p.at(TokenKind::BeginKw) {
-        parse_block(p);
-        return true;
-    }
-    false
-}
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -71,77 +62,66 @@ fn parse_declare_section(p: &mut Parser) {
 fn parse_stmt(p: &mut Parser) {
     p.start(SyntaxKind::BlockStatement);
 
-    if !(opt_block(p)
-        || opt_if_stmt(p)
-        || opt_null_stmt(p)
-        || opt_return_stmt(p)
-        || opt_insert(p)
-        || opt_query(p, true)
-        || opt_procedure_call(p))
-    {
-        p.error(ParseError::ExpectedStatement);
-        p.bump_any();
+    match p.current() {
+        TokenKind::DeclareKw | TokenKind::BeginKw => parse_block(p),
+        TokenKind::IfKw => parse_if_stmt(p),
+        TokenKind::InsertKw => parse_insert(p),
+        TokenKind::NullKw => parse_null_stmt(p),
+        TokenKind::ReturnKw => parse_return_stmt(p),
+        TokenKind::SelectKw => parse_query(p, true),
+        current_token => {
+            if !(opt_procedure_call(p)) {
+                p.error(ParseError::ExpectedStatement(current_token));
+                p.bump_any();
+            }
+        }
     }
 
     p.finish();
 }
 
-fn opt_if_stmt(p: &mut Parser) -> bool {
-    if p.eat(TokenKind::IfKw) {
+fn parse_if_stmt(p: &mut Parser) {
+    p.expect(TokenKind::IfKw);
+    parse_expr(p);
+    p.expect(TokenKind::ThenKw);
+
+    while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current()) {
+        parse_stmt(p);
+    }
+
+    while p.eat(TokenKind::ElsifKw) {
         parse_expr(p);
         p.expect(TokenKind::ThenKw);
 
         while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current()) {
             parse_stmt(p);
         }
-
-        while p.eat(TokenKind::ElsifKw) {
-            parse_expr(p);
-            p.expect(TokenKind::ThenKw);
-
-            while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current())
-            {
-                parse_stmt(p);
-            }
-        }
-
-        if p.eat(TokenKind::ElseKw) {
-            while !p.at(TokenKind::EndKw) {
-                parse_stmt(p);
-            }
-        }
-
-        p.expect(TokenKind::EndKw);
-        p.expect(TokenKind::IfKw);
-        p.expect(TokenKind::SemiColon);
-
-        true
-    } else {
-        false
     }
+
+    if p.eat(TokenKind::ElseKw) {
+        while !p.at(TokenKind::EndKw) {
+            parse_stmt(p);
+        }
+    }
+
+    p.expect(TokenKind::EndKw);
+    p.expect(TokenKind::IfKw);
+    p.expect(TokenKind::SemiColon);
 }
 
-fn opt_null_stmt(p: &mut Parser) -> bool {
-    if p.eat(TokenKind::NullKw) {
-        p.expect(TokenKind::SemiColon);
-        true
-    } else {
-        false
-    }
+fn parse_null_stmt(p: &mut Parser) {
+    p.expect(TokenKind::NullKw);
+    p.expect(TokenKind::SemiColon);
+}
+
+fn parse_return_stmt(p: &mut Parser) {
+    p.expect(TokenKind::ReturnKw);
+    opt_expr(p);
+    p.expect(TokenKind::SemiColon);
 }
 
 fn opt_procedure_call(p: &mut Parser) -> bool {
     if opt_function_invocation(p) {
-        p.expect(TokenKind::SemiColon);
-        true
-    } else {
-        false
-    }
-}
-
-fn opt_return_stmt(p: &mut Parser) -> bool {
-    if p.eat(TokenKind::ReturnKw) {
-        opt_expr(p);
         p.expect(TokenKind::SemiColon);
         true
     } else {
@@ -155,6 +135,26 @@ mod tests {
 
     use super::super::tests::{check, parse};
     use super::*;
+
+    #[test]
+    fn test_block_with_unexpected_token() {
+        check(
+            parse(r#"BEGIN ABC END;"#, parse_block),
+            expect![[r#"
+Root@0..54
+  Block@0..54
+    Keyword@0..5 "BEGIN"
+    Whitespace@5..6 " "
+    BlockStatement@6..49
+      Error@6..46
+        Text@6..46 "Expected statement, f ..."
+      Ident@46..49 "ABC"
+    Whitespace@49..50 " "
+    Keyword@50..53 "END"
+    SemiColon@53..54 ";"
+"#]],
+        );
+    }
 
     #[test]
     fn test_block_with_null_stmt() {
