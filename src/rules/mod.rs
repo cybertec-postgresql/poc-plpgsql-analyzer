@@ -258,41 +258,6 @@ where
     node.children().filter(node_pred)
 }
 
-/// Finds all (direct and indirect children) tokens within a syntax tree.
-///
-/// # Arguments
-///
-/// `node`: The parent node to find children token(s) in.
-///
-/// `token_pred`: A closure returning `true` for all tokens to return.
-#[allow(unused)]
-fn find_descendants_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
-where
-    P: Fn(&SyntaxToken) -> bool,
-{
-    node.descendants_with_tokens()
-        .filter_map(SyntaxElement::into_token)
-        .filter(token_pred)
-}
-
-#[allow(unused)]
-fn find_descendants_nodes<P>(node: &SyntaxNode, node_pred: P) -> impl Iterator<Item = SyntaxNode>
-where
-    P: Fn(&SyntaxNode) -> bool,
-{
-    node.descendants().filter(node_pred)
-}
-
-#[allow(unused)]
-fn find_sibling_token<P>(node: &SyntaxToken, token_pred: P) -> Option<SyntaxToken>
-where
-    P: Fn(&SyntaxToken) -> bool,
-{
-    node.siblings_with_tokens(Direction::Next)
-        .filter_map(SyntaxElement::into_token)
-        .find(token_pred)
-}
-
 /// Returns the next non-whitespace sibling token that follows.
 ///
 /// # Arguments
