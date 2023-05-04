@@ -83,11 +83,6 @@ pub enum SyntaxKind {
     Procedure,
     /// A node that marks a PROCEDURE header with params
     ProcedureHeader,
-    /// A node that marks the `IS` or `AS $$` prologue of a procedure
-    ProcedurePrologue,
-    /// A node that marks a PROCEDURE body block, between `{IS,AS} BEGIN` &
-    /// `END;`
-    ProcedureBody,
     /// A node that marks a block
     Block,
     /// A node that marks an individual statement inside a block
@@ -104,9 +99,6 @@ pub enum SyntaxKind {
     Function,
     /// A node that marks a FUNCTION header with params and return type
     FunctionHeader,
-    /// A node that marks a FUNCTION body block, between `{IS,AS} BEGIN` &
-    /// `END;`
-    FunctionBody,
     /// A node that marks a full SELECT statement
     SelectStmt,
     /// A node that marks a full INSERT statement
