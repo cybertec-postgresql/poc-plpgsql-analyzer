@@ -5,7 +5,8 @@
 //! Implements parsing of SQL blocks from a token tree.
 
 use crate::grammar::{
-    expr, opt_expr, opt_function_invocation, opt_insert, opt_query, parse_datatype, parse_ident,
+    opt_expr, opt_function_invocation, opt_insert, opt_query, parse_datatype, parse_expr,
+    parse_ident,
 };
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
@@ -87,7 +88,7 @@ fn parse_stmt(p: &mut Parser) {
 
 fn opt_if_stmt(p: &mut Parser) -> bool {
     if p.eat(TokenKind::IfKw) {
-        expr(p);
+        parse_expr(p);
         p.expect(TokenKind::ThenKw);
 
         while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current()) {
@@ -95,7 +96,7 @@ fn opt_if_stmt(p: &mut Parser) -> bool {
         }
 
         while p.eat(TokenKind::ElsifKw) {
-            expr(p);
+            parse_expr(p);
             p.expect(TokenKind::ThenKw);
 
             while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current())
