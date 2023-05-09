@@ -43,8 +43,7 @@ fn parse_header(p: &mut Parser) {
 fn parse_simple_dml_trigger(p: &mut Parser) {
     p.expect_one_of(&[TokenKind::BeforeKw, TokenKind::AfterKw]);
     parse_dml_event_clause(p);
-
-    // TODO: referencing_clause
+    parse_referencing_clause(p);
 
     if p.eat(TokenKind::ForKw) {
         p.expect(TokenKind::EachKw);
@@ -84,8 +83,7 @@ fn parse_instead_of_dml_trigger(p: &mut Parser) {
     // TODO: Nested table
 
     parse_ident(p, 1..2);
-
-    // TODO: referencing_clause
+    parse_referencing_clause(p);
 
     if p.eat(TokenKind::ForKw) {
         p.expect(TokenKind::EachKw);
@@ -121,6 +119,21 @@ fn parse_dml_event_clause(p: &mut Parser) {
     }
     p.expect(TokenKind::OnKw);
     parse_ident(p, 1..2);
+}
+
+const REFERENCING_TOKENS: &[TokenKind] = &[TokenKind::OldKw, TokenKind::NewKw, TokenKind::ParentKw];
+fn parse_referencing_clause(p: &mut Parser) {
+    if p.eat(TokenKind::ReferencingKw) {
+        loop {
+            p.expect_one_of(REFERENCING_TOKENS);
+            p.eat(TokenKind::AsKw);
+            parse_ident(p, 1..1);
+
+            if !REFERENCING_TOKENS.contains(&p.current()) {
+                break;
+            }
+        }
+    }
 }
 
 /// Parses the body of a trigger.
@@ -194,6 +207,49 @@ Root@0..174
     Keyword@166..170 "EACH"
     Whitespace@170..171 " "
     Keyword@171..174 "ROW"
+"#]],
+        );
+    }
+
+    #[test]
+    fn parse_header_with_referencing_clause() {
+        check(
+            parse(
+                r#"CREATE TRIGGER my_trigger BEFORE INSERT ON my_table REFERENCING OLD alt NEW AS neu"#,
+                parse_header,
+            ),
+            expect![[r#"
+Root@0..82
+  TriggerHeader@0..82
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..14 "TRIGGER"
+    Whitespace@14..15 " "
+    IdentGroup@15..25
+      Ident@15..25 "my_trigger"
+    Whitespace@25..26 " "
+    Keyword@26..32 "BEFORE"
+    Whitespace@32..33 " "
+    Keyword@33..39 "INSERT"
+    Whitespace@39..40 " "
+    Keyword@40..42 "ON"
+    Whitespace@42..43 " "
+    IdentGroup@43..51
+      Ident@43..51 "my_table"
+    Whitespace@51..52 " "
+    Keyword@52..63 "REFERENCING"
+    Whitespace@63..64 " "
+    Keyword@64..67 "OLD"
+    Whitespace@67..68 " "
+    IdentGroup@68..71
+      Ident@68..71 "alt"
+    Whitespace@71..72 " "
+    Keyword@72..75 "NEW"
+    Whitespace@75..76 " "
+    Keyword@76..78 "AS"
+    Whitespace@78..79 " "
+    IdentGroup@79..82
+      Ident@79..82 "neu"
 "#]],
         );
     }
