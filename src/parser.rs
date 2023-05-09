@@ -43,6 +43,21 @@ pub enum ParseError {
     Unhandled(String, String),
 }
 
+/// Takes a parser identifier, a scrutinee for the match, and multiple arms
+/// Given the arms patterns, a fallback arm is created, inserting an [`ParseError::ExpectedOneOfTokens`]
+/// error into the AST containing all patterns.
+macro_rules! expect_one_of_match {
+    ($parser:ident, $scrutinee:expr, $($pat:path $(| $pats:path)* => $arm_expr:expr),+) => {
+        match $scrutinee {
+            $($pat $(| $pats)* => $arm_expr),*,
+            _ => {
+                $parser.error(ParseError::ExpectedOneOfTokens(vec![$($pat $(, $pats)*),+]));
+            }
+        }
+    };
+}
+pub(crate) use expect_one_of_match;
+
 /// Tries to parse any string of SQL tokens.
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
