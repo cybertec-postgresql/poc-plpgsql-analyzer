@@ -27,6 +27,7 @@ mod function;
 mod function_invocation;
 mod procedure;
 mod query;
+mod trigger;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {

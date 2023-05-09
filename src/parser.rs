@@ -38,6 +38,9 @@ pub enum ParseError {
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
+    /// The parser encountered a construct that has not yet been implemented
+    #[error("Unimplemented construct: {0}")]
+    Unimplemented(String),
     /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
