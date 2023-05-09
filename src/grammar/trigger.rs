@@ -50,8 +50,8 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
         p.expect(TokenKind::RowKw);
     }
 
-    // TODO: trigger_edition_clause
-    // TODO: trigger_ordering_clause
+    parse_trigger_edition_clause(p);
+    parse_trigger_ordering_clause(p);
 
     p.eat_one_of(&[TokenKind::EnableKw, TokenKind::DisableKw]);
 
@@ -90,8 +90,8 @@ fn parse_instead_of_dml_trigger(p: &mut Parser) {
         p.expect(TokenKind::RowKw);
     }
 
-    // TODO: trigger_edition_clause
-    // TODO: trigger_ordering_clause
+    parse_trigger_edition_clause(p);
+    parse_trigger_ordering_clause(p);
 
     p.eat_one_of(&[TokenKind::EnableKw, TokenKind::DisableKw]);
 }
@@ -130,6 +130,23 @@ fn parse_referencing_clause(p: &mut Parser) {
             parse_ident(p, 1..1);
 
             if !REFERENCING_TOKENS.contains(&p.current()) {
+                break;
+            }
+        }
+    }
+}
+
+fn parse_trigger_edition_clause(p: &mut Parser) {
+    if p.eat_one_of(&[TokenKind::ForwardKw, TokenKind::ReverseKw]) {
+        p.expect(TokenKind::CrossEditionKw);
+    }
+}
+
+fn parse_trigger_ordering_clause(p: &mut Parser) {
+    if p.eat_one_of(&[TokenKind::FollowsKw, TokenKind::PrecedesKw]) {
+        loop {
+            parse_ident(p, 1..2);
+            if !p.eat(TokenKind::Comma) {
                 break;
             }
         }
@@ -212,44 +229,63 @@ Root@0..174
     }
 
     #[test]
-    fn parse_header_with_referencing_clause() {
+    fn parse_header_with_referencing_and_edition_and_ordering_clause() {
         check(
             parse(
-                r#"CREATE TRIGGER my_trigger BEFORE INSERT ON my_table REFERENCING OLD alt NEW AS neu"#,
+                r#"CREATE TRIGGER my_trigger
+                    BEFORE INSERT ON my_table
+                    REFERENCING OLD alt NEW AS neu
+                    FORWARD CROSSEDITION
+                    FOLLOWS my_schema.my_trigger_1, my_trigger_2"#,
                 parse_header,
             ),
             expect![[r#"
-Root@0..82
-  TriggerHeader@0..82
+Root@0..228
+  TriggerHeader@0..228
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
     Keyword@7..14 "TRIGGER"
     Whitespace@14..15 " "
     IdentGroup@15..25
       Ident@15..25 "my_trigger"
-    Whitespace@25..26 " "
-    Keyword@26..32 "BEFORE"
-    Whitespace@32..33 " "
-    Keyword@33..39 "INSERT"
-    Whitespace@39..40 " "
-    Keyword@40..42 "ON"
-    Whitespace@42..43 " "
-    IdentGroup@43..51
-      Ident@43..51 "my_table"
-    Whitespace@51..52 " "
-    Keyword@52..63 "REFERENCING"
-    Whitespace@63..64 " "
-    Keyword@64..67 "OLD"
-    Whitespace@67..68 " "
-    IdentGroup@68..71
-      Ident@68..71 "alt"
-    Whitespace@71..72 " "
-    Keyword@72..75 "NEW"
-    Whitespace@75..76 " "
-    Keyword@76..78 "AS"
-    Whitespace@78..79 " "
-    IdentGroup@79..82
-      Ident@79..82 "neu"
+    Whitespace@25..46 "\n                    "
+    Keyword@46..52 "BEFORE"
+    Whitespace@52..53 " "
+    Keyword@53..59 "INSERT"
+    Whitespace@59..60 " "
+    Keyword@60..62 "ON"
+    Whitespace@62..63 " "
+    IdentGroup@63..71
+      Ident@63..71 "my_table"
+    Whitespace@71..92 "\n                    "
+    Keyword@92..103 "REFERENCING"
+    Whitespace@103..104 " "
+    Keyword@104..107 "OLD"
+    Whitespace@107..108 " "
+    IdentGroup@108..111
+      Ident@108..111 "alt"
+    Whitespace@111..112 " "
+    Keyword@112..115 "NEW"
+    Whitespace@115..116 " "
+    Keyword@116..118 "AS"
+    Whitespace@118..119 " "
+    IdentGroup@119..122
+      Ident@119..122 "neu"
+    Whitespace@122..143 "\n                    "
+    Keyword@143..150 "FORWARD"
+    Whitespace@150..151 " "
+    Keyword@151..163 "CROSSEDITION"
+    Whitespace@163..184 "\n                    "
+    Keyword@184..191 "FOLLOWS"
+    Whitespace@191..192 " "
+    IdentGroup@192..214
+      Ident@192..201 "my_schema"
+      Dot@201..202 "."
+      Ident@202..214 "my_trigger_1"
+    Comma@214..215 ","
+    Whitespace@215..216 " "
+    IdentGroup@216..228
+      Ident@216..228 "my_trigger_2"
 "#]],
         );
     }
