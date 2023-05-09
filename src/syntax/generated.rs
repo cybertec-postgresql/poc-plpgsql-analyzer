@@ -178,6 +178,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::NocopyKw => SyntaxKind::Keyword,
             TokenKind::DefaultKw => SyntaxKind::Keyword,
             TokenKind::ReturnKw => SyntaxKind::Keyword,
+            TokenKind::ReturningKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::TypeKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
