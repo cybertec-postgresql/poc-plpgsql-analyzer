@@ -67,7 +67,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
         }
         TokenKind::LParen => {
             p.bump_any();
-            let _ = expr_bp(p, 0);
+            expr_bp(p, 0)?;
             if !p.expect(TokenKind::RParen) {
                 p.error(ParseError::UnbalancedParens);
             }
