@@ -78,7 +78,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
                     Some(syntax_kind) => p.bump_any_map(syntax_kind),
                     None => p.bump_any(),
                 }
-                add_expr_node(p, checkpoint, Some(operator.bp.r_bp()));
+                add_expr_node(p, checkpoint, Some(operator.bp + 1));
             }
         }
         _ => {
@@ -100,7 +100,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
         let op = p.current();
 
         if let Some(operator) = postfix_bp(op) {
-            if operator.bp.l_bp() < min_bp {
+            if operator.bp < min_bp {
                 break;
             }
 
@@ -114,7 +114,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
         }
 
         if let Some(operator) = infix_bp(op) {
-            if operator.bp.l_bp() < min_bp {
+            if operator.bp < min_bp {
                 break;
             }
 
@@ -124,10 +124,10 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             }
 
             if let Some(cb) = operator.callback {
-                cb(p, operator.bp.r_bp());
+                cb(p, operator.bp + 1);
             }
 
-            add_expr_node(p, checkpoint, Some(operator.bp.r_bp()));
+            add_expr_node(p, checkpoint, Some(operator.bp + 1));
             continue;
         }
 
@@ -146,81 +146,68 @@ fn add_expr_node(p: &mut Parser, checkpoint: Checkpoint, sub_expr: Option<u8>) {
     p.finish();
 }
 
-struct BindingPower(u8, u8);
-
-impl BindingPower {
-    pub fn l_bp(&self) -> u8 {
-        self.0
-    }
-
-    pub fn r_bp(&self) -> u8 {
-        self.1
-    }
-}
-
 type Callback = &'static dyn Fn(&mut Parser, u8);
 
 struct Operator {
-    bp: BindingPower,
+    bp: u8,
     mapping: Option<SyntaxKind>,
     callback: Option<Callback>,
 }
 
 impl Operator {
-    fn new(l_bp: u8, r_bp: u8, mapping: Option<SyntaxKind>, callback: Option<Callback>) -> Self {
+    fn new(bp: u8, mapping: Option<SyntaxKind>, callback: Option<Callback>) -> Self {
         Self {
-            bp: BindingPower(l_bp, r_bp),
+            bp,
             mapping,
             callback,
         }
     }
 
-    pub fn new_plain(l_bp: u8, r_bp: u8) -> Self {
-        Self::new(l_bp, r_bp, None, None)
+    pub fn new_plain(bp: u8) -> Self {
+        Self::new(bp, None, None)
     }
 
-    pub fn new_with_map(l_bp: u8, r_bp: u8, mapping: SyntaxKind) -> Self {
-        Self::new(l_bp, r_bp, Some(mapping), None)
+    pub fn new_with_map(bp: u8, mapping: SyntaxKind) -> Self {
+        Self::new(bp, Some(mapping), None)
     }
 
-    pub fn new_with_cb(l_bp: u8, r_bp: u8, callback: Option<Callback>) -> Self {
-        Self::new(l_bp, r_bp, None, callback)
+    pub fn new_with_cb(bp: u8, callback: Option<Callback>) -> Self {
+        Self::new(bp, None, callback)
     }
 }
 
 fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::NotKw => Operator::new_with_map(5, 6, SyntaxKind::LogicOp),
-        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(17, 18),
+        TokenKind::NotKw => Operator::new_with_map(5, SyntaxKind::LogicOp),
+        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(17),
         _ => return None,
     })
 }
 
 fn postfix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::Exclam => Operator::new_plain(19, 20),
+        TokenKind::Exclam => Operator::new_plain(19),
         _ => return None,
     })
 }
 
 fn infix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::OrKw => Operator::new_with_map(1, 2, SyntaxKind::LogicOp),
-        TokenKind::AndKw => Operator::new_with_map(3, 4, SyntaxKind::LogicOp),
-        TokenKind::ComparisonOp => Operator::new_plain(7, 8),
+        TokenKind::OrKw => Operator::new_with_map(1, SyntaxKind::LogicOp),
+        TokenKind::AndKw => Operator::new_with_map(3, SyntaxKind::LogicOp),
+        TokenKind::ComparisonOp => Operator::new_plain(7),
         TokenKind::LikeKw | TokenKind::BetweenKw | TokenKind::InKw => Operator::new_with_cb(
             9,
-            10,
             match op {
                 TokenKind::BetweenKw => Some(&between_cond),
                 TokenKind::InKw => Some(&in_cond),
                 _ => None,
             },
         ),
-        TokenKind::DoublePipe => Operator::new_plain(11, 12),
-        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(13, 14),
+        TokenKind::DoublePipe => Operator::new_plain(11),
+        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(13),
         TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
-            Operator::new_with_map(15, 16, SyntaxKind::ArithmeticOp)
+            Operator::new_with_map(15, SyntaxKind::ArithmeticOp)
         }
         _ => return None,
     })
