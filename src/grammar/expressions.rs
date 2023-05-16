@@ -167,7 +167,7 @@ struct Operator {
 }
 
 impl Operator {
-    fn ctor(l_bp: u8, r_bp: u8, mapping: Option<SyntaxKind>, callback: Option<Callback>) -> Self {
+    fn new(l_bp: u8, r_bp: u8, mapping: Option<SyntaxKind>, callback: Option<Callback>) -> Self {
         Self {
             bp: BindingPower(l_bp, r_bp),
             mapping,
@@ -175,30 +175,30 @@ impl Operator {
         }
     }
 
-    pub fn new(l_bp: u8, r_bp: u8) -> Self {
-        Self::ctor(l_bp, r_bp, None, None)
+    pub fn new_plain(l_bp: u8, r_bp: u8) -> Self {
+        Self::new(l_bp, r_bp, None, None)
     }
 
     pub fn new_with_map(l_bp: u8, r_bp: u8, mapping: SyntaxKind) -> Self {
-        Self::ctor(l_bp, r_bp, Some(mapping), None)
+        Self::new(l_bp, r_bp, Some(mapping), None)
     }
 
     pub fn new_with_cb(l_bp: u8, r_bp: u8, callback: Option<Callback>) -> Self {
-        Self::ctor(l_bp, r_bp, None, callback)
+        Self::new(l_bp, r_bp, None, callback)
     }
 }
 
 fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         TokenKind::NotKw => Operator::new_with_map(5, 6, SyntaxKind::LogicOp),
-        TokenKind::Plus | TokenKind::Minus => Operator::new(17, 18),
+        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(17, 18),
         _ => return None,
     })
 }
 
 fn postfix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::Exclam => Operator::new(19, 20),
+        TokenKind::Exclam => Operator::new_plain(19, 20),
         _ => return None,
     })
 }
@@ -207,7 +207,7 @@ fn infix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         TokenKind::OrKw => Operator::new_with_map(1, 2, SyntaxKind::LogicOp),
         TokenKind::AndKw => Operator::new_with_map(3, 4, SyntaxKind::LogicOp),
-        TokenKind::ComparisonOp => Operator::new(7, 8),
+        TokenKind::ComparisonOp => Operator::new_plain(7, 8),
         TokenKind::LikeKw | TokenKind::BetweenKw | TokenKind::InKw => Operator::new_with_cb(
             9,
             10,
@@ -217,8 +217,8 @@ fn infix_bp(op: TokenKind) -> Option<Operator> {
                 _ => None,
             },
         ),
-        TokenKind::DoublePipe => Operator::new(11, 12),
-        TokenKind::Plus | TokenKind::Minus => Operator::new(13, 14),
+        TokenKind::DoublePipe => Operator::new_plain(11, 12),
+        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(13, 14),
         TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
             Operator::new_with_map(15, 16, SyntaxKind::ArithmeticOp)
         }
