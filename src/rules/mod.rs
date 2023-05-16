@@ -253,36 +253,6 @@ where
     root.syntax().descendants().filter_map(f)
 }
 
-/// Finds all child tokens within an AST node.
-///
-/// # Arguments
-///
-/// `node`: The parent node to find children token(s) in.
-///
-/// `token_pred`: A closure returning `true` for all tokens to return.
-fn find_children_tokens<P>(node: &SyntaxNode, token_pred: P) -> impl Iterator<Item = SyntaxToken>
-where
-    P: Fn(&SyntaxToken) -> bool,
-{
-    node.children_with_tokens()
-        .filter_map(SyntaxElement::into_token)
-        .filter(token_pred)
-}
-
-/// Finds all child nodes within an AST node.
-///
-/// # Arguments
-///
-/// `node`: The parent node to find children node(s) in.
-///
-/// `node_pred`: A closure returning `true` for all nodes to return.
-fn find_children_nodes<P>(node: &SyntaxNode, node_pred: P) -> impl Iterator<Item = SyntaxNode>
-where
-    P: Fn(&SyntaxNode) -> bool,
-{
-    node.children().filter(node_pred)
-}
-
 /// Returns the next non-whitespace sibling token that follows.
 ///
 /// # Arguments
