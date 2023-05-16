@@ -3,7 +3,7 @@
 // <office@cybertec.at>
 
 use crate::lexer::TokenKind;
-use crate::parser::{expect_one_of_match, Parser};
+use crate::parser::{expect_token_match, Parser};
 use crate::syntax::SyntaxKind;
 
 use super::*;
@@ -29,19 +29,20 @@ fn parse_header(p: &mut Parser) {
     p.expect(TokenKind::TriggerKw);
     parse_ident(p, 1..2);
 
-    expect_one_of_match!(
+    expect_token_match!(
         p,
-        p.current(),
-        TokenKind::BeforeKw | TokenKind::AfterKw => parse_simple_dml_trigger(p),
-        TokenKind::InsteadKw => parse_instead_of_dml_trigger(p),
-        TokenKind::ForKw => p.error(ParseError::Unimplemented("compound trigger".to_string()))
+        &[TokenKind::BeforeKw] | &[TokenKind::InsteadKw, TokenKind::OfKw] | &[TokenKind::AfterKw] =>
+            match p.current() {
+                TokenKind::InsertKw | TokenKind::UpdateKw | TokenKind::DeleteKw => parse_simple_dml_trigger(p),
+                _ => parse_system_trigger(p)
+            },
+        &[TokenKind::ForKw] => p.error(ParseError::Unimplemented("compound trigger".to_string()))
     );
 
     p.finish();
 }
 
 fn parse_simple_dml_trigger(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::BeforeKw, TokenKind::AfterKw]);
     parse_dml_event_clause(p);
     parse_referencing_clause(p);
 
@@ -62,16 +63,42 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
     }
 }
 
-fn parse_instead_of_dml_trigger(p: &mut Parser) {
-    p.expect(TokenKind::InsteadKw);
-    p.expect(TokenKind::OfKw);
-
+fn parse_system_trigger(p: &mut Parser) {
     loop {
-        p.expect_one_of(&[
-            TokenKind::InsertKw,
-            TokenKind::UpdateKw,
-            TokenKind::DeleteKw,
-        ]);
+        expect_token_match!(
+            p,
+            &[TokenKind::AlterKw]
+                | &[TokenKind::AnalyzeKw]
+                | &[TokenKind::AuditKw]
+                | &[TokenKind::CommentKw]
+                | &[TokenKind::CreateKw]
+                | &[TokenKind::DdlKw]
+                | &[TokenKind::DropKw]
+                | &[TokenKind::GrantKw]
+                | &[TokenKind::NoAuditKw]
+                | &[TokenKind::RenameKw]
+                | &[TokenKind::RevokeKw]
+                | &[TokenKind::TruncateKw]
+                | &[TokenKind::AssociateKw, TokenKind::StatisticsKw]
+                | &[TokenKind::DisassociateKw, TokenKind::StatisticsKw] => {},
+            &[TokenKind::AfterKw] => expect_token_match!(
+                p,
+                &[TokenKind::CloneKw]
+                    | &[TokenKind::DbRoleChangeKw]
+                    | &[TokenKind::LogonKw]
+                    | &[TokenKind::ServerErrorKw]
+                    | &[TokenKind::StartupKw]
+                    | &[TokenKind::SuspendKw]
+                    | &[TokenKind::SetKw, TokenKind::ContainerKw] => {}
+            ),
+            &[TokenKind::BeforeKw] => expect_token_match!(
+                p,
+                &[TokenKind::LogoffKw]
+                    | &[TokenKind::ShutdownKw]
+                    | &[TokenKind::UnplugKw]
+                    | &[TokenKind::SetKw, TokenKind::ContainerKw] => {}
+            )
+        );
 
         if !p.eat(TokenKind::OrKw) {
             break;
@@ -80,17 +107,15 @@ fn parse_instead_of_dml_trigger(p: &mut Parser) {
 
     p.expect(TokenKind::OnKw);
 
-    // TODO: Nested table
-
-    parse_ident(p, 1..2);
-    parse_referencing_clause(p);
-
-    if p.eat(TokenKind::ForKw) {
-        p.expect(TokenKind::EachKw);
-        p.expect(TokenKind::RowKw);
+    if p.at(TokenKind::PluggableKw) || p.at(TokenKind::DatabaseKw) {
+        p.eat(TokenKind::PluggableKw);
+        p.expect(TokenKind::DatabaseKw);
+    } else {
+        parse_ident(p, 0..1);
+        p.eat(TokenKind::Dot);
+        p.expect(TokenKind::SchemaKw);
     }
 
-    parse_trigger_edition_clause(p);
     parse_trigger_ordering_clause(p);
 
     p.eat_one_of(&[TokenKind::EnableKw, TokenKind::DisableKw]);
@@ -100,11 +125,13 @@ fn parse_dml_event_clause(p: &mut Parser) {
     loop {
         let token = p.current();
 
-        p.expect_one_of(&[
+        if !p.expect_one_of(&[
             TokenKind::InsertKw,
             TokenKind::UpdateKw,
             TokenKind::DeleteKw,
-        ]);
+        ]) {
+            break;
+        }
 
         if token == TokenKind::UpdateKw && p.eat(TokenKind::OfKw) {
             parse_ident(p, 1..1);
@@ -125,7 +152,9 @@ const REFERENCING_TOKENS: &[TokenKind] = &[TokenKind::OldKw, TokenKind::NewKw, T
 fn parse_referencing_clause(p: &mut Parser) {
     if p.eat(TokenKind::ReferencingKw) {
         loop {
-            p.expect_one_of(REFERENCING_TOKENS);
+            if !p.expect_one_of(REFERENCING_TOKENS) {
+                break;
+            }
             p.eat(TokenKind::AsKw);
             parse_ident(p, 1..1);
 
@@ -571,6 +600,47 @@ Root@0..518
       Keyword@512..515 "END"
       SemiColon@515..516 ";"
     Whitespace@516..518 "\n\n"
+"#]],
+        );
+    }
+
+    #[test]
+    fn parse_schema_trigger() {
+        const INPUT: &str = include_str!("../../tests/trigger/schema_trigger.ora.sql");
+        check(
+            parse(INPUT, parse_trigger),
+            expect![[r#"
+Root@0..84
+  Trigger@0..84
+    TriggerHeader@0..63
+      Keyword@0..6 "CREATE"
+      Whitespace@6..7 " "
+      Keyword@7..14 "TRIGGER"
+      Whitespace@14..15 " "
+      IdentGroup@15..26
+        Ident@15..26 "no_drop_trg"
+      Whitespace@26..31 "\n    "
+      Keyword@31..37 "BEFORE"
+      Whitespace@37..38 " "
+      Keyword@38..42 "DROP"
+      Whitespace@42..43 " "
+      Keyword@43..45 "ON"
+      Whitespace@45..46 " "
+      IdentGroup@46..55
+        Ident@46..55 "my_schema"
+      Dot@55..56 "."
+      Keyword@56..62 "SCHEMA"
+      Whitespace@62..63 "\n"
+    Block@63..83
+      Keyword@63..68 "BEGIN"
+      Whitespace@68..73 "\n    "
+      BlockStatement@73..78
+        Keyword@73..77 "NULL"
+        SemiColon@77..78 ";"
+      Whitespace@78..79 "\n"
+      Keyword@79..82 "END"
+      SemiColon@82..83 ";"
+    Whitespace@83..84 "\n"
 "#]],
         );
     }
