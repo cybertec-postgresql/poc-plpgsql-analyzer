@@ -203,7 +203,6 @@ fn postfix_bp(op: TokenKind) -> Option<Operator> {
     })
 }
 
-#[allow(clippy::type_complexity)]
 fn infix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         TokenKind::OrKw => Operator::new_with_map(1, 2, SyntaxKind::LogicOp),
