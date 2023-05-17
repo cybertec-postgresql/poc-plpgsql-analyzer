@@ -23,7 +23,11 @@ impl RuleDefinition for FixTrunc {
         "Fix `trunc()` usage based on type"
     }
 
-    fn find(&self, root: &Root, ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let node = &root
             .procedure()
             .map(|p| p.syntax().clone())
@@ -50,7 +54,11 @@ impl RuleDefinition for ReplaceSysdate {
         "Replace `SYSDATE` with PostgreSQL's `clock_timestamp()`"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, IdentGroup::cast)
             .filter(|i| i.name().unwrap().to_lowercase() == "sysdate")
             .map(|i| RuleMatch::from_node(i.syntax()))
@@ -80,7 +88,11 @@ impl RuleDefinition for ReplaceNvl {
         "Replace `NVL` with PostgreSQL's `coalesce`"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, FunctionInvocation::cast)
             .filter_map(|f| f.ident())
             .filter(|i| i.name().unwrap().to_lowercase() == "nvl")
@@ -129,7 +141,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = FixTrunc;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert_eq!(result, Err(RuleError::NoTableInfo("persons".to_owned())));
 
         let mut columns = HashMap::new();
@@ -147,7 +159,7 @@ mod tests {
         let mut tables = HashMap::new();
         tables.insert("persons".into(), DboTable::new(columns));
         let ctx = DboAnalyzeContext::new(tables);
-        let result = rule.find(&root, &ctx);
+        let result = rule.find_rules(&root, &ctx);
         assert_eq!(result, Err(RuleError::NoChange));
     }
 
@@ -159,7 +171,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceSysdate;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -192,7 +204,7 @@ mod tests {
         assert_eq!(location, TextRange::new(51.into(), 68.into()));
         assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -233,7 +245,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceNvl;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -255,7 +267,7 @@ mod tests {
             "#]],
         );
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -266,7 +278,7 @@ mod tests {
         assert_eq!(location, TextRange::new(7.into(), 15.into()));
         assert_eq!(&root.syntax().to_string()[location], "coalesce");
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();

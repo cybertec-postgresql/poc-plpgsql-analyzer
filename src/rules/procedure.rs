@@ -21,7 +21,11 @@ impl RuleDefinition for AddParamlistParenthesis {
         "Add parameter list parentheses"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| p.header())
             .filter(|h| h.param_list().is_none())
@@ -60,7 +64,11 @@ impl RuleDefinition for ReplacePrologue {
         "Replace procedure prologue"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| {
                 p.syntax()
@@ -101,7 +109,11 @@ impl RuleDefinition for ReplaceEpilogue {
         "Replace procedure epilogue"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, Procedure::cast)
             .filter_map(|p| p.body())
             .filter_map(|p| {
@@ -197,7 +209,11 @@ impl RuleDefinition for RemoveEditionable {
         "Remove `EDITIONABLE` or `NONEDITIONABLE`"
     }
 
-    fn find(&self, root: &Root, _ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError> {
+    fn find_rules(
+        &self,
+        root: &Root,
+        _ctx: &DboAnalyzeContext,
+    ) -> Result<Vec<RuleMatch>, RuleError> {
         let locations: Vec<RuleMatch> = filter_map_descendant_nodes(root, |n| {
             if let Some(procedure) = Procedure::cast(n.clone()) {
                 procedure.header().map(|p| p.syntax().clone())
@@ -259,7 +275,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = RemoveEditionable;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -301,7 +317,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = AddParamlistParenthesis;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -345,7 +361,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -387,7 +403,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceEpilogue;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
@@ -436,7 +452,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap();
         let rule = AddParamlistParenthesis;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert_eq!(result, Err(RuleError::NoChange));
     }
 
@@ -448,7 +464,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.find(&root, &DboAnalyzeContext::default());
+        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
