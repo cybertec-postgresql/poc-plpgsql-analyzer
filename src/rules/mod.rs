@@ -69,7 +69,8 @@ pub enum RuleError {
 
 trait RuleDefinition {
     fn short_desc(&self) -> &'static str;
-    fn find(&self, root: &Root, ctx: &DboAnalyzeContext) -> Result<Vec<RuleMatch>, RuleError>;
+    fn find_rules(&self, root: &Root, ctx: &DboAnalyzeContext)
+        -> Result<Vec<RuleMatch>, RuleError>;
     fn apply(
         &self,
         node: &SyntaxNode,
@@ -158,7 +159,7 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
     ANALYZER_RULES
         .iter()
         .filter_map(|(name, rule)| {
-            rule.find(root, ctx)
+            rule.find_rules(root, ctx)
                 .map(|ranges| RuleHint {
                     name: (*name).to_owned(),
                     locations: ranges
@@ -190,7 +191,7 @@ pub fn apply_rule(
 
         if let Some(location) = location {
             // find the node that matches the given location
-            let occurrences = &rule.find(&root, ctx).unwrap();
+            let occurrences = &rule.find_rules(&root, ctx).unwrap();
             let node = occurrences
                 .iter()
                 .find(|p| (p.range.start().into()..p.range.end().into()) == location.offset);
@@ -200,7 +201,7 @@ pub fn apply_rule(
             Ok((root.syntax().to_string(), vec![location]))
         } else {
             let mut result = Vec::new();
-            while let Ok(locations) = rule.find(&root, ctx) {
+            while let Ok(locations) = rule.find_rules(&root, ctx) {
                 if locations.is_empty() {
                     break;
                 }
