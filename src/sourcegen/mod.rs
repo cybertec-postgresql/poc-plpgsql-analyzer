@@ -69,7 +69,6 @@ mod lib {
 
         let cmd_stdin = cmd.stdin.as_mut().unwrap();
         cmd_stdin.write_all(content.as_bytes()).unwrap();
-        let _ = drop(cmd_stdin);
 
         let output = cmd.wait_with_output().unwrap();
         assert!(output.status.success());
