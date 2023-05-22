@@ -38,7 +38,7 @@ pub mod data {
             T!("||", "double_pipe", "concat"),
         ],
         literals: &[
-            T!("int", "integer", "integer", r"-?\d+", 2),
+            T!("int_literal", "integer", "integer", r"-?\d+", 2),
             T!(
                 "unquoted_ident",
                 "unquoted_ident",

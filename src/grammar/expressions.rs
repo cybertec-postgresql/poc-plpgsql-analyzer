@@ -48,7 +48,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
 
     let token = p.current();
     match token {
-        T![unquoted_ident] | T![quoted_ident] | T![quoted_literal] | T![int] => {
+        T![unquoted_ident] | T![quoted_ident] | T![quoted_literal] | T![int_literal] => {
             match token {
                 T![unquoted_ident] | T![quoted_ident] => {
                     parse_ident_or_function_invocation(p);
@@ -82,7 +82,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             return Err(ParseError::ExpectedOneOfTokens(vec![
                 T![unquoted_ident],
                 T![quoted_ident],
-                T![int],
+                T![int_literal],
                 T!["("],
                 T![-],
                 T![not],

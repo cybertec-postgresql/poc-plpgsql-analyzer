@@ -85,10 +85,10 @@ pub fn parse_datatype(p: &mut Parser) {
             }
 
             if p.eat(T!["("]) {
-                p.expect_one_of(&[T![int], T![*]]);
+                p.expect_one_of(&[T![int_literal], T![*]]);
 
                 if p.eat(T![,]) {
-                    p.expect(T![int]);
+                    p.expect(T![int_literal]);
                 }
 
                 p.eat_one_of(&[T![char], T![byte]]);
