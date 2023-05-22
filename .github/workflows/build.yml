@@ -37,6 +37,9 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           components: clippy, rustfmt
 
+      - name: Install rustfmt executable
+        run: rustup component add rustfmt
+
       - name: Cache Rust crates
         uses: Swatinem/rust-cache@v2
         with:
