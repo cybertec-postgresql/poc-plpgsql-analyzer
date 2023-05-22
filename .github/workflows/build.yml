@@ -43,19 +43,19 @@ jobs:
           cache-on-failure: true
 
       - name: Run rustfmt check
-        run: cargo fmt -- --check
+        run: cargo +${{ matrix.toolchain }} fmt -- --check
 
       - name: Build project
-        run: cargo build
+        run: cargo +${{ matrix.toolchain }} build
 
       - name: Run clippy
-        run: cargo clippy --no-deps
+        run: cargo +${{ matrix.toolchain }} clippy --no-deps
 
       - name: Run tests
-        run: cargo test --features coverage-tests
+        run: cargo +${{ matrix.toolchain }} test --features coverage-tests
 
       - name: Generate rustdoc
-        run: cargo doc --no-deps
+        run: cargo +${{ matrix.toolchain }} doc --no-deps
 
   build-wasm:
     name: Build WASM library
@@ -73,7 +73,7 @@ jobs:
             curl binaryen gcc libssl-dev make pkg-config
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           components: rust-std
           targets: wasm32-unknown-unknown
