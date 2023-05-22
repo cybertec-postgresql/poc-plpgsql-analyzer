@@ -32,13 +32,9 @@ jobs:
           && apt-get install --assume-yes curl gcc
 
       - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          components: clippy, rustfmt
-
-      - name: Install rustfmt executable
-        run: rustup component add rustfmt
+        run: |
+          rustup update --no-self-update stable
+          rustup component add clippy rustfmt
 
       - name: Cache Rust crates
         uses: Swatinem/rust-cache@v2
