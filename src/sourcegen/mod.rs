@@ -58,7 +58,6 @@ mod lib {
 
         let mut cmd = Command::new("rustup")
             .arg("run")
-            .arg("stable")
             .arg("rustfmt")
             .arg("--config-path")
             .arg(config_path)
