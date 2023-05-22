@@ -42,7 +42,6 @@ pretty_assertions = "^1.3.0"
 proc-macro2 = "1.0.57"
 quote = "1"
 
-
 [profile.release]
 lto = true
 
