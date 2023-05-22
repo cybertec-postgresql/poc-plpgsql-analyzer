@@ -11,7 +11,7 @@
 use rowan::Checkpoint;
 
 use crate::grammar::parse_ident_or_function_invocation;
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
@@ -48,31 +48,28 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
 
     let token = p.current();
     match token {
-        TokenKind::UnquotedIdent
-        | TokenKind::QuotedIdent
-        | TokenKind::QuotedLiteral
-        | TokenKind::Integer => {
+        T![unquoted_ident] | T![quoted_ident] | T![quoted_literal] | T![int] => {
             match token {
-                TokenKind::UnquotedIdent | TokenKind::QuotedIdent => {
+                T![unquoted_ident] | T![quoted_ident] => {
                     parse_ident_or_function_invocation(p);
                 }
                 _ => {
                     p.bump_any();
                 }
             }
-            if min_bp == 0 && (p.at(TokenKind::SemiColon) || p.at(TokenKind::Eof)) {
+            if min_bp == 0 && (p.at(T![;]) || p.at(T![EOF])) {
                 add_expr_node(p, checkpoint, None);
             }
-            p.eat(TokenKind::OracleJoinKw);
+            p.eat(T![(+)]);
         }
-        TokenKind::LParen => {
+        T!["("] => {
             p.bump_any();
             expr_bp(p, 0)?;
-            if !p.expect(TokenKind::RParen) {
+            if !p.expect(T![")"]) {
                 p.error(ParseError::UnbalancedParens);
             }
         }
-        TokenKind::NotKw | TokenKind::Plus | TokenKind::Minus => {
+        T![not] | T![+] | T![-] => {
             if let Some(operator) = prefix_bp(token) {
                 match operator.mapping {
                     Some(syntax_kind) => p.bump_any_map(syntax_kind),
@@ -83,20 +80,20 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
         }
         _ => {
             return Err(ParseError::ExpectedOneOfTokens(vec![
-                TokenKind::UnquotedIdent,
-                TokenKind::QuotedIdent,
-                TokenKind::Integer,
-                TokenKind::LParen,
-                TokenKind::Minus,
-                TokenKind::NotKw,
-                TokenKind::Plus,
-                TokenKind::QuotedLiteral,
+                T![unquoted_ident],
+                T![quoted_ident],
+                T![int],
+                T!["("],
+                T![-],
+                T![not],
+                T![+],
+                T![quoted_literal],
             ]));
         }
     }
 
-    while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
-        p.eat(TokenKind::NotKw);
+    while !p.at(T![;]) && !p.at(T![EOF]) {
+        p.eat(T![not]);
         let op = p.current();
 
         if let Some(operator) = postfix_bp(op) {
@@ -178,55 +175,53 @@ impl Operator {
 
 fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::NotKw => Operator::new_with_map(5, SyntaxKind::LogicOp),
-        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(17),
+        T![not] => Operator::new_with_map(5, SyntaxKind::LogicOp),
+        T![+] | T![-] => Operator::new_plain(17),
         _ => return None,
     })
 }
 
 fn postfix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::Exclam => Operator::new_plain(19),
+        T![!] => Operator::new_plain(19),
         _ => return None,
     })
 }
 
 fn infix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
-        TokenKind::OrKw => Operator::new_with_map(1, SyntaxKind::LogicOp),
-        TokenKind::AndKw => Operator::new_with_map(3, SyntaxKind::LogicOp),
-        TokenKind::ComparisonOp => Operator::new_plain(7),
-        TokenKind::LikeKw | TokenKind::BetweenKw | TokenKind::InKw => Operator::new_with_cb(
+        T![or] => Operator::new_with_map(1, SyntaxKind::LogicOp),
+        T![and] => Operator::new_with_map(3, SyntaxKind::LogicOp),
+        T![comparison] => Operator::new_plain(7),
+        T![like] | T![ilike] | T![between] | T![in] => Operator::new_with_cb(
             9,
             match op {
-                TokenKind::BetweenKw => Some(&between_cond),
-                TokenKind::InKw => Some(&in_cond),
+                T![between] => Some(&between_cond),
+                T![in] => Some(&in_cond),
                 _ => None,
             },
         ),
-        TokenKind::DoublePipe => Operator::new_plain(11),
-        TokenKind::Plus | TokenKind::Minus => Operator::new_plain(13),
-        TokenKind::Asterisk | TokenKind::Slash | TokenKind::Percentage => {
-            Operator::new_with_map(15, SyntaxKind::ArithmeticOp)
-        }
+        T![||] => Operator::new_plain(11),
+        T![+] | T![-] => Operator::new_plain(13),
+        T![*] | T![/] | T![%] => Operator::new_with_map(15, SyntaxKind::ArithmeticOp),
         _ => return None,
     })
 }
 
 fn between_cond(p: &mut Parser, min_bp: u8) {
     let _ = expr_bp(p, min_bp);
-    p.expect(TokenKind::AndKw);
+    p.expect(T![and]);
     let _ = expr_bp(p, min_bp);
 }
 
 fn in_cond(p: &mut Parser, min_bp: u8) {
-    p.expect(TokenKind::LParen);
+    p.expect(T!["("]);
 
     let _ = expr_bp(p, min_bp);
-    while p.eat(TokenKind::Comma) {
+    while p.eat(T![,]) {
         let _ = expr_bp(p, min_bp);
     }
-    p.expect(TokenKind::RParen);
+    p.expect(T![")"]);
 }
 
 #[cfg(test)]

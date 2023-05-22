@@ -6,7 +6,7 @@
 //! See https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/Data-Types.html#GUID-A3C0D836-BADB-44E5-A5D4-265BA5968483
 
 use crate::grammar::{parse_expr, parse_ident};
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
@@ -19,103 +19,103 @@ pub fn parse_datatype(p: &mut Parser) {
 
     // All datatypes except intervals may be handled the same
     match datatype {
-        TokenKind::IntervalKw => {
+        T![interval] => {
             p.bump_any();
-            p.expect_one_of(&[TokenKind::YearKw, TokenKind::DayKw]);
+            p.expect_one_of(&[T![year], T![day]]);
 
-            if p.eat(TokenKind::LParen) {
+            if p.eat(T!["("]) {
                 parse_expr(p);
-                p.expect(TokenKind::RParen);
+                p.expect(T![")"]);
             }
 
-            p.expect(TokenKind::ToKw);
-            p.expect_one_of(&[TokenKind::MonthKw, TokenKind::SecondKw]);
+            p.expect(T![to]);
+            p.expect_one_of(&[T![month], T![second]]);
 
-            if p.eat(TokenKind::LParen) {
+            if p.eat(T!["("]) {
                 parse_expr(p);
-                p.expect(TokenKind::RParen);
+                p.expect(T![")"]);
             }
         }
-        TokenKind::CharKw
-        | TokenKind::Varchar2Kw
-        | TokenKind::NcharKw
-        | TokenKind::Nvarchar2Kw
-        | TokenKind::NumberKw
-        | TokenKind::FloatKw
-        | TokenKind::BinaryFloatKw
-        | TokenKind::BinaryDoubleKw
-        | TokenKind::LongKw
-        | TokenKind::RawKw
-        | TokenKind::DateKw
-        | TokenKind::TimestampKw
-        | TokenKind::BlobKw
-        | TokenKind::ClobKw
-        | TokenKind::NclobKw
-        | TokenKind::BfileKw
-        | TokenKind::RowidKw
-        | TokenKind::UrowidKw
-        | TokenKind::CharacterKw
-        | TokenKind::VarcharKw
-        | TokenKind::NationalKw
-        | TokenKind::NumericKw
-        | TokenKind::DecimalKw
-        | TokenKind::DecKw
-        | TokenKind::IntegerKw
-        | TokenKind::IntKw
-        | TokenKind::SmallintKw
-        | TokenKind::DoubleKw
-        | TokenKind::RealKw => {
+        T![char]
+        | T![varchar2]
+        | T![nchar]
+        | T![nvarchar2]
+        | T![number]
+        | T![float]
+        | T![binary_float]
+        | T![binary_double]
+        | T![long]
+        | T![raw]
+        | T![date]
+        | T![timestamp]
+        | T![blob]
+        | T![clob]
+        | T![nclob]
+        | T![bfile]
+        | T![rowid]
+        | T![urowid]
+        | T![character]
+        | T![varchar]
+        | T![national]
+        | T![numeric]
+        | T![decimal]
+        | T![dec]
+        | T![integer]
+        | T![int]
+        | T![smallint]
+        | T![double]
+        | T![real] => {
             p.bump_any();
 
             match datatype {
-                TokenKind::CharacterKw | TokenKind::CharKw | TokenKind::NcharKw => {
-                    p.eat(TokenKind::VaryingKw);
+                T![character] | T![char] | T![nchar] => {
+                    p.eat(T![varying]);
                 }
-                TokenKind::NationalKw => {
-                    p.expect_one_of(&[TokenKind::CharacterKw, TokenKind::CharKw]);
-                    p.eat(TokenKind::VaryingKw);
+                T![national] => {
+                    p.expect_one_of(&[T![character], T![char]]);
+                    p.eat(T![varying]);
                 }
-                TokenKind::DoubleKw => {
-                    p.eat(TokenKind::PrecisionKw);
+                T![double] => {
+                    p.eat(T![precision]);
                 }
-                TokenKind::LongKw => {
-                    p.eat(TokenKind::RawKw);
+                T![long] => {
+                    p.eat(T![raw]);
                 }
                 _ => {}
             }
 
-            if p.eat(TokenKind::LParen) {
-                p.expect_one_of(&[TokenKind::Integer, TokenKind::Asterisk]);
+            if p.eat(T!["("]) {
+                p.expect_one_of(&[T![int], T![*]]);
 
-                if p.eat(TokenKind::Comma) {
-                    p.expect(TokenKind::Integer);
+                if p.eat(T![,]) {
+                    p.expect(T![int]);
                 }
 
-                p.eat_one_of(&[TokenKind::CharKw, TokenKind::ByteKw]);
+                p.eat_one_of(&[T![char], T![byte]]);
 
-                p.expect(TokenKind::RParen);
+                p.expect(T![")"]);
             }
 
             match p.current() {
-                TokenKind::WithKw => {
+                T![with] => {
                     p.bump_any();
-                    p.eat(TokenKind::LocalKw);
-                    p.expect(TokenKind::TimeKw);
-                    p.expect(TokenKind::ZoneKw);
+                    p.eat(T![local]);
+                    p.expect(T![time]);
+                    p.expect(T![zone]);
                 }
-                TokenKind::CharacterKw => {
+                T![character] => {
                     p.bump_any();
-                    p.expect(TokenKind::SetKw);
+                    p.expect(T![set]);
                     parse_ident(p, 1..3);
                 }
                 _ => {}
             }
         }
-        TokenKind::UnquotedIdent | TokenKind::QuotedIdent => {
+        T![unquoted_ident] | T![quoted_ident] => {
             parse_ident(p, 1..3);
             let checkpoint = p.checkpoint();
-            if p.eat(TokenKind::Percentage) {
-                p.expect(TokenKind::TypeKw);
+            if p.eat(T![%]) {
+                p.expect(T![type]);
                 p.start_node_at(checkpoint, SyntaxKind::TypeAttribute);
                 p.finish();
             }

@@ -8,7 +8,7 @@
 use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
 
 use crate::grammar;
-use crate::lexer::{Lexer, Token, TokenKind};
+use crate::lexer::{Lexer, Token, TokenKind, T};
 use crate::syntax::{SyntaxKind, SyntaxNode};
 
 /// Error type describing all possible parser failures.
@@ -47,7 +47,7 @@ pub enum ParseError {
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
-    while !parser.at(TokenKind::Eof) {
+    while !parser.at(T![EOF]) {
         parser.bump_any();
     }
 
@@ -185,7 +185,7 @@ impl<'a> Parser<'a> {
         self.eat_ws();
         match self.tokens.last() {
             Some(token) => token.kind,
-            None => TokenKind::Eof,
+            None => T![EOF],
         }
     }
 
@@ -225,14 +225,14 @@ impl<'a> Parser<'a> {
 
     /// Consumes the next token, advances by one token
     pub fn bump_any(&mut self) {
-        if self.current() != TokenKind::Eof {
+        if self.current() != T![EOF] {
             self.do_bump();
         }
     }
 
     /// Consumes the next token as `target`, advances by one token
     pub fn bump_any_map(&mut self, target: SyntaxKind) {
-        if self.current() != TokenKind::Eof {
+        if self.current() != T![EOF] {
             self.do_bump_map(target);
         }
     }

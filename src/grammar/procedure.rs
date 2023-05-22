@@ -16,7 +16,7 @@ pub(crate) fn parse_procedure(p: &mut Parser) {
     p.start(SyntaxKind::Procedure);
     parse_header(p);
     parse_body(p);
-    while !p.at(TokenKind::Eof) {
+    while !p.at(T![EOF]) {
         p.bump_any();
     }
     p.finish();
@@ -25,14 +25,14 @@ pub(crate) fn parse_procedure(p: &mut Parser) {
 /// Parses the header of a procedure.
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::ProcedureHeader);
-    p.expect(TokenKind::CreateKw);
-    if p.eat(TokenKind::OrKw) {
-        p.expect(TokenKind::ReplaceKw);
+    p.expect(T![create]);
+    if p.eat(T![or]) {
+        p.expect(T![replace]);
     }
 
-    p.eat_one_of(&[TokenKind::Editionable, TokenKind::NonEditionable]);
+    p.eat_one_of(&[T![editionable], T![noneditionable]]);
 
-    p.expect(TokenKind::ProcedureKw);
+    p.expect(T![procedure]);
 
     parse_ident(p, 1..2);
     parse_param_list(p);
@@ -41,8 +41,8 @@ fn parse_header(p: &mut Parser) {
 
 /// Parses the body of a procedure.
 fn parse_body(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
-    p.eat(TokenKind::DollarQuote);
+    p.expect_one_of(&[T![is], T![as]]);
+    p.eat(T!["$$"]);
 
     parse_block(p);
 
@@ -188,13 +188,13 @@ Root@0..31
     Whitespace@9..14 "\n    "
     BlockStatement@14..19
       Keyword@14..18 "NULL"
-      SemiColon@18..19 ";"
+      Semicolon@18..19 ";"
     Whitespace@19..20 "\n"
     Keyword@20..23 "END"
     Whitespace@23..24 " "
     IdentGroup@24..29
       Ident@24..29 "hello"
-    SemiColon@29..30 ";"
+    Semicolon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
         );
@@ -223,7 +223,7 @@ Root@0..98
       Whitespace@49..52 "\n  "
       BlockStatement@52..57
         Keyword@52..56 "NULL"
-        SemiColon@56..57 ";"
+        Semicolon@56..57 ";"
       Whitespace@57..58 " "
       Comment@58..68 "-- メ メ"
       Whitespace@68..69 "\n"
@@ -231,7 +231,7 @@ Root@0..98
       Whitespace@72..73 " "
       IdentGroup@73..96
         Ident@73..96 "\"读文👩🏼\u{200d}🔬\""
-      SemiColon@96..97 ";"
+      Semicolon@96..97 ";"
     Whitespace@97..98 "\n"
 "#]],
         );
@@ -264,10 +264,10 @@ Root@0..124
       Whitespace@108..113 "\n    "
       BlockStatement@113..118
         Keyword@113..117 "NULL"
-        SemiColon@117..118 ";"
+        Semicolon@117..118 ";"
       Whitespace@118..119 "\n"
       Keyword@119..122 "END"
-      SemiColon@122..123 ";"
+      Semicolon@122..123 ";"
     Whitespace@123..124 "\n"
 "#]],
         );
@@ -373,22 +373,22 @@ Root@0..304
               Argument@211..265
                 QuotedLiteral@211..265 "'You may only make ch ..."
             RParen@265..266 ")"
-          SemiColon@266..267 ";"
+          Semicolon@266..267 ";"
         Whitespace@267..270 "\n  "
         Keyword@270..273 "END"
         Whitespace@273..274 " "
         Keyword@274..276 "IF"
-        SemiColon@276..277 ";"
+        Semicolon@276..277 ";"
       Whitespace@277..278 "\n"
       Keyword@278..281 "END"
-      SemiColon@281..282 ";"
+      Semicolon@281..282 ";"
     Whitespace@282..283 "\n"
     DollarQuote@283..285 "$$"
     Whitespace@285..286 " "
     Ident@286..294 "LANGUAGE"
     Whitespace@294..295 " "
     Ident@295..302 "plpgsql"
-    SemiColon@302..303 ";"
+    Semicolon@302..303 ";"
     Whitespace@303..304 "\n"
 "#]],
         );
@@ -427,13 +427,13 @@ Root@0..176
       Whitespace@141..146 "\n    "
       BlockStatement@146..151
         Keyword@146..150 "NULL"
-        SemiColon@150..151 ";"
+        Semicolon@150..151 ";"
       Whitespace@151..152 "\n"
       Keyword@152..155 "END"
       Whitespace@155..156 " "
       IdentGroup@156..174
         Ident@156..174 "ignore_editionable"
-      SemiColon@174..175 ";"
+      Semicolon@174..175 ";"
     Whitespace@175..176 "\n"
 "#]],
         );
@@ -472,13 +472,13 @@ Root@0..193
       Whitespace@155..160 "\n    "
       BlockStatement@160..165
         Keyword@160..164 "NULL"
-        SemiColon@164..165 ";"
+        Semicolon@164..165 ";"
       Whitespace@165..166 "\n"
       Keyword@166..169 "END"
       Whitespace@169..170 " "
       IdentGroup@170..191
         Ident@170..191 "ignore_noneditionable"
-      SemiColon@191..192 ";"
+      Semicolon@191..192 ";"
     Whitespace@192..193 "\n"
 "#]],
         );
