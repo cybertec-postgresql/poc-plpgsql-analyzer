@@ -56,9 +56,7 @@ mod lib {
     pub fn rustfmt_content(content: String) -> String {
         let config_path = project_path().join(".rustfmt.toml");
 
-        let mut cmd = Command::new("rustup")
-            .arg("run")
-            .arg("rustfmt")
+        let mut cmd = Command::new("rustfmt")
             .arg("--config-path")
             .arg(config_path)
             .stdin(Stdio::piped())
