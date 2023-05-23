@@ -121,36 +121,33 @@ impl RuleDefinition for ReplaceEpilogue {
                     .children_with_tokens()
                     .filter_map(SyntaxElement::into_token)
                     .find(|t| {
-                        // find an `END` keyword
-                        if !(t.kind() == SyntaxKind::Keyword
-                            && t.text().to_string().to_lowercase() == "end")
+                        // Find an `END` keyword
+                        if t.kind() == SyntaxKind::Keyword
+                            && t.text().to_string().to_lowercase() == "end"
                         {
-                            return false;
-                        }
+                            // Grab the next four syntax tokens
+                            let syntax_tokens = t
+                                .parent()
+                                .unwrap()
+                                .siblings_with_tokens(Direction::Next)
+                                .skip(1)
+                                .take(4)
+                                .collect::<Vec<_>>();
 
-                        // determine if the `LANGUAGE` epilogue has already been applied
-                        t.parent()
-                            .unwrap()
-                            .next_sibling_or_token()
-                            .and_then(|t| match t.kind() {
-                                SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                                _ => None,
-                            })
-                            .and_then(|t| match t.kind() {
-                                SyntaxKind::DollarQuote => t.next_sibling_or_token(),
-                                _ => None,
-                            })
-                            .and_then(|t| match t.kind() {
-                                SyntaxKind::Whitespace => t.next_sibling_or_token(),
-                                _ => None,
-                            })
-                            .and_then(|t| match t.kind() {
-                                SyntaxKind::Ident => {
-                                    Some(t.to_string().to_lowercase() == "language")
-                                }
-                                _ => None,
-                            })
-                            .is_none()
+                            // If the token sequence represents `\n$$ LANGUAGE`, the rule has already been applied
+                            return if syntax_tokens.iter().map(|t| t.kind()).collect::<Vec<_>>()
+                                != [
+                                    SyntaxKind::Whitespace,
+                                    SyntaxKind::DollarQuote,
+                                    SyntaxKind::Whitespace,
+                                    SyntaxKind::Ident,
+                                ] {
+                                true
+                            } else {
+                                syntax_tokens[3].to_string().to_lowercase() != "language"
+                            };
+                        }
+                        false
                     })
                     .map(|t| {
                         let start = t.clone();
