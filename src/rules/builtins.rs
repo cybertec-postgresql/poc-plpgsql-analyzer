@@ -64,11 +64,7 @@ impl RuleDefinition for ReplaceSysdate {
             .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -99,11 +95,7 @@ impl RuleDefinition for ReplaceNvl {
             .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(

@@ -160,6 +160,8 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
         .iter()
         .filter_map(|(name, rule)| {
             rule.find_rules(root, ctx)
+                .ok()
+                .filter(|rule_hint| !rule_hint.is_empty())
                 .map(|ranges| RuleHint {
                     name: (*name).to_owned(),
                     locations: ranges
@@ -168,7 +170,6 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
                         .collect(),
                     short_desc: rule.short_desc(),
                 })
-                .ok()
         })
         .collect()
 }
