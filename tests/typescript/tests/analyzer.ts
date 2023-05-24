@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { analyze, applyRule, DboMetaData, DboType, DboColumnType } from 'poc-plpgsql-analyzer';
+import { analyze, applyRule, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
 
 const FUNCTION_HEADINGS_DIR = '../function/heading';
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
@@ -17,7 +17,7 @@ describe('try to parse and analyze Oracle function', () => {
 
   it.each(files)('should parse %s successfully', path => {
     const content = fs.readFileSync(path, 'utf8');
-    const metaData = analyze(DboType.Function, content, { tables: {} });
+    const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function).toEqual(expect.anything());
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -27,7 +27,7 @@ describe('try to parse and analyze Oracle function', () => {
 
   it('should return the correct function name', () => {
     const content = fs.readFileSync('../function/heading/function_heading_example.ora.sql', 'utf8');
-    const metaData = analyze(DboType.Function, content, { tables: {} });
+    const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function.name).toEqual('function_heading_example');
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -37,7 +37,7 @@ describe('try to parse and analyze Oracle function', () => {
 
   it('should count the lines of code correctly', () => {
     const content = fs.readFileSync('../function/heading/function_heading_example.ora.sql', 'utf8');
-    const metaData = analyze(DboType.Function, content, { tables: {} });
+    const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function.linesOfCode).toEqual(3);
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -54,7 +54,7 @@ describe('try to parse and analyze Oracle procedures', () => {
 
   it.each(files)('should parse %s successfully', path => {
     const content = fs.readFileSync(path, 'utf8');
-    const metaData = analyze(DboType.Procedure, content, { tables: {} });
+    const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure).toEqual(expect.anything());
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -64,7 +64,7 @@ describe('try to parse and analyze Oracle procedures', () => {
 
   it('should return the correct procedure name', () => {
     const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
-    const metaData = analyze(DboType.Procedure, content, { tables: {} });
+    const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure.name).toEqual('add_job_history');
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -74,7 +74,7 @@ describe('try to parse and analyze Oracle procedures', () => {
 
   it('should count the lines of code correctly', () => {
     const content = fs.readFileSync('../fixtures/add_job_history.sql', 'utf8');
-    const metaData = analyze(DboType.Procedure, content, { tables: {} });
+    const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure.linesOfCode).toEqual(5);
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -91,7 +91,7 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
 
   it.each(files)('should parse %s successfully', path => {
     const content = fs.readFileSync(path, 'utf8');
-    const metaData = analyze(DboType.Query, content, { tables: {} });
+    const metaData = analyze('query', content, { tables: {} });
 
     expect(metaData.query).toEqual(expect.anything());
     expect(metaData.rules).toBeInstanceOf(Array);
@@ -102,7 +102,7 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
   it('should return the correct amount of outer joins', () => {
     const content = fs.readFileSync('../dql/select_left_join.ora.sql', 'utf8');
 
-    const metaData = analyze(DboType.Query, content, { tables: {} });
+    const metaData = analyze('query', content, { tables: {} });
     expect(metaData.query.outerJoins).toEqual(1);
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
@@ -113,20 +113,20 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
 describe('passing type context information into analyzer', () => {
   it('should be able to analyze procedure with `%TYPE` parameters', () => {
     const content = fs.readFileSync('../fixtures/log_last_login_fuzzy.ora.sql', 'utf8');
-    const context = {
+    const context: DboAnalyzeContext = {
       tables: {
         persons: {
           columns: {
-            id: { typ: DboColumnType.Integer },
-            name: { typ: DboColumnType.Text },
-            number_of_logins: { typ: DboColumnType.Integer },
-            last_login: { typ: DboColumnType.Date },
+            id: { typ: 'integer' },
+            name: { typ: 'text' },
+            number_of_logins: { typ: 'integer' },
+            last_login: { typ: 'date' },
           },
         },
       },
     };
 
-    const metaData = analyze(DboType.Procedure, content, context);
+    const metaData = analyze('procedure', content, context);
     expect(metaData.procedure.name).toEqual('log_last_login_fuzzy');
     expect(metaData.procedure.linesOfCode).toEqual(5);
 
@@ -166,8 +166,8 @@ describe('passing type context information into analyzer', () => {
 describe('trying to apply some transpiler rules', () => {
   it('should transform the PL/SQL code correctly', () => {
     const content = fs.readFileSync('../fixtures/secure_dml.ora.sql', 'utf8');
-    const context = { tables: {} };
-    let metaData = analyze(DboType.Procedure, content, context);
+    const context: DboAnalyzeContext = { tables: {} };
+    let metaData = analyze('procedure', content, context);
 
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.rules.length).toEqual(4);
@@ -176,18 +176,10 @@ describe('trying to apply some transpiler rules', () => {
     expect(metaData.rules[2].name).toEqual('CYAR-0003');
     expect(metaData.rules[3].name).toEqual('CYAR-0005');
 
-    let transpiled = content;
+    let original = content;
     const doApply = rule => {
-      let location;
-      [transpiled, location] = applyRule(
-        DboType.Procedure,
-        transpiled,
-        rule.name,
-        rule.locations[0],
-        context,
-      );
-
-      return analyze(DboType.Procedure, transpiled, context);
+      original = applyRule('procedure', original, rule.name, rule.locations[0], context).original;
+      return analyze('procedure', original, context);
     };
 
     expect(metaData.rules[0].name).toEqual('CYAR-0001');
@@ -215,7 +207,7 @@ describe('trying to apply some transpiler rules', () => {
     expect(metaData.rules[0].locations.length).toEqual(1);
     metaData = doApply(metaData.rules[0]);
 
-    expect(transpiled).toEqual(`CREATE PROCEDURE secure_dml()
+    expect(original).toEqual(`CREATE PROCEDURE secure_dml()
 AS $$
 BEGIN
   IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'
@@ -230,8 +222,8 @@ $$ LANGUAGE plpgsql;
 
   it('should transform the PL/SQL code correctly without locations', () => {
     const content = fs.readFileSync('../fixtures/secure_dml.ora.sql', 'utf8');
-    const context = { tables: {} };
-    let metaData = analyze(DboType.Procedure, content, context);
+    const context: DboAnalyzeContext = { tables: {} };
+    let metaData = analyze('procedure', content, context);
 
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.rules.length).toEqual(4);
@@ -240,12 +232,10 @@ $$ LANGUAGE plpgsql;
     expect(metaData.rules[2].name).toEqual('CYAR-0003');
     expect(metaData.rules[3].name).toEqual('CYAR-0005');
 
-    let transpiled = content;
+    let original = content;
     const doApply = rule => {
-      let location;
-      [transpiled, location] = applyRule(DboType.Procedure, transpiled, rule.name, null, context);
-
-      return analyze(DboType.Procedure, transpiled, context);
+      original = applyRule('procedure', original, rule.name, null, context).original;
+      return analyze('procedure', original, context);
     };
 
     expect(metaData.rules[0].name).toEqual('CYAR-0001');
@@ -268,7 +258,7 @@ $$ LANGUAGE plpgsql;
     expect(metaData.rules[0].locations.length).toEqual(2);
     doApply(metaData.rules[0]);
 
-    expect(transpiled).toEqual(`CREATE PROCEDURE secure_dml()
+    expect(original).toEqual(`CREATE PROCEDURE secure_dml()
 AS $$
 BEGIN
   IF TO_CHAR (clock_timestamp(), 'HH24:MI') NOT BETWEEN '08:00' AND '18:00'

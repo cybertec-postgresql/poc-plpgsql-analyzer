@@ -8,9 +8,11 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 
 use serde::de::{self, Visitor};
-use serde::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer, Serialize};
+use tsify::Tsify;
 
-#[derive(Clone, Debug, Eq)]
+#[derive(Tsify, Clone, Debug, Eq, Serialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct SqlIdent {
     name: String,
     is_quoted: bool,
