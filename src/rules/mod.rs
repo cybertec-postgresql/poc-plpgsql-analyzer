@@ -68,7 +68,7 @@ pub enum RuleError {
 }
 
 trait RuleDefinition {
-    fn short_desc(&self) -> &'static str;
+    fn short_desc(&self) -> String;
     fn find_rules(&self, root: &Root, ctx: &DboAnalyzeContext)
         -> Result<Vec<RuleMatch>, RuleError>;
     fn apply(

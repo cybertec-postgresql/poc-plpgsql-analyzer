@@ -17,8 +17,8 @@ use super::{next_token, replace_token, RuleDefinition, RuleError, RuleLocation};
 pub(super) struct AddParamlistParenthesis;
 
 impl RuleDefinition for AddParamlistParenthesis {
-    fn short_desc(&self) -> &'static str {
-        "Add parameter list parentheses"
+    fn short_desc(&self) -> String {
+        "Add parameter list parentheses".to_string()
     }
 
     fn find_rules(
@@ -60,8 +60,8 @@ impl RuleDefinition for AddParamlistParenthesis {
 pub(super) struct ReplacePrologue;
 
 impl RuleDefinition for ReplacePrologue {
-    fn short_desc(&self) -> &'static str {
-        "Replace procedure prologue"
+    fn short_desc(&self) -> String {
+        "Replace procedure prologue".to_string()
     }
 
     fn find_rules(
@@ -105,8 +105,8 @@ impl RuleDefinition for ReplacePrologue {
 pub(super) struct ReplaceEpilogue;
 
 impl RuleDefinition for ReplaceEpilogue {
-    fn short_desc(&self) -> &'static str {
-        "Replace procedure epilogue"
+    fn short_desc(&self) -> String {
+        "Replace procedure epilogue".to_string()
     }
 
     fn find_rules(
@@ -205,8 +205,8 @@ impl RuleDefinition for ReplaceEpilogue {
 pub(super) struct RemoveEditionable;
 
 impl RuleDefinition for RemoveEditionable {
-    fn short_desc(&self) -> &'static str {
-        "Remove `EDITIONABLE` or `NONEDITIONABLE`"
+    fn short_desc(&self) -> String {
+        "Remove `EDITIONABLE` or `NONEDITIONABLE`".to_string()
     }
 
     fn find_rules(
