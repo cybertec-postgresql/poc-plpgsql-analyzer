@@ -6,18 +6,18 @@
 //! Implements parsing of procedures from a token tree.
 
 use crate::grammar::{parse_expr, parse_ident};
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 /// Looks ahead and parses a function invocation if applicable
 pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
-    if (p.at(TokenKind::QuotedIdent) || p.at(TokenKind::UnquotedIdent))
+    if (p.at(T![quoted_ident]) || p.at(T![unquoted_ident]))
         && matches!(
             p.lookahead(3).as_slice(),
-            &[TokenKind::LParen, ..]
-                | &[TokenKind::Dot, TokenKind::QuotedIdent, TokenKind::LParen]
-                | &[TokenKind::Dot, TokenKind::UnquotedIdent, TokenKind::LParen]
+            &[T!["("], ..]
+                | &[T![.], T![quoted_ident], T!["("]]
+                | &[T![.], T![unquoted_ident], T!["("]]
         )
     {
         parse_function_invocation(p);
@@ -29,17 +29,17 @@ pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
 pub(crate) fn parse_function_invocation(p: &mut Parser) {
     p.start(SyntaxKind::FunctionInvocation);
     parse_ident(p, 1..2);
-    p.expect(TokenKind::LParen);
+    p.expect(T!["("]);
 
-    if !p.at(TokenKind::RParen) {
+    if !p.at(T![")"]) {
         p.start(SyntaxKind::ArgumentList);
 
         loop {
             match p.current() {
-                TokenKind::Comma => {
-                    p.bump(TokenKind::Comma);
+                T![,] => {
+                    p.bump(T![,]);
                 }
-                TokenKind::RParen | TokenKind::Eof => {
+                T![")"] | T![EOF] => {
                     break;
                 }
                 _ => {
@@ -53,7 +53,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
         p.finish();
     }
 
-    p.expect(TokenKind::RParen);
+    p.expect(T![")"]);
     p.finish();
 }
 

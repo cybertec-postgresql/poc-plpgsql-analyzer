@@ -15,7 +15,7 @@ pub fn parse_function(p: &mut Parser) {
     p.start(SyntaxKind::Function);
     parse_header(p);
     parse_body(p);
-    while !p.at(TokenKind::Eof) {
+    while !p.at(T![EOF]) {
         p.bump_any();
     }
     p.finish();
@@ -24,14 +24,14 @@ pub fn parse_function(p: &mut Parser) {
 /// Parses the header of a function.
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::FunctionHeader);
-    p.expect(TokenKind::CreateKw);
-    if p.eat(TokenKind::OrKw) {
-        p.expect(TokenKind::ReplaceKw);
+    p.expect(T![create]);
+    if p.eat(T![or]) {
+        p.expect(T![replace]);
     }
 
-    p.eat_one_of(&[TokenKind::Editionable, TokenKind::NonEditionable]);
+    p.eat_one_of(&[T![editionable], T![noneditionable]]);
 
-    p.expect(TokenKind::FunctionKw);
+    p.expect(T![function]);
 
     parse_ident(p, 1..2);
 
@@ -43,19 +43,19 @@ fn parse_header(p: &mut Parser) {
 }
 
 fn parse_return_type(p: &mut Parser) {
-    if p.eat(TokenKind::ReturnKw) {
+    if p.eat(T![return]) {
         parse_datatype(p);
     }
 }
 
 fn parse_attributes(p: &mut Parser) {
-    p.eat(TokenKind::DeterministicKw);
+    p.eat(T![deterministic]);
 }
 
 /// Parses the body of a function.
 fn parse_body(p: &mut Parser) {
-    p.expect_one_of(&[TokenKind::IsKw, TokenKind::AsKw]);
-    p.eat(TokenKind::DollarQuote);
+    p.expect_one_of(&[T![is], T![as]]);
+    p.eat(T!["$$"]);
 
     parse_block(p);
 
@@ -177,13 +177,13 @@ Root@0..25
     Whitespace@8..9 " "
     BlockStatement@9..14
       Keyword@9..13 "NULL"
-      SemiColon@13..14 ";"
+      Semicolon@13..14 ";"
     Whitespace@14..15 " "
     Keyword@15..18 "END"
     Whitespace@18..19 " "
     IdentGroup@19..24
       Ident@19..24 "hello"
-    SemiColon@24..25 ";"
+    Semicolon@24..25 ";"
 "#]],
         );
     }
@@ -228,10 +228,10 @@ Root@0..171
         Expression@162..164
           Whitespace@162..163 " "
           Integer@163..164 "1"
-        SemiColon@164..165 ";"
+        Semicolon@164..165 ";"
       Whitespace@165..166 "\n"
       Keyword@166..169 "END"
-      SemiColon@169..170 ";"
+      Semicolon@169..170 ";"
     Whitespace@170..171 "\n"
 "#]],
         );
@@ -278,10 +278,10 @@ Root@0..180
         Expression@171..173
           Whitespace@171..172 " "
           Integer@172..173 "1"
-        SemiColon@173..174 ";"
+        Semicolon@173..174 ";"
       Whitespace@174..175 "\n"
       Keyword@175..178 "END"
-      SemiColon@178..179 ";"
+      Semicolon@178..179 ";"
     Whitespace@179..180 "\n"
 "#]],
         );
