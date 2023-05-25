@@ -17,5 +17,6 @@ mod grammar;
 mod lexer;
 mod parser;
 mod rules;
+mod sourcegen;
 mod syntax;
 mod util;

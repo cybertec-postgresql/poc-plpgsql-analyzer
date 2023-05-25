@@ -10,9 +10,9 @@ use std::ops;
 use logos::Logos;
 use rowan::{TextRange, TextSize};
 
-pub use token::TokenKind;
+pub(crate) use generated::{TokenKind, T};
 
-mod token;
+mod generated;
 
 /// Wrapper for the actual [`Logos`] parser.
 #[derive(Debug)]
@@ -54,4 +54,34 @@ pub struct Token<'a> {
     pub kind: TokenKind,
     pub text: &'a str,
     pub range: TextRange,
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::generated::T;
+    use crate::lexer::Lexer;
+
+    use super::*;
+
+    fn check(input: &str, kind: TokenKind) {
+        let mut lexer = Lexer::new(input);
+        let token = lexer.next().unwrap();
+        assert_eq!(token.kind, kind);
+        assert_eq!(token.text, input);
+    }
+
+    #[test]
+    fn lex_spaces_tabs_and_newlines() {
+        check(" \t \n", T![whitespace]);
+    }
+
+    #[test]
+    fn lex_ident() {
+        check("hello1$#", T![unquoted_ident]);
+    }
+
+    #[test]
+    fn lex_quoted_ident() {
+        check(r#""读文👩🏼‍🔬""#, T![quoted_ident]);
+    }
 }

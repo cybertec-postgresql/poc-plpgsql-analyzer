@@ -8,7 +8,7 @@ use crate::grammar::{
     opt_expr, opt_function_invocation, parse_datatype, parse_expr, parse_ident, parse_insert,
     parse_query,
 };
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
@@ -18,41 +18,41 @@ pub fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
     parse_declare_section(p);
 
-    p.expect(TokenKind::BeginKw);
+    p.expect(T![begin]);
 
-    while !p.at(TokenKind::EndKw) {
+    while !p.at(T![end]) {
         parse_stmt(p);
     }
 
-    p.expect(TokenKind::EndKw);
+    p.expect(T![end]);
     parse_ident(p, 0..1);
-    p.expect(TokenKind::SemiColon);
+    p.expect(T![;]);
 
     p.finish();
 }
 
 /// <https://docs.oracle.com/cd/B28359_01/appdev.111/b28370/block.htm#CJAIABJJ>
 fn parse_declare_section(p: &mut Parser) {
-    if p.at(TokenKind::BeginKw) {
+    if p.at(T![begin]) {
         return;
     }
 
     p.start(SyntaxKind::DeclareSection);
-    p.eat(TokenKind::DeclareKw);
-    while !p.at(TokenKind::BeginKw) && !p.at(TokenKind::Eof) {
+    p.eat(T![declare]);
+    while !p.at(T![begin]) && !p.at(T![EOF]) {
         p.start(SyntaxKind::VariableDecl);
 
-        if !p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent]) {
+        if !p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]) {
             break;
         }
 
-        while !p.at(TokenKind::SemiColon) && !p.at(TokenKind::Eof) {
+        while !p.at(T![;]) && !p.at(T![EOF]) {
             parse_datatype(p);
         }
 
         p.finish();
 
-        if !p.eat(TokenKind::SemiColon) {
+        if !p.eat(T![;]) {
             break;
         }
     }
@@ -63,12 +63,12 @@ fn parse_stmt(p: &mut Parser) {
     p.start(SyntaxKind::BlockStatement);
 
     match p.current() {
-        TokenKind::DeclareKw | TokenKind::BeginKw => parse_block(p),
-        TokenKind::IfKw => parse_if_stmt(p),
-        TokenKind::InsertKw => parse_insert(p),
-        TokenKind::NullKw => parse_null_stmt(p),
-        TokenKind::ReturnKw => parse_return_stmt(p),
-        TokenKind::SelectKw => parse_query(p, true),
+        T![declare] | T![begin] => parse_block(p),
+        T![if] => parse_if_stmt(p),
+        T![insert] => parse_insert(p),
+        T![null] => parse_null_stmt(p),
+        T![return] => parse_return_stmt(p),
+        T![select] => parse_query(p, true),
         current_token => {
             if !(opt_procedure_call(p)) {
                 p.error(ParseError::ExpectedStatement(current_token));
@@ -81,48 +81,48 @@ fn parse_stmt(p: &mut Parser) {
 }
 
 fn parse_if_stmt(p: &mut Parser) {
-    p.expect(TokenKind::IfKw);
+    p.expect(T![if]);
     parse_expr(p);
-    p.expect(TokenKind::ThenKw);
+    p.expect(T![then]);
 
-    while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current()) {
+    while ![T![elsif], T![else], T![end]].contains(&p.current()) {
         parse_stmt(p);
     }
 
-    while p.eat(TokenKind::ElsifKw) {
+    while p.eat(T![elsif]) {
         parse_expr(p);
-        p.expect(TokenKind::ThenKw);
+        p.expect(T![then]);
 
-        while ![TokenKind::ElsifKw, TokenKind::ElseKw, TokenKind::EndKw].contains(&p.current()) {
+        while ![T![elsif], T![else], T![end]].contains(&p.current()) {
             parse_stmt(p);
         }
     }
 
-    if p.eat(TokenKind::ElseKw) {
-        while !p.at(TokenKind::EndKw) {
+    if p.eat(T![else]) {
+        while !p.at(T![end]) {
             parse_stmt(p);
         }
     }
 
-    p.expect(TokenKind::EndKw);
-    p.expect(TokenKind::IfKw);
-    p.expect(TokenKind::SemiColon);
+    p.expect(T![end]);
+    p.expect(T![if]);
+    p.expect(T![;]);
 }
 
 fn parse_null_stmt(p: &mut Parser) {
-    p.expect(TokenKind::NullKw);
-    p.expect(TokenKind::SemiColon);
+    p.expect(T![null]);
+    p.expect(T![;]);
 }
 
 fn parse_return_stmt(p: &mut Parser) {
-    p.expect(TokenKind::ReturnKw);
+    p.expect(T![return]);
     opt_expr(p);
-    p.expect(TokenKind::SemiColon);
+    p.expect(T![;]);
 }
 
 fn opt_procedure_call(p: &mut Parser) -> bool {
     if opt_function_invocation(p) {
-        p.expect(TokenKind::SemiColon);
+        p.expect(T![;]);
         true
     } else {
         false
@@ -151,7 +151,7 @@ Root@0..54
       Ident@46..49 "ABC"
     Whitespace@49..50 " "
     Keyword@50..53 "END"
-    SemiColon@53..54 ";"
+    Semicolon@53..54 ";"
 "#]],
         );
     }
@@ -167,10 +167,10 @@ Root@0..16
     Whitespace@5..6 " "
     BlockStatement@6..11
       Keyword@6..10 "NULL"
-      SemiColon@10..11 ";"
+      Semicolon@10..11 ";"
     Whitespace@11..12 " "
     Keyword@12..15 "END"
-    SemiColon@15..16 ";"
+    Semicolon@15..16 ";"
 "#]],
         );
     }
@@ -215,7 +215,7 @@ Root@0..461
           LParen@38..39 "("
           Integer@39..42 "100"
           RParen@42..43 ")"
-      SemiColon@43..44 ";"
+      Semicolon@43..44 ";"
       Whitespace@44..45 "\n"
     Keyword@45..50 "BEGIN"
     Whitespace@50..55 "\n    "
@@ -249,7 +249,7 @@ Root@0..461
         Keyword@142..146 "FROM"
         Whitespace@146..147 " "
         Ident@147..151 "DUAL"
-        SemiColon@151..152 ";"
+        Semicolon@151..152 ";"
       Whitespace@152..157 "\n    "
       Comment@157..172 "-- Nested block"
       Whitespace@172..177 "\n    "
@@ -259,10 +259,10 @@ Root@0..461
         Whitespace@182..183 " "
         BlockStatement@183..188
           Keyword@183..187 "NULL"
-          SemiColon@187..188 ";"
+          Semicolon@187..188 ";"
         Whitespace@188..189 " "
         Keyword@189..192 "END"
-        SemiColon@192..193 ";"
+        Semicolon@192..193 ";"
       Whitespace@193..198 "\n    "
       Comment@198..215 "-- Procedure call"
       Whitespace@215..220 "\n    "
@@ -278,7 +278,7 @@ Root@0..461
             IdentGroup@241..257
               Ident@241..257 "formatted_output"
         RParen@257..258 ")"
-      SemiColon@258..259 ";"
+      Semicolon@258..259 ";"
     Whitespace@259..264 "\n    "
     Comment@264..279 "-- IF statement"
     Whitespace@279..288 "\n        "
@@ -292,7 +292,7 @@ Root@0..461
       Whitespace@300..301 " "
       BlockStatement@301..306
         Keyword@301..305 "NULL"
-        SemiColon@305..306 ";"
+        Semicolon@305..306 ";"
       Whitespace@306..315 "\n        "
       Keyword@315..320 "ELSIF"
       Whitespace@320..321 " "
@@ -303,7 +303,7 @@ Root@0..461
       Whitespace@330..331 " "
       BlockStatement@331..336
         Keyword@331..335 "NULL"
-        SemiColon@335..336 ";"
+        Semicolon@335..336 ";"
       Whitespace@336..345 "\n        "
       Keyword@345..350 "ELSIF"
       Whitespace@350..351 " "
@@ -314,18 +314,18 @@ Root@0..461
       Whitespace@360..361 " "
       BlockStatement@361..366
         Keyword@361..365 "NULL"
-        SemiColon@365..366 ";"
+        Semicolon@365..366 ";"
       Whitespace@366..375 "\n        "
       Keyword@375..379 "ELSE"
       Whitespace@379..380 " "
       BlockStatement@380..385
         Keyword@380..384 "NULL"
-        SemiColon@384..385 ";"
+        Semicolon@384..385 ";"
       Whitespace@385..390 "\n    "
       Keyword@390..393 "END"
       Whitespace@393..394 " "
       Keyword@394..396 "IF"
-      SemiColon@396..397 ";"
+      Semicolon@396..397 ";"
     Whitespace@397..402 "\n    "
     Comment@402..421 "-- Return statement"
     Whitespace@421..426 "\n    "
@@ -334,13 +334,13 @@ Root@0..461
       Expression@432..434
         Whitespace@432..433 " "
         Integer@433..434 "1"
-      SemiColon@434..435 ";"
+      Semicolon@434..435 ";"
     Whitespace@435..436 "\n"
     Keyword@436..439 "END"
     Whitespace@439..440 " "
     IdentGroup@440..460
       Ident@440..460 "log_last_login_fuzzy"
-    SemiColon@460..461 ";"
+    Semicolon@460..461 ";"
 "#]],
         );
     }
@@ -367,11 +367,11 @@ Root@0..54
         Keyword@38..42 "FROM"
         Whitespace@42..43 " "
         Ident@43..47 "dual"
-        SemiColon@47..48 ";"
+        Semicolon@47..48 ";"
       Whitespace@48..49 " "
     Keyword@49..52 "END"
     Whitespace@52..53 " "
-    SemiColon@53..54 ";"
+    Semicolon@53..54 ";"
 "#]],
         );
     }
@@ -399,7 +399,7 @@ Root@0..68
         Comma@30..31 ","
         Integer@31..32 "0"
         RParen@32..33 ")"
-    SemiColon@33..34 ";"
+    Semicolon@33..34 ";"
     Whitespace@34..39 "\n    "
     VariableDecl@39..67
       Ident@39..53 "l_contact_name"
@@ -409,7 +409,7 @@ Root@0..68
         LParen@62..63 "("
         Integer@63..66 "255"
         RParen@66..67 ")"
-    SemiColon@67..68 ";"
+    Semicolon@67..68 ";"
 "#]],
         );
     }
