@@ -19,8 +19,8 @@ use super::{check_parameter_types, replace_token, RuleDefinition, RuleError, Rul
 pub(super) struct FixTrunc;
 
 impl RuleDefinition for FixTrunc {
-    fn short_desc(&self) -> &'static str {
-        "Fix `trunc()` usage based on type"
+    fn short_desc(&self) -> String {
+        "Fix `trunc()` usage based on type".to_string()
     }
 
     fn find_rules(
@@ -50,8 +50,8 @@ impl RuleDefinition for FixTrunc {
 pub(super) struct ReplaceSysdate;
 
 impl RuleDefinition for ReplaceSysdate {
-    fn short_desc(&self) -> &'static str {
-        "Replace `SYSDATE` with PostgreSQL's `clock_timestamp()`"
+    fn short_desc(&self) -> String {
+        "Replace `SYSDATE` with PostgreSQL's `clock_timestamp()`".to_string()
     }
 
     fn find_rules(
@@ -80,8 +80,8 @@ impl RuleDefinition for ReplaceSysdate {
 pub(super) struct ReplaceNvl;
 
 impl RuleDefinition for ReplaceNvl {
-    fn short_desc(&self) -> &'static str {
-        "Replace `NVL` with PostgreSQL's `coalesce`"
+    fn short_desc(&self) -> String {
+        "Replace `NVL` with PostgreSQL's `coalesce`".to_string()
     }
 
     fn find_rules(

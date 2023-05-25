@@ -12,9 +12,9 @@ use std::ops::Range;
 use indexmap::IndexMap;
 use rowan::{Direction, GreenNode, GreenToken, NodeOrToken, TextRange, TokenAtOffset};
 use serde::{Deserialize, Serialize};
+use tsify::Tsify;
 use unicode_width::UnicodeWidthStr;
 use wasm_bindgen::prelude::*;
-use wasm_typescript_definition::TypescriptDefinition;
 
 use crate::analyze::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
@@ -46,7 +46,7 @@ lazy_static::lazy_static! {
     };
 }
 
-#[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum RuleError {
     #[error("Item not found: {0}")]
@@ -66,7 +66,7 @@ pub enum RuleError {
 }
 
 trait RuleDefinition {
-    fn short_desc(&self) -> &'static str;
+    fn short_desc(&self) -> String;
     fn find_rules(&self, root: &Root, ctx: &DboAnalyzeContext)
         -> Result<Vec<RuleMatch>, RuleError>;
     fn apply(
@@ -95,14 +95,16 @@ impl RuleMatch {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct RuleLocation {
     offset: Range<u32>,
     start: LineCol,
     end: LineCol,
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Copy, Debug, Eq, PartialEq, Deserialize, Serialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct LineCol {
     line: u32,
     col: u32,
@@ -140,11 +142,28 @@ impl fmt::Display for RuleLocation {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct RuleHint {
     name: String,
     locations: Vec<RuleLocation>,
-    short_desc: &'static str,
+    short_desc: String,
+}
+
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+pub struct RuleApplication {
+    original: String,
+    locations: Vec<RuleLocation>,
+}
+
+impl RuleApplication {
+    fn new(original: String, locations: Vec<RuleLocation>) -> Self {
+        RuleApplication {
+            original,
+            locations,
+        }
+    }
 }
 
 impl From<ParseError> for RuleError {
@@ -178,7 +197,7 @@ pub fn apply_rule(
     rule_name: &str,
     location: Option<&RuleLocation>,
     ctx: &DboAnalyzeContext,
-) -> Result<(String, Vec<RuleLocation>), RuleError> {
+) -> Result<RuleApplication, RuleError> {
     let apply = |p: Parse| {
         let rule = ANALYZER_RULES
             .get(rule_name)
@@ -197,7 +216,10 @@ pub fn apply_rule(
             let range = rule.apply(&node.unwrap().node, location, ctx)?;
             let text = root.syntax().to_string();
             let location = RuleLocation::from(&text, range);
-            Ok((root.syntax().to_string(), vec![location]))
+            Ok(RuleApplication::new(
+                root.syntax().to_string(),
+                vec![location],
+            ))
         } else {
             let mut result = Vec::new();
             while let Ok(locations) = rule.find_rules(&root, ctx) {
@@ -215,7 +237,7 @@ pub fn apply_rule(
                 .into_iter()
                 .map(|r| RuleLocation::from(&text, r))
                 .collect();
-            Ok((text, result))
+            Ok(RuleApplication::new(text, result))
         }
     };
 
@@ -233,16 +255,11 @@ pub fn js_apply_rule(
     typ: DboType,
     sql: &str,
     rule: &str,
-    location: JsValue,
-    ctx: JsValue,
-) -> Result<JsValue, JsValue> {
-    let location: Option<RuleLocation> = serde_wasm_bindgen::from_value(location)?;
-    let ctx = serde_wasm_bindgen::from_value(ctx)?;
-
-    match apply_rule(typ, sql, rule, location.as_ref(), &ctx) {
-        Ok(location) => Ok(serde_wasm_bindgen::to_value(&location)?),
-        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
-    }
+    location: Option<RuleLocation>,
+    ctx: DboAnalyzeContext,
+) -> Result<RuleApplication, JsValue> {
+    apply_rule(typ, sql, rule, location.as_ref(), &ctx)
+        .or_else(|err| Err(serde_wasm_bindgen::to_value(&err)?))
 }
 
 /// Finds all descendant nodes within an AST node that fulfill the predicate
@@ -431,7 +448,7 @@ mod tests {
                 &context,
             );
             assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().0;
+            transpiled = result.unwrap().original;
 
             let result = crate::analyze(DboType::Procedure, &transpiled, &context);
             assert!(result.is_ok(), "{:#?}", result);
@@ -518,7 +535,7 @@ mod tests {
         let mut do_apply = |rule: &RuleHint| {
             let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, None, &context);
             assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().0;
+            transpiled = result.unwrap().original;
 
             let result = crate::analyze(DboType::Procedure, &transpiled, &context);
             assert!(result.is_ok(), "{:#?}", result);
@@ -581,7 +598,7 @@ mod tests {
                 &context,
             );
             assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().0;
+            transpiled = result.unwrap().original;
 
             let result = crate::analyze(DboType::Procedure, &transpiled, &context);
             assert!(result.is_ok(), "{:#?}", result);

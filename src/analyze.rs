@@ -7,23 +7,22 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
-use wasm_typescript_definition::TypescriptDefinition;
 
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use crate::rules::{find_applicable_rules, RuleHint};
 use crate::syntax::SyntaxKind;
-use crate::util::SqlIdent;
+use crate::SqlIdent;
 
 /// Different types the analyzer can possibly examine.
 ///
 /// Some types may be only available for specific frontends, e.g.
 /// [`Package`][`DboType::Package`] is only available for Oracle databases.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize_repr)]
-#[repr(usize)]
-#[wasm_bindgen]
+#[derive(Tsify, Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
 pub enum DboType {
     CheckConstraint,
     DefaultExpr,
@@ -36,7 +35,8 @@ pub enum DboType {
     View,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
 pub struct DboFunctionMetaData {
     pub name: String,
@@ -44,7 +44,8 @@ pub struct DboFunctionMetaData {
     pub lines_of_code: usize,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
 pub struct DboProcedureMetaData {
     pub name: String,
@@ -52,7 +53,8 @@ pub struct DboProcedureMetaData {
     pub lines_of_code: usize,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
 pub struct DboQueryMetaData {
     // For now, we only report how many OUTER JOINs there are, but not any
@@ -61,12 +63,15 @@ pub struct DboQueryMetaData {
 }
 
 /// The result of parsing and analyzing a piece of SQL code.
-#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, TypescriptDefinition)]
-#[serde(rename_all = "camelCase")]
+#[derive(Tsify, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DboMetaData {
     pub rules: Vec<RuleHint>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub function: Option<DboFunctionMetaData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub procedure: Option<DboProcedureMetaData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub query: Option<DboQueryMetaData>,
 }
 
@@ -74,9 +79,9 @@ pub struct DboMetaData {
 ///
 /// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
 /// but furter extensible as needed. Keep alphabetically sorted.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize_repr)]
-#[repr(usize)]
-#[wasm_bindgen]
+#[derive(Tsify, Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
+#[serde(rename_all = "camelCase")]
 pub enum DboColumnType {
     BigInt,
     Date,
@@ -91,7 +96,8 @@ pub enum DboColumnType {
     TimeWithTz,
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Deserialize, TypescriptDefinition)]
+#[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
 pub struct DboTableColumn {
     typ: DboColumnType,
@@ -103,8 +109,10 @@ impl DboTableColumn {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
+#[derive(Tsify, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DboTable {
+    #[tsify(type = "Record<string, DboTableColumn>")]
     columns: HashMap<SqlIdent, DboTableColumn>,
 }
 
@@ -114,8 +122,10 @@ impl DboTable {
     }
 }
 
-#[derive(Clone, Debug, Default, Eq, PartialEq, Deserialize)]
+#[derive(Tsify, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DboAnalyzeContext {
+    #[tsify(type = "Record<string, DboTable>")]
     tables: HashMap<SqlIdent, DboTable>,
 }
 
@@ -134,7 +144,7 @@ impl DboAnalyzeContext {
 }
 
 /// Possible errors that might occur during analyzing.
-#[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize, TypescriptDefinition)]
+#[derive(Debug, Eq, thiserror::Error, PartialEq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum AnalyzeError {
     #[error("Language construct unsupported: {0:?}")]
@@ -174,27 +184,18 @@ pub fn analyze(
 
 /// WASM export of [`analyze()`]. Should _never_ be called from other Rust code.
 ///
-/// A second, WASM-specific function is needed here. Since the only allowed
-/// [`Result`] type to return to JS is a [`Result<T, JsValue>`], we just call
-/// the actual [`analyze()`] function and map the error type.
+/// A second, WASM-specific function is required here, as the only allowed [`Result`] type for
+/// returning to JS is [`Result<T, JsValue>`]. We simply call the actual [`analyze()`] function and
+/// map the error type.
 ///
-/// For one, the main [`analyze()`] function shouldn't return a
-/// [`JsValue`][`wasm_bindgen::JsValue`], since it should represent the "normal"
-/// entry point into the library (e.g. from other Rust code). And secondly,
-/// [`JsValue`][`wasm_bindgen::JsValue`] doesn't implement the
-/// [`Debug`][`std::fmt::Debug`] trait, which just complicates unit tests.
-/// And secondly, we want to transparently parse
-/// [`DboAnalyzeContext`][`self::DboAnalyzeContext`] from the raw JS value
-/// and pass it on.
+/// The main [`analyze()`] function should not return a [`JsValue`][`wasm_bindgen::JsValue`],
+/// since it represents the "normal" entry point into the library (e.g. from other Rust code).
+/// Furthermore, [`JsValue`][`wasm_bindgen::JsValue`] does not implement the
+/// [`Debug`][`std::fmt::Debug`] trait, making unit tests unnecessarily complex.
 #[cfg(any(target_arch = "wasm32", target_arch = "wasm64"))]
 #[wasm_bindgen(js_name = "analyze")]
-pub fn js_analyze(typ: DboType, sql: &str, ctx: JsValue) -> Result<JsValue, JsValue> {
-    let ctx = serde_wasm_bindgen::from_value(ctx)?;
-
-    match analyze(typ, sql, &ctx) {
-        Ok(metadata) => Ok(serde_wasm_bindgen::to_value(&metadata)?),
-        Err(err) => Err(serde_wasm_bindgen::to_value(&err)?),
-    }
+pub fn js_analyze(typ: DboType, sql: &str, ctx: DboAnalyzeContext) -> Result<DboMetaData, JsValue> {
+    analyze(typ, sql, &ctx).or_else(|err| Err(serde_wasm_bindgen::to_value(&err)?))
 }
 
 fn analyze_function(
