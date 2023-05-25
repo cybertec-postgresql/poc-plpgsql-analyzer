@@ -143,6 +143,16 @@ pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
+pub fn parse_trigger(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a query `SELECT`
+    grammar::parse_trigger(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// The struct holds the parsed / built green syntax tree with
 /// a list of parse errors.
 #[derive(Debug)]

@@ -19,21 +19,21 @@ pub(crate) fn parse_trigger(p: &mut Parser) {
 /// Parses the header of a trigger.
 fn parse_header(p: &mut Parser) {
     p.start(SyntaxKind::TriggerHeader);
-    p.expect(TokenKind::CreateKw);
-    if p.eat(TokenKind::OrKw) {
-        p.expect(TokenKind::ReplaceKw);
+    p.expect(T![create]);
+    if p.eat(T![or]) {
+        p.expect(T![replace]);
     }
 
-    p.eat_one_of(&[TokenKind::Editionable, TokenKind::NonEditionable]);
+    p.eat_one_of(&[T![editionable], T![noneditionable]]);
 
-    p.expect(TokenKind::TriggerKw);
+    p.expect(T![trigger]);
     parse_ident(p, 1..2);
 
     expect_token_match!(
         p,
         &[TokenKind::BeforeKw] | &[TokenKind::InsteadKw, TokenKind::OfKw] | &[TokenKind::AfterKw] =>
             match p.current() {
-                TokenKind::InsertKw | TokenKind::UpdateKw | TokenKind::DeleteKw => parse_simple_dml_trigger(p),
+                T![insert] | T![update] | T![delete] => parse_simple_dml_trigger(p),
                 _ => parse_system_trigger(p)
             },
         &[TokenKind::ForKw] => p.error(ParseError::Unimplemented("compound trigger".to_string()))
@@ -46,20 +46,20 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
     parse_dml_event_clause(p);
     parse_referencing_clause(p);
 
-    if p.eat(TokenKind::ForKw) {
-        p.expect(TokenKind::EachKw);
-        p.expect(TokenKind::RowKw);
+    if p.eat(T![for]) {
+        p.expect(T![each]);
+        p.expect(T![row]);
     }
 
     parse_trigger_edition_clause(p);
     parse_trigger_ordering_clause(p);
 
-    p.eat_one_of(&[TokenKind::EnableKw, TokenKind::DisableKw]);
+    p.eat_one_of(&[T![enable], T![disable]]);
 
-    if p.eat(TokenKind::WhenKw) {
-        p.expect(TokenKind::LParen);
+    if p.eat(T![when]) {
+        p.expect(T!["("]);
         parse_expr(p);
-        p.expect(TokenKind::RParen);
+        p.expect(T![")"]);
     }
 }
 
@@ -75,7 +75,7 @@ fn parse_system_trigger(p: &mut Parser) {
                 | &[TokenKind::DdlKw]
                 | &[TokenKind::DropKw]
                 | &[TokenKind::GrantKw]
-                | &[TokenKind::NoAuditKw]
+                | &[TokenKind::NoauditKw]
                 | &[TokenKind::RenameKw]
                 | &[TokenKind::RevokeKw]
                 | &[TokenKind::TruncateKw]
@@ -86,7 +86,7 @@ fn parse_system_trigger(p: &mut Parser) {
                 &[TokenKind::CloneKw]
                     | &[TokenKind::DbRoleChangeKw]
                     | &[TokenKind::LogonKw]
-                    | &[TokenKind::ServerErrorKw]
+                    | &[TokenKind::ServererrorKw]
                     | &[TokenKind::StartupKw]
                     | &[TokenKind::SuspendKw]
                     | &[TokenKind::SetKw, TokenKind::ContainerKw] => {}
@@ -100,62 +100,58 @@ fn parse_system_trigger(p: &mut Parser) {
             )
         );
 
-        if !p.eat(TokenKind::OrKw) {
+        if !p.eat(T![or]) {
             break;
         }
     }
 
-    p.expect(TokenKind::OnKw);
+    p.expect(T![on]);
 
-    if p.at(TokenKind::PluggableKw) || p.at(TokenKind::DatabaseKw) {
-        p.eat(TokenKind::PluggableKw);
-        p.expect(TokenKind::DatabaseKw);
+    if p.at(T![pluggable]) || p.at(T![database]) {
+        p.eat(T![pluggable]);
+        p.expect(T![database]);
     } else {
         parse_ident(p, 0..1);
-        p.eat(TokenKind::Dot);
-        p.expect(TokenKind::SchemaKw);
+        p.eat(T![.]);
+        p.expect(T![schema]);
     }
 
     parse_trigger_ordering_clause(p);
 
-    p.eat_one_of(&[TokenKind::EnableKw, TokenKind::DisableKw]);
+    p.eat_one_of(&[T![enable], T![disable]]);
 }
 
 fn parse_dml_event_clause(p: &mut Parser) {
     loop {
         let token = p.current();
 
-        if !p.expect_one_of(&[
-            TokenKind::InsertKw,
-            TokenKind::UpdateKw,
-            TokenKind::DeleteKw,
-        ]) {
+        if !p.expect_one_of(&[T![insert], T![update], T![delete]]) {
             break;
         }
 
-        if token == TokenKind::UpdateKw && p.eat(TokenKind::OfKw) {
+        if token == T![update] && p.eat(T![of]) {
             parse_ident(p, 1..1);
-            while p.eat(TokenKind::Comma) {
+            while p.eat(T![,]) {
                 parse_ident(p, 1..1);
             }
         }
 
-        if !p.eat(TokenKind::OrKw) {
+        if !p.eat(T![or]) {
             break;
         }
     }
-    p.expect(TokenKind::OnKw);
+    p.expect(T![on]);
     parse_ident(p, 1..2);
 }
 
-const REFERENCING_TOKENS: &[TokenKind] = &[TokenKind::OldKw, TokenKind::NewKw, TokenKind::ParentKw];
+const REFERENCING_TOKENS: &[TokenKind] = &[T![old], T![new], T![parent]];
 fn parse_referencing_clause(p: &mut Parser) {
-    if p.eat(TokenKind::ReferencingKw) {
+    if p.eat(T![referencing]) {
         loop {
             if !p.expect_one_of(REFERENCING_TOKENS) {
                 break;
             }
-            p.eat(TokenKind::AsKw);
+            p.eat(T![as]);
             parse_ident(p, 1..1);
 
             if !REFERENCING_TOKENS.contains(&p.current()) {
@@ -166,16 +162,16 @@ fn parse_referencing_clause(p: &mut Parser) {
 }
 
 fn parse_trigger_edition_clause(p: &mut Parser) {
-    if p.eat_one_of(&[TokenKind::ForwardKw, TokenKind::ReverseKw]) {
-        p.expect(TokenKind::CrossEditionKw);
+    if p.eat_one_of(&[T![forward], T![reverse]]) {
+        p.expect(T![crossedition]);
     }
 }
 
 fn parse_trigger_ordering_clause(p: &mut Parser) {
-    if p.eat_one_of(&[TokenKind::FollowsKw, TokenKind::PrecedesKw]) {
+    if p.eat_one_of(&[T![follows], T![precedes]]) {
         loop {
             parse_ident(p, 1..2);
-            if !p.eat(TokenKind::Comma) {
+            if !p.eat(T![,]) {
                 break;
             }
         }
@@ -184,7 +180,7 @@ fn parse_trigger_ordering_clause(p: &mut Parser) {
 
 /// Parses the body of a trigger.
 fn parse_body(p: &mut Parser) {
-    if p.eat(TokenKind::CallKw) {
+    if p.eat(T![call]) {
         parse_function_invocation(p);
     } else {
         parse_block(p);
@@ -408,10 +404,10 @@ Root@0..237
                 Dot@220..221 "."
                 Ident@221..229 "group_id"
           RParen@229..230 ")"
-        SemiColon@230..231 ";"
+        Semicolon@230..231 ";"
       Whitespace@231..232 "\n"
       Keyword@232..235 "END"
-      SemiColon@235..236 ";"
+      Semicolon@235..236 ";"
     Whitespace@236..237 "\n"
 "#]],
         );
@@ -463,13 +459,13 @@ Root@0..518
           Whitespace@109..110 " "
           Datatype@110..116
             Keyword@110..116 "NUMBER"
-        SemiColon@116..117 ";"
+        Semicolon@116..117 ";"
         Whitespace@117..118 "\n"
       Keyword@118..123 "BEGIN"
       Whitespace@123..128 "\n    "
       BlockStatement@128..133
         Keyword@128..132 "NULL"
-        SemiColon@132..133 ";"
+        Semicolon@132..133 ";"
       Whitespace@133..138 "\n    "
       Comment@138..168 "-- insert a new custo ..."
       Whitespace@168..173 "\n    "
@@ -533,7 +529,7 @@ Root@0..518
           Whitespace@332..333 " "
           IdentGroup@333..335
             Ident@333..335 "id"
-          SemiColon@335..336 ";"
+          Semicolon@335..336 ";"
         Whitespace@336..342 "\n\n    "
         Comment@342..363 "-- insert the contact"
         Whitespace@363..368 "\n    "
@@ -595,10 +591,10 @@ Root@0..518
           IdentGroup@507..509
             Ident@507..509 "id"
           RParen@509..510 ")"
-          SemiColon@510..511 ";"
+          Semicolon@510..511 ";"
         Whitespace@511..512 "\n"
       Keyword@512..515 "END"
-      SemiColon@515..516 ";"
+      Semicolon@515..516 ";"
     Whitespace@516..518 "\n\n"
 "#]],
         );
@@ -636,10 +632,10 @@ Root@0..84
       Whitespace@68..73 "\n    "
       BlockStatement@73..78
         Keyword@73..77 "NULL"
-        SemiColon@77..78 ";"
+        Semicolon@77..78 ";"
       Whitespace@78..79 "\n"
       Keyword@79..82 "END"
-      SemiColon@82..83 ";"
+      Semicolon@82..83 ";"
     Whitespace@83..84 "\n"
 "#]],
         );

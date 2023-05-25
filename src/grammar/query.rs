@@ -50,23 +50,23 @@ pub(crate) fn parse_insert(p: &mut Parser) {
     }
     p.expect(T![")"]);
 
-    if p.eat_one_of(&[TokenKind::ReturnKw, TokenKind::ReturningKw]) {
+    if p.eat_one_of(&[T![return], T![returning]]) {
         loop {
             parse_expr(p);
-            if !p.eat(TokenKind::Comma) {
+            if !p.eat(T![,]) {
                 break;
             }
         }
-        p.expect(TokenKind::IntoKw);
+        p.expect(T![into]);
         loop {
             parse_ident(p, 1..1);
-            if !p.eat(TokenKind::Comma) {
+            if !p.eat(T![,]) {
                 break;
             }
         }
     }
 
-    p.eat(TokenKind::SemiColon);
+    p.eat(T![;]);
     p.finish();
 }
 
@@ -391,7 +391,7 @@ Root@0..148
     Whitespace@142..143 " "
     IdentGroup@143..147
       Ident@143..147 "name"
-    SemiColon@147..148 ";"
+    Semicolon@147..148 ";"
 "#]],
         );
     }

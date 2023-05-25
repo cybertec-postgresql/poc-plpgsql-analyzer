@@ -14,6 +14,7 @@ pub(crate) use function::*;
 pub(crate) use function_invocation::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
+pub(crate) use trigger::*;
 
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
@@ -134,7 +135,7 @@ fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
 /// Helper function for [`parse_ident`]
 fn parse_single_ident(p: &mut Parser) {
     if p.current().is_ident() {
-        if !p.eat(TokenKind::BindVar) {
+        if !p.eat(T![bind_var]) {
             p.bump_any_map(SyntaxKind::Ident)
         }
     } else {
