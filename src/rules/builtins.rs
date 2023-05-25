@@ -34,7 +34,7 @@ impl RuleDefinition for FixTrunc {
             .ok_or(RuleError::NoSuchItem("Procedure"))?;
         check_parameter_types(node, ctx)?;
 
-        Err(RuleError::NoChange)
+        Err(RuleError::Unsupported("CYAR-0004: FixTrunc".to_string()))
     }
 
     fn apply(
@@ -43,7 +43,7 @@ impl RuleDefinition for FixTrunc {
         _location: &RuleLocation,
         _ctx: &DboAnalyzeContext,
     ) -> Result<TextRange, RuleError> {
-        Err(RuleError::NoChange)
+        Err(RuleError::Unsupported("CYAR-0004: FixTrunc".to_string()))
     }
 }
 
@@ -64,11 +64,7 @@ impl RuleDefinition for ReplaceSysdate {
             .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -99,11 +95,7 @@ impl RuleDefinition for ReplaceNvl {
             .map(|i| RuleMatch::from_node(i.syntax()))
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -160,7 +152,10 @@ mod tests {
         tables.insert("persons".into(), DboTable::new(columns));
         let ctx = DboAnalyzeContext::new(tables);
         let result = rule.find_rules(&root, &ctx);
-        assert_eq!(result, Err(RuleError::NoChange));
+        assert_eq!(
+            result,
+            Err(RuleError::Unsupported("CYAR-0004: FixTrunc".to_string()))
+        );
     }
 
     #[test]
