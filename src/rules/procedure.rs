@@ -40,11 +40,7 @@ impl RuleDefinition for AddParamlistParenthesis {
             })
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -85,11 +81,7 @@ impl RuleDefinition for ReplacePrologue {
             })
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -163,11 +155,7 @@ impl RuleDefinition for ReplaceEpilogue {
             })
             .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -232,11 +220,7 @@ impl RuleDefinition for RemoveEditionable {
         })
         .collect();
 
-        if locations.is_empty() {
-            Err(RuleError::NoChange)
-        } else {
-            Ok(locations)
-        }
+        Ok(locations)
     }
 
     fn apply(
@@ -450,7 +434,7 @@ mod tests {
         let rule = AddParamlistParenthesis;
 
         let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert_eq!(result, Err(RuleError::NoChange));
+        assert_eq!(result, Ok(vec![]));
     }
 
     #[test]

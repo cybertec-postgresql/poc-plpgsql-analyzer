@@ -15,7 +15,7 @@ pub(crate) use function_invocation::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
 
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 use crate::ParseError;
@@ -30,16 +30,16 @@ mod query;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {
-    if p.at(TokenKind::LParen) {
+    if p.at(T!["("]) {
         p.start(SyntaxKind::ParamList);
-        p.bump(TokenKind::LParen);
+        p.bump(T!["("]);
 
         loop {
             match p.current() {
-                TokenKind::Comma => {
-                    p.bump(TokenKind::Comma);
+                T![,] => {
+                    p.bump(T![,]);
                 }
-                TokenKind::RParen | TokenKind::Eof => {
+                T![")"] | T![EOF] => {
                     break;
                 }
                 _ => {
@@ -48,7 +48,7 @@ fn parse_param_list(p: &mut Parser) {
             }
         }
 
-        p.expect(TokenKind::RParen);
+        p.expect(T![")"]);
         p.finish();
     }
 }
@@ -62,15 +62,15 @@ fn parse_param(p: &mut Parser) {
     p.start(SyntaxKind::Param);
     parse_ident(p, 1..1);
 
-    if !p.at(TokenKind::RParen) && !p.at(TokenKind::Comma) && !p.at(TokenKind::Eof) {
-        p.eat(TokenKind::InKw);
+    if !p.at(T![")"]) && !p.at(T![,]) && !p.at(T![EOF]) {
+        p.eat(T![in]);
 
-        if p.eat(TokenKind::OutKw) {
-            p.eat(TokenKind::NoCopyKw);
+        if p.eat(T![out]) {
+            p.eat(T![nocopy]);
             parse_datatype(p);
         } else {
             parse_datatype(p);
-            if p.eat_one_of(&[TokenKind::Assign, TokenKind::DefaultKw]) {
+            if p.eat_one_of(&[T![:=], T![default]]) {
                 parse_expr(p);
             }
         }
@@ -117,12 +117,12 @@ fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
     let mut i: u8 = 1;
     while i < expected_components.end {
         if i < expected_components.start {
-            p.expect(TokenKind::Dot);
-        } else if p.nth(0) != Some(TokenKind::Dot) {
+            p.expect(T![.]);
+        } else if p.nth(0) != Some(T![.]) {
             break;
         }
 
-        p.expect(TokenKind::Dot);
+        p.expect(T![.]);
         parse_single_ident(p);
         i += 1;
     }

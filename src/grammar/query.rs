@@ -5,74 +5,70 @@
 //! Implements parsing of procedures from a token tree.
 
 use crate::grammar::{opt_expr, parse_expr, parse_ident};
-use crate::lexer::TokenKind;
+use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
-    p.expect(TokenKind::SelectKw);
+    p.expect(T![select]);
     parse_column_expr(p);
     parse_into_clause(p, expect_into_clause);
-    p.expect(TokenKind::FromKw);
+    p.expect(T![from]);
     parse_from_list(p);
 
-    if p.at(TokenKind::WhereKw) {
+    if p.at(T![where]) {
         parse_where_clause(p);
     }
 
-    p.eat(TokenKind::SemiColon);
+    p.eat(T![;]);
     p.finish();
 }
 
 pub(crate) fn parse_insert(p: &mut Parser) {
     p.start(SyntaxKind::InsertStmt);
-    p.expect(TokenKind::InsertKw);
-    p.expect(TokenKind::IntoKw);
+    p.expect(T![insert]);
+    p.expect(T![into]);
     parse_ident(p, 1..2);
     parse_ident(p, 0..1);
 
-    if p.eat(TokenKind::LParen) {
+    if p.eat(T!["("]) {
         parse_ident(p, 1..1);
-        while p.eat(TokenKind::Comma) {
+        while p.eat(T![,]) {
             parse_ident(p, 1..1);
         }
-        p.expect(TokenKind::RParen);
+        p.expect(T![")"]);
     }
 
-    p.expect(TokenKind::ValuesKw);
-    p.expect(TokenKind::LParen);
+    p.expect(T![values]);
+    p.expect(T!["("]);
     parse_expr(p);
-    while p.eat(TokenKind::Comma) {
+    while p.eat(T![,]) {
         if !opt_expr(p) {
-            p.expect(TokenKind::DefaultKw);
+            p.expect(T![default]);
         }
     }
-    p.expect(TokenKind::RParen);
+    p.expect(T![")"]);
 
-    p.eat(TokenKind::SemiColon);
+    p.eat(T![;]);
     p.finish();
 }
 
 fn parse_column_expr(p: &mut Parser) {
-    if p.eat(TokenKind::Asterisk) {
+    if p.eat(T![*]) {
         return;
     }
 
     p.start(SyntaxKind::SelectClause);
 
-    while !p.at(TokenKind::IntoKw)
-        && !p.at(TokenKind::FromKw)
-        && !p.at(TokenKind::Eof)
-        && !p.at(TokenKind::SemiColon)
-    {
+    while !p.at(T![into]) && !p.at(T![from]) && !p.at(T![EOF]) && !p.at(T![;]) {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
 
         p.finish();
 
-        p.eat(TokenKind::Comma);
+        p.eat(T![,]);
     }
 
     p.finish();
@@ -82,15 +78,15 @@ fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
     let checkpoint = p.checkpoint();
 
     if expect_into_clause {
-        if !p.expect(TokenKind::IntoKw) {
+        if !p.expect(T![into]) {
             return;
         }
-    } else if !p.eat(TokenKind::IntoKw) {
+    } else if !p.eat(T![into]) {
         return;
     }
 
     parse_ident(p, 1..1);
-    while p.eat(TokenKind::Comma) {
+    while p.eat(T![,]) {
         parse_ident(p, 1..1);
     }
 
@@ -99,14 +95,12 @@ fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 }
 
 fn parse_from_list(p: &mut Parser) {
-    while p.expect_one_of(&[TokenKind::UnquotedIdent, TokenKind::QuotedIdent])
-        && p.eat(TokenKind::Comma)
-    {}
+    while p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]) && p.eat(T![,]) {}
 }
 
 fn parse_where_clause(p: &mut Parser) {
     p.start(SyntaxKind::WhereClause);
-    p.expect(TokenKind::WhereKw);
+    p.expect(T![where]);
 
     parse_expr(p);
 
@@ -194,7 +188,7 @@ Root@0..38
     Keyword@28..32 "FROM"
     Whitespace@32..33 " "
     Ident@33..37 "DUAL"
-    SemiColon@37..38 ";"
+    Semicolon@37..38 ";"
 "#]],
         );
     }
@@ -237,7 +231,7 @@ Root@0..328
           Ident@83..90 "persons"
           Dot@90..91 "."
           Ident@91..93 "id"
-    SemiColon@93..94 ";"
+    Semicolon@93..94 ";"
   Whitespace@94..97 "\n  "
   Comment@97..131 "-- Can be switched, s ..."
   Whitespace@131..134 "\n  "
@@ -313,7 +307,7 @@ Root@0..72
             QuotedLiteral@61..68 "'%foo%'"
         RParen@68..69 ")"
         Whitespace@69..70 "\n"
-    SemiColon@70..71 ";"
+    Semicolon@70..71 ";"
   Whitespace@71..72 "\n"
 "#]],
         );
@@ -356,7 +350,7 @@ Root@0..63
     Whitespace@53..54 " "
     Keyword@54..61 "DEFAULT"
     RParen@61..62 ")"
-    SemiColon@62..63 ";"
+    Semicolon@62..63 ";"
 "#]],
         );
     }

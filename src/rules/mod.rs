@@ -51,8 +51,6 @@ lazy_static::lazy_static! {
 pub enum RuleError {
     #[error("Item not found: {0}")]
     NoSuchItem(&'static str),
-    #[error("No change")]
-    NoChange,
     #[error("Table column definition for '{0}' not found")]
     NoTableInfo(String),
     #[error("Invalid type reference: {0}")]
@@ -64,7 +62,7 @@ pub enum RuleError {
     #[error("Failed to parse replacement: {0}")]
     ParseError(String),
     #[error("Language construct unsupported: {0:?}")]
-    Unsupported(DboType),
+    Unsupported(String),
 }
 
 trait RuleDefinition {
@@ -160,6 +158,8 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
         .iter()
         .filter_map(|(name, rule)| {
             rule.find_rules(root, ctx)
+                .ok()
+                .filter(|rule_hint| !rule_hint.is_empty())
                 .map(|ranges| RuleHint {
                     name: (*name).to_owned(),
                     locations: ranges
@@ -168,7 +168,6 @@ pub fn find_applicable_rules(input: &str, root: &Root, ctx: &DboAnalyzeContext) 
                         .collect(),
                     short_desc: rule.short_desc(),
                 })
-                .ok()
         })
         .collect()
 }
@@ -224,7 +223,7 @@ pub fn apply_rule(
         DboType::Function => apply(parse_function(sql)?),
         DboType::Procedure => apply(parse_procedure(sql)?),
         DboType::Query => apply(parse_query(sql)?),
-        _ => Err(RuleError::Unsupported(typ)),
+        _ => Err(RuleError::Unsupported(format!("{typ:?}"))),
     }
 }
 
