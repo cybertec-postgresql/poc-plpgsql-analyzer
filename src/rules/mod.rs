@@ -422,6 +422,26 @@ mod tests {
 
     use super::*;
 
+    #[track_caller]
+    fn check_metadata_rule(
+        rule: &RuleHint,
+        name: &str,
+        locations_len: usize,
+        offset: Range<u32>,
+        start_line: u32,
+        start_col: u32,
+        end_line: u32,
+        end_col: u32,
+    ) {
+        assert_eq!(rule.name, name);
+        assert_eq!(rule.locations.len(), locations_len);
+        assert_eq!(rule.locations[0].offset, offset);
+        assert_eq!(rule.locations[0].start.line, start_line);
+        assert_eq!(rule.locations[0].start.col, start_col);
+        assert_eq!(rule.locations[0].end.line, end_line);
+        assert_eq!(rule.locations[0].end.col, end_col);
+    }
+
     #[test]
     fn test_apply_all_applicable_rules_on_procedure() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
@@ -455,49 +475,19 @@ mod tests {
             result.unwrap()
         };
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0001");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 27..27);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 28);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0001", 1, 27..27, 1, 28, 1, 28);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0002");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 30..32);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0002", 1, 30..32, 2, 1, 2, 3);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0003");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 281..292);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 9);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 9);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 15);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0003", 1, 281..292, 9, 4, 9, 15);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0005");
-        assert_eq!(metadata.rules[0].locations.len(), 2);
-        assert_eq!(metadata.rules[0].locations[0].offset, 56..63);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 15);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 22);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0005", 2, 56..63, 4, 15, 4, 22);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0005");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 138..145);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 5);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 21);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 5);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0005", 1, 138..145, 5, 21, 5, 28);
         do_apply(&metadata.rules[0]);
 
         expect![[r#"
@@ -605,31 +595,13 @@ mod tests {
             result.unwrap()
         };
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0001");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 40..40);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 30);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 30);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0001", 1, 40..40, 1, 30, 1, 30);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0002");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 43..45);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0002", 1, 43..45, 2, 1, 2, 3);
         metadata = do_apply(&metadata.rules[0]);
 
-        assert_eq!(metadata.rules[0].name, "CYAR-0003");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 77..101);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 17);
+        check_metadata_rule(&metadata.rules[0], "CYAR-0003", 1, 77..101, 4, 4, 4, 17);
         do_apply(&metadata.rules[0]);
 
         expect![[r#"CREATE PROCEDURE "读文👩🏼‍🔬"()
