@@ -112,18 +112,14 @@ impl RuleDefinition for ReplaceNvl {
 mod tests {
     use std::collections::HashMap;
 
-    use expect_test::{expect, Expect};
+    use expect_test::expect;
     use pretty_assertions::assert_eq;
 
     use crate::ast::AstNode;
-    use crate::syntax::SyntaxNode;
+    use crate::rules::tests::{check_applied_location, check_locations, check_node};
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
 
     use super::*;
-
-    fn check(node: SyntaxNode, expect: Expect) {
-        expect.assert_eq(&node.to_string());
-    }
 
     #[test]
     fn replace_trunc_with_date_trunc() {
@@ -170,11 +166,10 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0].range, TextRange::new(51.into(), 58.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
-        assert_eq!(locations[1].range, TextRange::new(123.into(), 130.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
+        check_locations(
+            &locations,
+            r#"[RuleMatch(51..58, "SYSDATE"), RuleMatch(123..130, "SYSDATE")]"#,
+        );
 
         let result = rule.apply(
             &locations[0].node,
@@ -182,8 +177,8 @@ mod tests {
             &DboAnalyzeContext::default(),
         );
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -196,15 +191,13 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(51.into(), 68.into()));
-        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
+        check_applied_location(&root, location, 51..68, "clock_timestamp()");
 
         let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(133.into(), 140.into()));
+        check_locations(&locations, r#"[RuleMatch(133..140, "SYSDATE")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -214,8 +207,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -228,8 +221,7 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(133.into(), 150.into()));
-        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
+        check_applied_location(&root, location, 133..150, "clock_timestamp()");
     }
 
     #[test]
@@ -244,10 +236,10 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0].range, TextRange::new(7.into(), 10.into()));
-        assert_eq!(locations[1].range, TextRange::new(11.into(), 14.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
+        check_locations(
+            &locations,
+            r#"[RuleMatch(7..10, "NVL"), RuleMatch(11..14, "NVL")]"#,
+        );
 
         let result = rule.apply(
             &locations[0].node,
@@ -255,8 +247,8 @@ mod tests {
             &DboAnalyzeContext::default(),
         );
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 SELECT coalesce(NVL(dummy, dummy), 'John'), JOHN.NVL() from dual;
             "#]],
@@ -266,19 +258,15 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
+        check_locations(&locations, r#"[RuleMatch(16..19, "NVL")]"#);
 
-        assert_eq!(location, TextRange::new(7.into(), 15.into()));
-        assert_eq!(&root.syntax().to_string()[location], "coalesce");
+        check_applied_location(&root, location, 7..15, "coalesce");
 
         let result = rule.find_rules(&root, &DboAnalyzeContext::default());
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
+        check_locations(&locations, r#"[RuleMatch(16..19, "NVL")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -288,13 +276,12 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 SELECT coalesce(coalesce(dummy, dummy), 'John'), JOHN.NVL() from dual;
             "#]],
         );
-        assert_eq!(location, TextRange::new(16.into(), 24.into()));
-        assert_eq!(&root.syntax().to_string()[location], "coalesce");
+        check_applied_location(&root, location, 16..24, "coalesce");
     }
 }

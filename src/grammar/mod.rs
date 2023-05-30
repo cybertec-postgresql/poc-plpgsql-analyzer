@@ -165,6 +165,7 @@ mod tests {
 
     /// Helper function to compare the build syntax tree with the expected
     /// output.
+    #[track_caller]
     pub fn check(parse: Parse, expected_tree: Expect) {
         expected_tree.assert_eq(&format!("{:#?}", parse.syntax()))
     }

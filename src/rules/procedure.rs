@@ -235,17 +235,13 @@ impl RuleDefinition for RemoveEditionable {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::expect;
     use pretty_assertions::assert_eq;
 
     use crate::ast::AstNode;
-    use crate::syntax::SyntaxNode;
+    use crate::rules::tests::{check_applied_location, check_locations, check_node};
 
     use super::*;
-
-    fn check(node: SyntaxNode, expect: Expect) {
-        expect.assert_eq(&node.to_string());
-    }
 
     #[test]
     fn test_replace_editionable() {
@@ -260,12 +256,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(92.into(), 103.into()));
-        assert_eq!(
-            &root.syntax().to_string()[locations[0].range],
-            "EDITIONABLE"
-        );
+        check_locations(&locations, r#"[RuleMatch(92..103, "EDITIONABLE")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -275,8 +266,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
     -- test: ignore EDITIONABLE keyword, there is no equivalent in PostgreSQL
     CREATE OR REPLACE PROCEDURE ignore_editionable
@@ -286,8 +277,7 @@ mod tests {
     END ignore_editionable;
     "#]],
         );
-        assert_eq!(location, TextRange::new(92.into(), 92.into()));
-        assert_eq!(&root.syntax().to_string()[location], "");
+        check_applied_location(&root, location, 92..92, "");
     }
 
     #[test]
@@ -302,11 +292,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(27.into(), 27.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "");
-
-        // let root = root.clone_for_update();
+        check_locations(&locations, r#"[RuleMatch(27..27, "")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -316,8 +302,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml()
                 IS
@@ -330,8 +316,7 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(27.into(), 29.into()));
-        assert_eq!(&root.syntax().to_string()[location], "()");
+        check_applied_location(&root, location, 27..29, "()");
     }
 
     #[test]
@@ -346,9 +331,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(28.into(), 30.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "IS");
+        check_locations(&locations, r#"[RuleMatch(28..30, "IS")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -358,8 +341,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 AS $$
@@ -372,8 +355,7 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(28.into(), 33.into()));
-        assert_eq!(&root.syntax().to_string()[location], "AS $$");
+        check_applied_location(&root, location, 28..33, "AS $$");
     }
 
     #[test]
@@ -388,12 +370,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(276.into(), 287.into()));
-        assert_eq!(
-            &root.syntax().to_string()[locations[0].range],
-            " secure_dml"
-        );
+        check_locations(&locations, r#"[RuleMatch(276..287, " secure_dml")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -403,8 +380,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -418,11 +395,7 @@ mod tests {
                 $$ LANGUAGE plpgsql;
             "#]],
         );
-        assert_eq!(location, TextRange::new(277.into(), 298.into()));
-        assert_eq!(
-            &root.syntax().to_string()[location],
-            "\n$$ LANGUAGE plpgsql;"
-        );
+        check_applied_location(&root, location, 277..298, "\n$$ LANGUAGE plpgsql;");
     }
 
     #[test]
@@ -449,9 +422,7 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(74.into(), 76.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "AS");
+        check_locations(&locations, r#"[RuleMatch(74..76, "AS")]"#);
 
         let result = rule.apply(
             &locations[0].node,
@@ -461,8 +432,8 @@ mod tests {
         assert!(result.is_ok(), "{:#?}", result);
 
         let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        check_node(
+            &root,
             expect![[r#"
                 -- test: use of AS instead of IS
                 CREATE OR REPLACE PROCEDURE procedure_as
@@ -472,7 +443,6 @@ mod tests {
                 END procedure_as;
             "#]],
         );
-        assert_eq!(location, TextRange::new(74.into(), 79.into()));
-        assert_eq!(&root.syntax().to_string()[location], "AS $$");
+        check_applied_location(&root, location, 74..79, "AS $$");
     }
 }

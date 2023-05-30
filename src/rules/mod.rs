@@ -77,7 +77,7 @@ trait RuleDefinition {
     ) -> Result<TextRange, RuleError>;
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Eq, PartialEq)]
 struct RuleMatch {
     node: SyntaxNode,
     range: TextRange,
@@ -92,6 +92,17 @@ impl RuleMatch {
             node: node.clone(),
             range: node.text_range(),
         }
+    }
+}
+
+impl fmt::Debug for RuleMatch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "RuleMatch({:?}, \"{}\")",
+            self.range,
+            &self.node.ancestors().last().unwrap().text().to_string()[self.range]
+        )
     }
 }
 
@@ -417,10 +428,34 @@ fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> Res
 
 #[cfg(test)]
 mod tests {
-    use expect_test::expect;
+    use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
 
     use super::*;
+
+    #[track_caller]
+    pub(super) fn check_node(root: &Root, expect: Expect) {
+        expect.assert_eq(&root.syntax.clone().to_string());
+    }
+
+    #[track_caller]
+    pub(super) fn check_locations(locations: &Vec<RuleMatch>, expected: &str) {
+        assert_eq!(format!("{:?}", locations), expected);
+    }
+
+    #[track_caller]
+    pub(super) fn check_applied_location(
+        root: &Root,
+        location: TextRange,
+        expected_location: Range<u32>,
+        expected_text: &str,
+    ) {
+        assert_eq!(
+            location,
+            TextRange::new(expected_location.start.into(), expected_location.end.into())
+        );
+        assert_eq!(&root.syntax().to_string()[location], expected_text);
+    }
 
     #[track_caller]
     fn check_metadata_rule(
