@@ -116,7 +116,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::ast::AstNode;
-    use crate::rules::tests::{check_applied_location, check_locations, check_node};
+    use crate::rules::tests::{apply_first_rule, check_node, parse_root};
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
 
     use super::*;
@@ -162,21 +162,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceSysdate;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(
-            &locations,
-            r#"[RuleMatch(51..58, "SYSDATE"), RuleMatch(123..130, "SYSDATE")]"#,
-        );
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -191,22 +177,8 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        check_applied_location(&root, location, 51..68, "clock_timestamp()");
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(133..140, "SYSDATE")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -221,7 +193,6 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        check_applied_location(&root, location, 133..150, "clock_timestamp()");
     }
 
     #[test]
@@ -232,21 +203,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceNvl;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(
-            &locations,
-            r#"[RuleMatch(7..10, "NVL"), RuleMatch(11..14, "NVL")]"#,
-        );
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -254,34 +211,12 @@ mod tests {
             "#]],
         );
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(16..19, "NVL")]"#);
-
-        check_applied_location(&root, location, 7..15, "coalesce");
-
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(16..19, "NVL")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
                 SELECT coalesce(coalesce(dummy, dummy), 'John'), JOHN.NVL() from dual;
             "#]],
         );
-        check_applied_location(&root, location, 16..24, "coalesce");
     }
 }

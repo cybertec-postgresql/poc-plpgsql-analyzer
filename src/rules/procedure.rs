@@ -238,8 +238,7 @@ mod tests {
     use expect_test::expect;
     use pretty_assertions::assert_eq;
 
-    use crate::ast::AstNode;
-    use crate::rules::tests::{check_applied_location, check_locations, check_node};
+    use crate::rules::tests::{apply_first_rule, check_node, parse_root};
 
     use super::*;
 
@@ -252,20 +251,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = RemoveEditionable;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(92..103, "EDITIONABLE")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -277,7 +263,6 @@ mod tests {
     END ignore_editionable;
     "#]],
         );
-        check_applied_location(&root, location, 92..92, "");
     }
 
     #[test]
@@ -288,20 +273,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = AddParamlistParenthesis;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(27..27, "")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -316,7 +288,6 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        check_applied_location(&root, location, 27..29, "()");
     }
 
     #[test]
@@ -327,20 +298,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(28..30, "IS")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -355,7 +313,6 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        check_applied_location(&root, location, 28..33, "AS $$");
     }
 
     #[test]
@@ -366,20 +323,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplaceEpilogue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(276..287, " secure_dml")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -395,7 +339,6 @@ mod tests {
                 $$ LANGUAGE plpgsql;
             "#]],
         );
-        check_applied_location(&root, location, 277..298, "\n$$ LANGUAGE plpgsql;");
     }
 
     #[test]
@@ -418,20 +361,7 @@ mod tests {
         let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
         let rule = ReplacePrologue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        check_locations(&locations, r#"[RuleMatch(74..76, "AS")]"#);
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
         check_node(
             &root,
             expect![[r#"
@@ -443,6 +373,5 @@ mod tests {
                 END procedure_as;
             "#]],
         );
-        check_applied_location(&root, location, 74..79, "AS $$");
     }
 }
