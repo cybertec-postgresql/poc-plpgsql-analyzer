@@ -246,9 +246,7 @@ mod tests {
     fn test_replace_editionable() {
         const INPUT: &str =
             include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = RemoveEditionable;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
@@ -268,9 +266,7 @@ mod tests {
     #[test]
     fn test_add_paramlist_parens() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = AddParamlistParenthesis;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
@@ -293,9 +289,7 @@ mod tests {
     #[test]
     fn test_replace_procedure_prologue() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplacePrologue;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
@@ -318,9 +312,7 @@ mod tests {
     #[test]
     fn test_replace_procedure_epilogue() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplaceEpilogue;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
@@ -344,9 +336,7 @@ mod tests {
     #[test]
     fn dont_add_second_pair_of_parentheses_for_procedure() {
         const INPUT: &str = include_str!("../../tests/fixtures/empty_parameter_list.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = parse_root(INPUT, crate::parse_procedure);
         let rule = AddParamlistParenthesis;
 
         let result = rule.find_rules(&root, &DboAnalyzeContext::default());
@@ -356,9 +346,7 @@ mod tests {
     #[test]
     fn accept_either_is_or_as_in_procedure_prologue() {
         const INPUT: &str = include_str!("../../tests/procedure/heading/procedure_as.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplacePrologue;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");

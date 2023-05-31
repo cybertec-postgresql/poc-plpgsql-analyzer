@@ -478,6 +478,15 @@ mod tests {
         assert_eq!(rule.locations[0].end.col, end_col);
     }
 
+    #[track_caller]
+    pub(super) fn parse_root<F>(input: &str, parse_fn: F) -> Root
+    where
+        F: Fn(&str) -> Result<Parse, ParseError>,
+    {
+        let parse = parse_fn(input).expect("Failed to parse input with supplied function");
+        Root::cast(parse.syntax()).unwrap().clone_for_update()
+    }
+
     pub(super) fn apply_first_rule(
         rule: &impl RuleDefinition,
         root: &mut Root,

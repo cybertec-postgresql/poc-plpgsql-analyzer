@@ -157,9 +157,7 @@ mod tests {
     #[test]
     fn test_replace_sysdate() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplaceSysdate;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
@@ -198,9 +196,7 @@ mod tests {
     #[test]
     fn test_replace_nvl() {
         const INPUT: &str = include_str!("../../tests/dql/nvl-coalesce.ora.sql");
-
-        let parse = crate::parse_query(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_query);
         let rule = ReplaceNvl;
 
         apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
