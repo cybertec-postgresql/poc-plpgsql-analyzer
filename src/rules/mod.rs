@@ -421,31 +421,13 @@ mod tests {
     use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
 
+    use crate::DboMetaData;
+
     use super::*;
 
     #[track_caller]
     pub(super) fn check_node(root: &Root, expect: Expect) {
         expect.assert_eq(&root.syntax.clone().to_string());
-    }
-
-    #[track_caller]
-    fn check_metadata_rule(
-        rule: &RuleHint,
-        name: &str,
-        locations_len: usize,
-        offset: Range<u32>,
-        start_line: u32,
-        start_col: u32,
-        end_line: u32,
-        end_col: u32,
-    ) {
-        assert_eq!(rule.name, name);
-        assert_eq!(rule.locations.len(), locations_len);
-        assert_eq!(rule.locations[0].offset, offset);
-        assert_eq!(rule.locations[0].start.line, start_line);
-        assert_eq!(rule.locations[0].start.col, start_col);
-        assert_eq!(rule.locations[0].end.line, end_line);
-        assert_eq!(rule.locations[0].end.col, end_col);
     }
 
     #[track_caller]
@@ -475,6 +457,26 @@ mod tests {
         )
     }
 
+    fn apply_rule_and_parse(
+        transpiled: &mut String,
+        rule: &RuleHint,
+        use_location: bool,
+    ) -> DboMetaData {
+        let ctx = DboAnalyzeContext::default();
+        let location = if use_location {
+            Some(&rule.locations[0])
+        } else {
+            None
+        };
+        let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, location, &ctx);
+        assert!(result.is_ok(), "{:#?}", result);
+        *transpiled = result.unwrap().original;
+
+        let result = crate::analyze(DboType::Procedure, &transpiled, &ctx);
+        assert!(result.is_ok(), "{:#?}", result);
+        result.unwrap()
+    }
+
     #[test]
     fn test_apply_all_applicable_rules_on_procedure() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
@@ -492,36 +494,11 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(
-                DboType::Procedure,
-                &transpiled,
-                &rule.name,
-                Some(&rule.locations[0]),
-                &context,
-            );
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0001", 1, 27..27, 1, 28, 1, 28);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0002", 1, 30..32, 2, 1, 2, 3);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0003", 1, 281..292, 9, 4, 9, 15);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0005", 2, 56..63, 4, 15, 4, 22);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0005", 1, 138..145, 5, 21, 5, 28);
-        do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
@@ -555,31 +532,21 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, None, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
         assert_eq!(metadata.rules[0].name, "CYAR-0001");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0002");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0003");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 2);
-        do_apply(&metadata.rules[0]);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
@@ -612,30 +579,9 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(
-                DboType::Procedure,
-                &transpiled,
-                &rule.name,
-                Some(&rule.locations[0]),
-                &context,
-            );
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0001", 1, 40..40, 1, 30, 1, 30);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0002", 1, 43..45, 2, 1, 2, 3);
-        metadata = do_apply(&metadata.rules[0]);
-
-        check_metadata_rule(&metadata.rules[0], "CYAR-0003", 1, 77..101, 4, 4, 4, 17);
-        do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
 
         expect![[r#"CREATE PROCEDURE "读文👩🏼‍🔬"()
 AS $$ BEGIN
