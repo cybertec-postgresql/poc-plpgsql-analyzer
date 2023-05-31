@@ -78,7 +78,7 @@ trait RuleDefinition {
     ) -> Result<TextRange, RuleError>;
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq)]
 struct RuleMatch {
     node: SyntaxNode,
     range: TextRange,
@@ -93,17 +93,6 @@ impl RuleMatch {
             node: node.clone(),
             range: node.text_range(),
         }
-    }
-}
-
-impl fmt::Debug for RuleMatch {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "RuleMatch({:?}, \"{}\")",
-            self.range,
-            &self.node.ancestors().last().unwrap().text().to_string()[self.range]
-        )
     }
 }
 
