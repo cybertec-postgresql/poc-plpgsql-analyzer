@@ -440,25 +440,6 @@ mod tests {
     }
 
     #[track_caller]
-    pub(super) fn check_locations(locations: &Vec<RuleMatch>, expected: &str) {
-        assert_eq!(format!("{:?}", locations), expected);
-    }
-
-    #[track_caller]
-    pub(super) fn check_applied_location(
-        root: &Root,
-        location: TextRange,
-        expected_location: Range<u32>,
-        expected_text: &str,
-    ) {
-        assert_eq!(
-            location,
-            TextRange::new(expected_location.start.into(), expected_location.end.into())
-        );
-        assert_eq!(&root.syntax().to_string()[location], expected_text);
-    }
-
-    #[track_caller]
     fn check_metadata_rule(
         rule: &RuleHint,
         name: &str,
