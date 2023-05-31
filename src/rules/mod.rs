@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@ferrous-systems.com>
 
 //! Implements rules for transpiling PL/SQL to PL/pgSQL
 
@@ -475,6 +476,24 @@ mod tests {
         assert_eq!(rule.locations[0].start.col, start_col);
         assert_eq!(rule.locations[0].end.line, end_line);
         assert_eq!(rule.locations[0].end.col, end_col);
+    }
+
+    pub(super) fn apply_first_rule(
+        rule: &impl RuleDefinition,
+        root: &mut Root,
+    ) -> Result<TextRange, RuleError> {
+        let ctx = DboAnalyzeContext::default();
+        let rules = rule.find_rules(root, &ctx)?;
+        let location = rules
+            .first()
+            .ok_or_else(|| RuleError::RuleNotFound(rule.short_desc()))?;
+
+        let rule_location = RuleLocation::from(root.syntax().to_string().as_str(), location.range);
+        rule.apply(
+            &location.node,
+            &rule_location,
+            &DboAnalyzeContext::default(),
+        )
     }
 
     #[test]
