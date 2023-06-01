@@ -89,6 +89,7 @@ fn parse_system_trigger(p: &mut Parser) {
             | [T![rename], ..]
             | [T![revoke], ..]
             | [T![truncate], ..] => 1,
+
             [T![after], T![clone], ..]
             | [T![after], T![db_role_change], ..]
             | [T![after], T![logon], ..]
@@ -100,6 +101,7 @@ fn parse_system_trigger(p: &mut Parser) {
             | [T![before], T![shutdown], ..]
             | [T![before], T![unplug], ..]
             | [T![disassociate], T![statistics], ..] => 2,
+
             [T![before], T![set], T![container]] | [T![after], T![set], T![container]] => 3,
             _ => {
                 p.error(ParseError::ExpectedDdlOrDatabaseEvent);
