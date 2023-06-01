@@ -20,6 +20,9 @@ pub enum ParseError {
     /// A token could not be parsed by the lexer
     #[error("Unknown token found: {0}")]
     UnknownToken(String),
+    /// The parser expected a DDL or database event
+    #[error("Expected DDL or database event")]
+    ExpectedDdlOrDatabaseEvent,
     /// The parser expected an identifier, as defined in [`TokenKind::is_ident`]
     #[error("Expected identifier")]
     ExpectedIdent,
@@ -45,59 +48,6 @@ pub enum ParseError {
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
 }
-
-/// Takes a parser identifier, and multiple match arms.
-/// Given the arms patterns, a fallback arm is created, inserting an [`ParseError::ExpectedOneOfTokens`]
-/// error into the AST containing all patterns.
-///
-/// Note: Having multiple arrays starting with the same [`TokenKind`] is not supported, as it
-///     generates multiple arms with the same pattern.
-///
-/// # Examples
-///
-/// ```ignore
-/// expect_token_match!(
-///     p,
-///     &[TokenKind::BeforeKw] | &[TokenKind::InsteadKw, TokenKind::OfKw] | &[TokenKind::AfterKw] => {},
-///     &[TokenKind::ForKw] => todo!()
-/// );
-/// ```
-macro_rules! expect_token_match {
-    (@first $enum:ident::$variant:ident) => { $enum::$variant };
-    (@first $enum:ident::$variant:ident $(, $enum_tail:ident::$variant_tail:ident)+) => { $enum::$variant };
-
-    // If the last entry of the array has been reached, execute the arm and return
-    (@arm $parser:ident, &[$enum:ident::$variant:ident] => $arm:expr) => {
-        $arm;
-        return;
-    };
-    // If there are remaining entries in the array, call the macro again while omitting the first array entry
-    (@arm $parser:ident, &[$enum:ident::$variant:ident $(, $enum_tail:ident::$variant_tail:ident)+] => $arm:expr) => {
-        expect_token_match!(@internal $parser, &[$($enum_tail::$variant_tail),+] => $arm);
-    };
-
-    (@internal $parser:ident, $($(&[$($enum:ident::$variant:ident),+])|+ => $arm:expr),+) => {
-        match $parser.current() {
-            // Match against the first entry in the array
-            $($(expect_token_match!(@first $($enum::$variant),*) => {
-                $parser.bump_any();
-                expect_token_match!(@arm $parser, &[$($enum::$variant),*] => $arm);
-            },)+)+
-            _ => {
-                $parser.error(ParseError::ExpectedOneOfTokens(vec![$($(expect_token_match!(@first $($enum::$variant),*)),*),*]));
-                return;
-            }
-        };
-    };
-
-    // Entry-point. Wraps the macro in an anonymous function so the `return` usages do not cause unexpected behaviour
-    ($parser:ident, $($(&[$($enum:ident::$variant:ident),+])|+ => $arm:expr),+) => {
-        (|| {
-            expect_token_match!(@internal $parser, $($(&[$($enum::$variant),+])|+ => $arm),+);
-        })();
-    };
-}
-pub(crate) use expect_token_match;
 
 /// Tries to parse any string of SQL tokens.
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {

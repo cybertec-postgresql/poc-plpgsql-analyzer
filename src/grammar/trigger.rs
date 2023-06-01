@@ -3,7 +3,7 @@
 // <office@cybertec.at>
 
 use crate::lexer::TokenKind;
-use crate::parser::{expect_token_match, Parser};
+use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
 
 use super::*;
@@ -29,15 +29,26 @@ fn parse_header(p: &mut Parser) {
     p.expect(T![trigger]);
     parse_ident(p, 1..2);
 
-    expect_token_match!(
-        p,
-        &[TokenKind::BeforeKw] | &[TokenKind::InsteadKw, TokenKind::OfKw] | &[TokenKind::AfterKw] =>
+    match p.current() {
+        T![before] | T![instead] | T![after] => {
+            if p.eat(T![instead]) {
+                p.expect(T![of]);
+            } else {
+                p.bump_any();
+            }
+
             match p.current() {
                 T![insert] | T![update] | T![delete] => parse_simple_dml_trigger(p),
-                _ => parse_system_trigger(p)
-            },
-        &[TokenKind::ForKw] => p.error(ParseError::Unimplemented("compound trigger".to_string()))
-    );
+                _ => parse_system_trigger(p),
+            };
+        }
+        T![for] => {
+            p.error(ParseError::Unimplemented("compound trigger".to_string()));
+        }
+        _ => {
+            p.expect_one_of(&[T![before], T![instead], T![after], T![for]]);
+        }
+    }
 
     p.finish();
 }
@@ -65,40 +76,40 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
 
 fn parse_system_trigger(p: &mut Parser) {
     loop {
-        expect_token_match!(
-            p,
-            &[TokenKind::AlterKw]
-                | &[TokenKind::AnalyzeKw]
-                | &[TokenKind::AuditKw]
-                | &[TokenKind::CommentKw]
-                | &[TokenKind::CreateKw]
-                | &[TokenKind::DdlKw]
-                | &[TokenKind::DropKw]
-                | &[TokenKind::GrantKw]
-                | &[TokenKind::NoauditKw]
-                | &[TokenKind::RenameKw]
-                | &[TokenKind::RevokeKw]
-                | &[TokenKind::TruncateKw]
-                | &[TokenKind::AssociateKw, TokenKind::StatisticsKw]
-                | &[TokenKind::DisassociateKw, TokenKind::StatisticsKw] => {},
-            &[TokenKind::AfterKw] => expect_token_match!(
-                p,
-                &[TokenKind::CloneKw]
-                    | &[TokenKind::DbRoleChangeKw]
-                    | &[TokenKind::LogonKw]
-                    | &[TokenKind::ServererrorKw]
-                    | &[TokenKind::StartupKw]
-                    | &[TokenKind::SuspendKw]
-                    | &[TokenKind::SetKw, TokenKind::ContainerKw] => {}
-            ),
-            &[TokenKind::BeforeKw] => expect_token_match!(
-                p,
-                &[TokenKind::LogoffKw]
-                    | &[TokenKind::ShutdownKw]
-                    | &[TokenKind::UnplugKw]
-                    | &[TokenKind::SetKw, TokenKind::ContainerKw] => {}
-            )
-        );
+        let bump_n = match &[&[p.current()], p.lookahead(2).as_slice()].concat()[..] {
+            [T![alter], ..]
+            | [T![analyze], ..]
+            | [T![audit], ..]
+            | [T![comment], ..]
+            | [T![create], ..]
+            | [T![ddl], ..]
+            | [T![drop], ..]
+            | [T![grant], ..]
+            | [T![noaudit], ..]
+            | [T![rename], ..]
+            | [T![revoke], ..]
+            | [T![truncate], ..] => 1,
+            [T![after], T![clone], ..]
+            | [T![after], T![db_role_change], ..]
+            | [T![after], T![logon], ..]
+            | [T![after], T![servererror], ..]
+            | [T![after], T![startup], ..]
+            | [T![after], T![suspend], ..]
+            | [T![associate], T![statistics], ..]
+            | [T![before], T![logoff], ..]
+            | [T![before], T![shutdown], ..]
+            | [T![before], T![unplug], ..]
+            | [T![disassociate], T![statistics], ..] => 2,
+            [T![before], T![set], T![container]] | [T![after], T![set], T![container]] => 3,
+            _ => {
+                p.error(ParseError::ExpectedDdlOrDatabaseEvent);
+                return;
+            }
+        };
+
+        for _ in 0..bump_n {
+            p.bump_any();
+        }
 
         if !p.eat(T![or]) {
             break;
