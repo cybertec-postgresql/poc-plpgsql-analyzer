@@ -10,7 +10,7 @@
 
 use rowan::Checkpoint;
 
-use crate::grammar::parse_ident_or_function_invocation;
+use crate::grammar::{parse_ident, parse_ident_or_function_invocation};
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -25,6 +25,7 @@ pub(crate) fn opt_expr(p: &mut Parser) -> bool {
 pub(crate) fn parse_expr(p: &mut Parser) {
     if let Err(err) = expr_bp(p, 0) {
         p.error(err);
+        p.bump_any();
     }
 }
 
@@ -48,10 +49,17 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
 
     let token = p.current();
     match token {
-        T![unquoted_ident] | T![quoted_ident] | T![quoted_literal] | T![int_literal] => {
+        T![unquoted_ident]
+        | T![quoted_ident]
+        | T![quoted_literal]
+        | T![bind_var]
+        | T![int_literal] => {
             match token {
                 T![unquoted_ident] | T![quoted_ident] => {
                     parse_ident_or_function_invocation(p);
+                }
+                T![bind_var] => {
+                    parse_ident(p, 1..2);
                 }
                 _ => {
                     p.bump_any();
@@ -88,6 +96,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
                 T![not],
                 T![+],
                 T![quoted_literal],
+                T![bind_var],
             ]));
         }
     }

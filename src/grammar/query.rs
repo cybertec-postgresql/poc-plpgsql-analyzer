@@ -50,6 +50,22 @@ pub(crate) fn parse_insert(p: &mut Parser) {
     }
     p.expect(T![")"]);
 
+    if p.eat_one_of(&[T![return], T![returning]]) {
+        loop {
+            parse_expr(p);
+            if !p.eat(T![,]) {
+                break;
+            }
+        }
+        p.expect(T![into]);
+        loop {
+            parse_ident(p, 1..1);
+            if !p.eat(T![,]) {
+                break;
+            }
+        }
+    }
+
     p.eat(T![;]);
     p.finish();
 }
@@ -317,12 +333,14 @@ Root@0..72
     fn test_insert() {
         check(
             parse(
-                r#"INSERT INTO job_history j (id, d_id) VALUES(p_emp_id, DEFAULT);"#,
+                r#"INSERT INTO job_history j (id, d_id)
+                    VALUES (p_emp_id, DEFAULT)
+                    RETURNING p_emp_id + 1, 'abc' INTO id, name;"#,
                 parse_insert,
             ),
             expect![[r#"
-Root@0..63
-  InsertStmt@0..63
+Root@0..148
+  InsertStmt@0..148
     Keyword@0..6 "INSERT"
     Whitespace@6..7 " "
     Keyword@7..11 "INTO"
@@ -341,16 +359,39 @@ Root@0..63
     IdentGroup@31..35
       Ident@31..35 "d_id"
     RParen@35..36 ")"
-    Whitespace@36..37 " "
-    Keyword@37..43 "VALUES"
-    LParen@43..44 "("
-    IdentGroup@44..52
-      Ident@44..52 "p_emp_id"
-    Comma@52..53 ","
-    Whitespace@53..54 " "
-    Keyword@54..61 "DEFAULT"
-    RParen@61..62 ")"
-    Semicolon@62..63 ";"
+    Whitespace@36..57 "\n                    "
+    Keyword@57..63 "VALUES"
+    Whitespace@63..64 " "
+    LParen@64..65 "("
+    IdentGroup@65..73
+      Ident@65..73 "p_emp_id"
+    Comma@73..74 ","
+    Whitespace@74..75 " "
+    Keyword@75..82 "DEFAULT"
+    RParen@82..83 ")"
+    Whitespace@83..104 "\n                    "
+    Keyword@104..113 "RETURNING"
+    Expression@113..126
+      Whitespace@113..114 " "
+      IdentGroup@114..122
+        Ident@114..122 "p_emp_id"
+      Whitespace@122..123 " "
+      ArithmeticOp@123..124 "+"
+      Whitespace@124..125 " "
+      Integer@125..126 "1"
+    Comma@126..127 ","
+    Whitespace@127..128 " "
+    QuotedLiteral@128..133 "'abc'"
+    Whitespace@133..134 " "
+    Keyword@134..138 "INTO"
+    Whitespace@138..139 " "
+    IdentGroup@139..141
+      Ident@139..141 "id"
+    Comma@141..142 ","
+    Whitespace@142..143 " "
+    IdentGroup@143..147
+      Ident@143..147 "name"
+    Semicolon@147..148 ";"
 "#]],
         );
     }

@@ -1,0 +1,5 @@
+CREATE TRIGGER no_drop_trg
+    BEFORE DROP ON my_schema.SCHEMA
+BEGIN
+    NULL;
+END;

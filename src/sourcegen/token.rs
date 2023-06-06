@@ -189,7 +189,7 @@ pub mod token {
                 }
 
                 pub fn is_ident(self) -> bool {
-                    matches!(self, Self::UnquotedIdent | Self::QuotedIdent)
+                    matches!(self, Self::UnquotedIdent | Self::QuotedIdent | Self::BindVar)
                         || !(self.is_trivia()
                             || self.is_punct()
                             || self.is_literal()
