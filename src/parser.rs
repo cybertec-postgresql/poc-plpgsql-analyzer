@@ -20,6 +20,9 @@ pub enum ParseError {
     /// A token could not be parsed by the lexer
     #[error("Unknown token found: {0}")]
     UnknownToken(String),
+    /// The parser expected a DDL or database event
+    #[error("Expected DDL or database event")]
+    ExpectedDdlOrDatabaseEvent,
     /// The parser expected an identifier, as defined in [`TokenKind::is_ident`]
     #[error("Expected identifier")]
     ExpectedIdent,
@@ -38,6 +41,9 @@ pub enum ParseError {
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
+    /// The parser encountered a construct that has not yet been implemented
+    #[error("Unimplemented construct: {0}")]
+    Unimplemented(String),
     /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
@@ -82,6 +88,16 @@ pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
 
     // Expect a query `SELECT`
     grammar::parse_query(&mut parser, false);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+pub fn parse_trigger(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a query `SELECT`
+    grammar::parse_trigger(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())

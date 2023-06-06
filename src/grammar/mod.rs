@@ -14,6 +14,7 @@ pub(crate) use function::*;
 pub(crate) use function_invocation::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
+pub(crate) use trigger::*;
 
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
@@ -27,6 +28,7 @@ mod function;
 mod function_invocation;
 mod procedure;
 mod query;
+mod trigger;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {
@@ -133,7 +135,9 @@ fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
 /// Helper function for [`parse_ident`]
 fn parse_single_ident(p: &mut Parser) {
     if p.current().is_ident() {
-        p.bump_any_map(SyntaxKind::Ident)
+        if !p.eat(T![bind_var]) {
+            p.bump_any_map(SyntaxKind::Ident)
+        }
     } else {
         p.error(ParseError::ExpectedIdent)
     }
@@ -178,6 +182,20 @@ mod tests {
 Root@0..5
   IdentGroup@0..5
     Ident@0..5 "hello"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_parse_bindvar() {
+        check(
+            parse(":old.employee_id", |p| parse_ident(p, 1..2)),
+            expect![[r#"
+Root@0..16
+  IdentGroup@0..16
+    BindVar@0..4 ":old"
+    Dot@4..5 "."
+    Ident@5..16 "employee_id"
 "#]],
         );
     }
