@@ -76,7 +76,11 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
 
 fn parse_system_trigger(p: &mut Parser) {
     loop {
-        let bump_n = match &[&[p.current()], p.lookahead(2).as_slice()].concat()[..] {
+        let bump_n = match [
+            p.current(),
+            p.nth(1).unwrap_or(T![EOF]),
+            p.nth(2).unwrap_or(T![EOF]),
+        ] {
             [T![alter], ..]
             | [T![analyze], ..]
             | [T![audit], ..]
