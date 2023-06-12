@@ -7,7 +7,7 @@
 use rowan::NodeOrToken::Token;
 use rowan::{Direction, TextRange};
 
-use crate::analyze::DboAnalyzeContext;
+use crate::analyzer::DboAnalyzeContext;
 use crate::ast::{AstNode, Function, Procedure, Root};
 use crate::rules::{filter_map_descendant_nodes, RuleMatch};
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode};

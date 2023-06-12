@@ -16,7 +16,7 @@ use tsify::Tsify;
 use unicode_width::UnicodeWidthStr;
 use wasm_bindgen::prelude::*;
 
-use crate::analyze::{DboAnalyzeContext, DboType};
+use crate::analyzer::{DboAnalyzeContext, DboType};
 use crate::ast::{AstNode, Function, Param, Procedure, Root};
 use crate::parser::*;
 use crate::syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
