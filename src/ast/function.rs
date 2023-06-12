@@ -30,9 +30,9 @@ impl Function {
 }
 
 impl FunctionHeader {
-    /// Returns the name of the function.
-    pub fn name(&self) -> Option<String> {
-        self.syntax.children().find_map(IdentGroup::cast)?.name()
+    /// Returns the identifier of the function.
+    pub fn identifier(&self) -> Option<IdentGroup> {
+        self.syntax.children().find_map(IdentGroup::cast)
     }
 
     pub fn param_list(&self) -> Option<ParamList> {
