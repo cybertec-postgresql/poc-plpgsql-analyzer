@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH <office@cybertec.at>
+// SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH <office@cybertec.at>
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -7,6 +7,7 @@ import { analyze, applyRule, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
 
 const FUNCTION_HEADINGS_DIR = '../function/heading';
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
+const TRIGGERS_DIR = '../trigger';
 const QUERYS_DIR = '../dql';
 
 describe('try to parse and analyze Oracle function', () => {
@@ -107,6 +108,30 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
     expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.procedure).toBeUndefined();
+  });
+});
+
+describe('try to parse and analyze Oracle triggers', () => {
+  const files = fs
+    .readdirSync(TRIGGERS_DIR)
+    .filter(name => name.match(/^(.+)\.ora\.sql$/))
+    .map(name => path.join(TRIGGERS_DIR, name));
+
+  it.each(files)('should parse %s successfully', path => {
+    const content = fs.readFileSync(path, 'utf8');
+    const metaData = analyze('trigger', content, { tables: {} });
+
+    expect(metaData.trigger).toEqual(expect.anything());
+    expect(metaData.rules).toBeInstanceOf(Array);
+  });
+
+  it('should return the correct trigger name and lines of code', () => {
+    const content = fs.readFileSync('../trigger/after_trigger.ora.sql', 'utf8');
+    const metaData = analyze('trigger', content, { tables: {} });
+
+    expect(metaData.trigger.name).toEqual('store.after_trigger');
+    expect(metaData.trigger.linesOfCode).toEqual(4);
+    expect(metaData.rules).toBeInstanceOf(Array);
   });
 });
 

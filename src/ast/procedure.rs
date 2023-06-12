@@ -14,25 +14,21 @@ typed_syntax_node!(Procedure, ProcedureHeader);
 impl Procedure {
     /// Returns the name of the procedure.
     pub fn name(&self) -> Option<String> {
-        self.syntax
-            .children()
-            .find_map(ProcedureHeader::cast)?
-            .identifier()?
-            .name()
+        self.header()?.identifier()?.name()
     }
 
     pub fn header(&self) -> Option<ProcedureHeader> {
         self.syntax.children().find_map(ProcedureHeader::cast)
     }
 
-    /// Returns the name of the procedure.
+    /// Returns the body of the procedure.
     pub fn body(&self) -> Option<Block> {
         self.syntax.children().find_map(Block::cast)
     }
 }
 
 impl ProcedureHeader {
-    /// Returns the name of the procedure.
+    /// Returns the identifier of the procedure.
     pub fn identifier(&self) -> Option<IdentGroup> {
         self.syntax.children().find_map(IdentGroup::cast)
     }

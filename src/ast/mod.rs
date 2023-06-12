@@ -13,6 +13,7 @@ pub use function::*;
 pub use function_invocation::*;
 pub use procedure::*;
 pub use query::*;
+pub use trigger::*;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
 
@@ -22,6 +23,7 @@ mod function;
 mod function_invocation;
 mod procedure;
 mod query;
+mod trigger;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
@@ -118,6 +120,11 @@ impl Root {
     /// Finds the (next) `SELECT` query in this root node.
     pub fn query(&self) -> Option<SelectStmt> {
         self.syntax.children().find_map(SelectStmt::cast)
+    }
+
+    /// Finds the (next) trigger query in this root node.
+    pub fn trigger(&self) -> Option<Trigger> {
+        self.syntax.children().find_map(Trigger::cast)
     }
 }
 
