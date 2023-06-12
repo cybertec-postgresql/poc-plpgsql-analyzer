@@ -57,7 +57,7 @@ pub struct DboMetaData {
 /// List of possible datatypes for tuple fields.
 ///
 /// Mainly derived from <https://www.postgresql.org/docs/current/datatype.html>,
-/// but furter extensible as needed. Keep alphabetically sorted.
+/// but further extensible as needed. Keep alphabetically sorted.
 #[derive(Tsify, Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 #[serde(rename_all = "camelCase")]
@@ -70,9 +70,9 @@ pub enum DboColumnType {
     SmallInt,
     Text,
     Time,
+    TimeWithTz,
     Timestamp,
     TimestampWithTz,
-    TimeWithTz,
 }
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
