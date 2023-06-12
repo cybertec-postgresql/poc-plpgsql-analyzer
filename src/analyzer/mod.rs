@@ -13,6 +13,7 @@ use wasm_bindgen::prelude::*;
 use crate::analyzer::function::{analyze_function, DboFunctionMetaData};
 use crate::analyzer::procedure::{analyze_procedure, DboProcedureMetaData};
 use crate::analyzer::query::{analyze_query, DboQueryMetaData};
+use crate::analyzer::trigger::{analyze_trigger, DboTriggerMetaData};
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
 use crate::rules::RuleHint;
@@ -21,6 +22,7 @@ use crate::SqlIdent;
 mod function;
 mod procedure;
 mod query;
+mod trigger;
 
 /// Different types the analyzer can possibly examine.
 ///
@@ -37,7 +39,7 @@ pub enum DboType {
     Package,
     Procedure,
     Query,
-    TriggerBody,
+    Trigger,
     View,
 }
 
@@ -52,6 +54,8 @@ pub struct DboMetaData {
     pub procedure: Option<DboProcedureMetaData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub query: Option<DboQueryMetaData>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trigger: Option<DboTriggerMetaData>,
 }
 
 /// List of possible datatypes for tuple fields.
@@ -157,6 +161,7 @@ pub fn analyze(
         DboType::Function => analyze_function(sql, cast_to_root(parse_function(sql)?)?, ctx),
         DboType::Procedure => analyze_procedure(sql, cast_to_root(parse_procedure(sql)?)?, ctx),
         DboType::Query => analyze_query(sql, cast_to_root(parse_query(sql)?)?, ctx),
+        DboType::Trigger => analyze_trigger(sql, cast_to_root(parse_trigger(sql)?)?, ctx),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
