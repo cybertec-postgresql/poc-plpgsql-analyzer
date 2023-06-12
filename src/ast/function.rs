@@ -13,10 +13,7 @@ typed_syntax_node!(Function, FunctionHeader);
 impl Function {
     /// Returns the name of the function.
     pub fn name(&self) -> Option<String> {
-        self.syntax
-            .children()
-            .find_map(FunctionHeader::cast)?
-            .name()
+        self.header()?.identifier()?.name()
     }
 
     pub fn header(&self) -> Option<FunctionHeader> {

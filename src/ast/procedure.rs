@@ -14,11 +14,7 @@ typed_syntax_node!(Procedure, ProcedureHeader);
 impl Procedure {
     /// Returns the name of the procedure.
     pub fn name(&self) -> Option<String> {
-        self.syntax
-            .children()
-            .find_map(ProcedureHeader::cast)?
-            .identifier()?
-            .name()
+        self.header()?.identifier()?.name()
     }
 
     pub fn header(&self) -> Option<ProcedureHeader> {
