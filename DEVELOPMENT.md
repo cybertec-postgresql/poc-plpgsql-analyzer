@@ -1,46 +1,74 @@
 # Development
 
+## Contributing
+
+Contributions are welcome! If you have any ideas, suggestions, or bug reports, please open an issue or submit a pull
+request. \
+To contribute to this project, follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix:
+
+    ```shell
+    git checkout -b feature/my-feature
+    ```
+
+3. Make your changes and ensure that the code follows the project's coding conventions.
+4. Run the tests to ensure they pass:
+
+    ```shell
+    cargo test --features coverage-tests
+    ```
+
+5. Commit your changes:
+
+    ```shell
+    git commit -m "Add my feature"
+    ```
+
+6. Push to your branch:
+
+    ```shell
+    git push origin feature/my-feature
+    ```
+
+7. Open a pull request on GitHub.
+
+## Requirements
+
+* A working Rust toolchain using [rustup](https://rustup.rs/) (at least 1.69.0)
+* [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/) (for building WebAssembly)
+
 ## Getting started
 
-First of, you need a working Rust toolchain using [rustup](https://rustup.rs/).
+To build the application and generate a full npm package in the `pkg/` directory, use
 
-> **Note**
-> This is due to the `wasm32-unknown-unknown` target being not a default one [yet]
-> and needs to be downloaded separatly. Rustup will take care of that automatically.
-
-To generate the WASM code and it's corresponding JavaScript/TypeScript bindings,
-the [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/) tool it needed.
-
-> **Note**
-> If you already have a working Rust toolchain installed, you can also just type
-> `cargo install wasm-pack` to install it from source directly.)
-
-Then, simply type 
 ```sh
 wasm-pack build --target nodejs
 ```
-in the project directory to build.
-
-This will create a full npm package in the `pkg/` directory.
 
 ## Unit tests
 
-To run all the unit tests, simply run
+To run all unit tests, use
+
 ```sh
 cargo test
 ```
 
-To run the unit tests marked with `#[ignore]`
+To run unit tests marked with `#[ignore]`, use
+
 ```sh
 cargo test -- --ignored
 ```
 
-To run the coverage test
+To run the coverage tests, use
+
 ```sh
 cargo test -F coverage-tests
 ```
 
-To run the TypeScript test suite
+To run the TypeScript test suite, use
+
 ```sh
 npm --prefix tests/typescript clean-install
 npm --prefix tests/typescript test
@@ -48,18 +76,20 @@ npm --prefix tests/typescript test
 
 ## Rustdoc
 
-To generate the (public) rustdoc for this library:
+To generate the (public) rustdoc for this library, use:
+
 ```sh
 cargo doc
 ```
 
-And to generate the full rustdoc for all items, including private ones:
+To generate the full rustdoc for all items, including private ones, use:
+
 ```sh
 cargo doc --document-private-items
 ```
 
-#### Optional tools
+## Optional tools
 
-It is desired to also install the `wasm-opt` tool from the
+It is endorsed to install the `wasm-opt` tool from the
 [`binaryen`](https://github.com/WebAssembly/binaryen) project,
-which `wasm-pack` will then automatically use to optimize the produced WASM code.
+which `wasm-pack` will automatically use to optimize the generated WASM code.

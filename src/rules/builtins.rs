@@ -6,7 +6,7 @@
 
 use rowan::TextRange;
 
-use crate::analyze::DboAnalyzeContext;
+use crate::analyzer::DboAnalyzeContext;
 use crate::ast::{AstNode, FunctionInvocation, IdentGroup, Root};
 use crate::rules::{filter_map_descendant_nodes, RuleMatch};
 use crate::syntax::SyntaxNode;
