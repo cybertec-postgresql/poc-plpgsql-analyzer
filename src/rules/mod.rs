@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
+// SPDX-FileContributor: Sebastian Ziebell <sebastian.ziebell@ferrous-systems.com>
 
 //! Implements rules for transpiling PL/SQL to PL/pgSQL
 
@@ -417,10 +418,64 @@ fn check_parameter_types_lower(params: &[Param], ctx: &DboAnalyzeContext) -> Res
 
 #[cfg(test)]
 mod tests {
-    use expect_test::expect;
+    use expect_test::{expect, Expect};
     use pretty_assertions::assert_eq;
 
+    use crate::DboMetaData;
+
     use super::*;
+
+    #[track_caller]
+    pub(super) fn check_node(root: &Root, expect: Expect) {
+        expect.assert_eq(&root.syntax.clone().to_string());
+    }
+
+    #[track_caller]
+    pub(super) fn parse_root<F>(input: &str, parse_fn: F) -> Root
+    where
+        F: Fn(&str) -> Result<Parse, ParseError>,
+    {
+        let parse = parse_fn(input).expect("Failed to parse input with supplied function");
+        Root::cast(parse.syntax()).unwrap().clone_for_update()
+    }
+
+    pub(super) fn apply_first_rule(
+        rule: &impl RuleDefinition,
+        root: &mut Root,
+    ) -> Result<TextRange, RuleError> {
+        let ctx = DboAnalyzeContext::default();
+        let rules = rule.find_rules(root, &ctx)?;
+        let location = rules
+            .first()
+            .ok_or_else(|| RuleError::RuleNotFound(rule.short_desc()))?;
+
+        let rule_location = RuleLocation::from(root.syntax().to_string().as_str(), location.range);
+        rule.apply(
+            &location.node,
+            &rule_location,
+            &DboAnalyzeContext::default(),
+        )
+    }
+
+    fn apply_rule_and_parse(
+        transpiled: &mut String,
+        rule: &RuleHint,
+        use_location: bool,
+    ) -> DboMetaData {
+        let ctx = DboAnalyzeContext::default();
+        let location = if use_location {
+            Some(&rule.locations[0])
+        } else {
+            None
+        };
+        let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, location, &ctx);
+        assert!(result.is_ok(), "{:#?}", result);
+        *transpiled = result.unwrap().original;
+
+        let result = crate::analyze(DboType::Procedure, &transpiled, &ctx);
+        assert!(result.is_ok(), "{:#?}", result);
+        result.unwrap()
+    }
 
     #[test]
     fn test_apply_all_applicable_rules_on_procedure() {
@@ -439,66 +494,11 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(
-                DboType::Procedure,
-                &transpiled,
-                &rule.name,
-                Some(&rule.locations[0]),
-                &context,
-            );
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0001");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 27..27);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 28);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0002");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 30..32);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0003");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 281..292);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 9);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 9);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 15);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0005");
-        assert_eq!(metadata.rules[0].locations.len(), 2);
-        assert_eq!(metadata.rules[0].locations[0].offset, 56..63);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 15);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 22);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0005");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 138..145);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 5);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 21);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 5);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 28);
-        do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
@@ -532,31 +532,21 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(DboType::Procedure, &transpiled, &rule.name, None, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
         assert_eq!(metadata.rules[0].name, "CYAR-0001");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0002");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0003");
         assert_eq!(metadata.rules[0].locations.len(), 1);
-        metadata = do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         assert_eq!(metadata.rules[0].name, "CYAR-0005");
         assert_eq!(metadata.rules[0].locations.len(), 2);
-        do_apply(&metadata.rules[0]);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], false);
 
         expect![[r#"
             CREATE PROCEDURE secure_dml()
@@ -589,48 +579,9 @@ mod tests {
 
         let mut transpiled = INPUT.to_owned();
 
-        let mut do_apply = |rule: &RuleHint| {
-            let result = apply_rule(
-                DboType::Procedure,
-                &transpiled,
-                &rule.name,
-                Some(&rule.locations[0]),
-                &context,
-            );
-            assert!(result.is_ok(), "{:#?}", result);
-            transpiled = result.unwrap().original;
-
-            let result = crate::analyze(DboType::Procedure, &transpiled, &context);
-            assert!(result.is_ok(), "{:#?}", result);
-            result.unwrap()
-        };
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0001");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 40..40);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 30);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 30);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0002");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 43..45);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 1);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 2);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 3);
-        metadata = do_apply(&metadata.rules[0]);
-
-        assert_eq!(metadata.rules[0].name, "CYAR-0003");
-        assert_eq!(metadata.rules[0].locations.len(), 1);
-        assert_eq!(metadata.rules[0].locations[0].offset, 77..101);
-        assert_eq!(metadata.rules[0].locations[0].start.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].start.col, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.line, 4);
-        assert_eq!(metadata.rules[0].locations[0].end.col, 17);
-        do_apply(&metadata.rules[0]);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        metadata = apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
+        apply_rule_and_parse(&mut transpiled, &metadata.rules[0], true);
 
         expect![[r#"CREATE PROCEDURE "读文👩🏼‍🔬"()
 AS $$ BEGIN

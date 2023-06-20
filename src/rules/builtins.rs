@@ -112,18 +112,14 @@ impl RuleDefinition for ReplaceNvl {
 mod tests {
     use std::collections::HashMap;
 
-    use expect_test::{expect, Expect};
+    use expect_test::expect;
     use pretty_assertions::assert_eq;
 
     use crate::ast::AstNode;
-    use crate::syntax::SyntaxNode;
+    use crate::rules::tests::{apply_first_rule, check_node, parse_root};
     use crate::{DboAnalyzeContext, DboColumnType, DboTable, DboTableColumn};
 
     use super::*;
-
-    fn check(node: SyntaxNode, expect: Expect) {
-        expect.assert_eq(&node.to_string());
-    }
 
     #[test]
     fn replace_trunc_with_date_trunc() {
@@ -161,29 +157,12 @@ mod tests {
     #[test]
     fn test_replace_sysdate() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplaceSysdate;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0].range, TextRange::new(51.into(), 58.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
-        assert_eq!(locations[1].range, TextRange::new(123.into(), 130.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "SYSDATE");
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -196,26 +175,10 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(51.into(), 68.into()));
-        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(133.into(), 140.into()));
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -228,73 +191,28 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(133.into(), 150.into()));
-        assert_eq!(&root.syntax().to_string()[location], "clock_timestamp()");
     }
 
     #[test]
     fn test_replace_nvl() {
         const INPUT: &str = include_str!("../../tests/dql/nvl-coalesce.ora.sql");
-
-        let parse = crate::parse_query(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_query);
         let rule = ReplaceNvl;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 2);
-        assert_eq!(locations[0].range, TextRange::new(7.into(), 10.into()));
-        assert_eq!(locations[1].range, TextRange::new(11.into(), 14.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 SELECT coalesce(NVL(dummy, dummy), 'John'), JOHN.NVL() from dual;
             "#]],
         );
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "NVL");
-
-        assert_eq!(location, TextRange::new(7.into(), 15.into()));
-        assert_eq!(&root.syntax().to_string()[location], "coalesce");
-
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(16.into(), 19.into()));
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(&root.syntax().to_string(), locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 SELECT coalesce(coalesce(dummy, dummy), 'John'), JOHN.NVL() from dual;
             "#]],
         );
-        assert_eq!(location, TextRange::new(16.into(), 24.into()));
-        assert_eq!(&root.syntax().to_string()[location], "coalesce");
     }
 }

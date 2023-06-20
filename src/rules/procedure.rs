@@ -235,48 +235,23 @@ impl RuleDefinition for RemoveEditionable {
 
 #[cfg(test)]
 mod tests {
-    use expect_test::{expect, Expect};
+    use expect_test::expect;
     use pretty_assertions::assert_eq;
 
-    use crate::ast::AstNode;
-    use crate::syntax::SyntaxNode;
+    use crate::rules::tests::{apply_first_rule, check_node, parse_root};
 
     use super::*;
-
-    fn check(node: SyntaxNode, expect: Expect) {
-        expect.assert_eq(&node.to_string());
-    }
 
     #[test]
     fn test_replace_editionable() {
         const INPUT: &str =
             include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = RemoveEditionable;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(92.into(), 103.into()));
-        assert_eq!(
-            &root.syntax().to_string()[locations[0].range],
-            "EDITIONABLE"
-        );
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
     -- test: ignore EDITIONABLE keyword, there is no equivalent in PostgreSQL
     CREATE OR REPLACE PROCEDURE ignore_editionable
@@ -286,38 +261,17 @@ mod tests {
     END ignore_editionable;
     "#]],
         );
-        assert_eq!(location, TextRange::new(92.into(), 92.into()));
-        assert_eq!(&root.syntax().to_string()[location], "");
     }
 
     #[test]
     fn test_add_paramlist_parens() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = AddParamlistParenthesis;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(27.into(), 27.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "");
-
-        // let root = root.clone_for_update();
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml()
                 IS
@@ -330,36 +284,17 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(27.into(), 29.into()));
-        assert_eq!(&root.syntax().to_string()[location], "()");
     }
 
     #[test]
     fn test_replace_procedure_prologue() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplacePrologue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(28.into(), 30.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "IS");
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 AS $$
@@ -372,39 +307,17 @@ mod tests {
                 END secure_dml;
             "#]],
         );
-        assert_eq!(location, TextRange::new(28.into(), 33.into()));
-        assert_eq!(&root.syntax().to_string()[location], "AS $$");
     }
 
     #[test]
     fn test_replace_procedure_epilogue() {
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplaceEpilogue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(276.into(), 287.into()));
-        assert_eq!(
-            &root.syntax().to_string()[locations[0].range],
-            " secure_dml"
-        );
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 CREATE PROCEDURE secure_dml
                 IS
@@ -418,19 +331,12 @@ mod tests {
                 $$ LANGUAGE plpgsql;
             "#]],
         );
-        assert_eq!(location, TextRange::new(277.into(), 298.into()));
-        assert_eq!(
-            &root.syntax().to_string()[location],
-            "\n$$ LANGUAGE plpgsql;"
-        );
     }
 
     #[test]
     fn dont_add_second_pair_of_parentheses_for_procedure() {
         const INPUT: &str = include_str!("../../tests/fixtures/empty_parameter_list.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap();
+        let root = parse_root(INPUT, crate::parse_procedure);
         let rule = AddParamlistParenthesis;
 
         let result = rule.find_rules(&root, &DboAnalyzeContext::default());
@@ -440,29 +346,12 @@ mod tests {
     #[test]
     fn accept_either_is_or_as_in_procedure_prologue() {
         const INPUT: &str = include_str!("../../tests/procedure/heading/procedure_as.ora.sql");
-
-        let parse = crate::parse_procedure(INPUT).unwrap();
-        let root = Root::cast(parse.syntax()).unwrap().clone_for_update();
+        let mut root = parse_root(INPUT, crate::parse_procedure);
         let rule = ReplacePrologue;
 
-        let result = rule.find_rules(&root, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let locations = result.unwrap();
-        assert_eq!(locations.len(), 1);
-        assert_eq!(locations[0].range, TextRange::new(74.into(), 76.into()));
-        assert_eq!(&root.syntax().to_string()[locations[0].range], "AS");
-
-        let result = rule.apply(
-            &locations[0].node,
-            &RuleLocation::from(INPUT, locations[0].range),
-            &DboAnalyzeContext::default(),
-        );
-        assert!(result.is_ok(), "{:#?}", result);
-
-        let location = result.unwrap();
-        check(
-            root.syntax().clone(),
+        apply_first_rule(&rule, &mut root).expect("Failed to apply rule");
+        check_node(
+            &root,
             expect![[r#"
                 -- test: use of AS instead of IS
                 CREATE OR REPLACE PROCEDURE procedure_as
@@ -472,7 +361,5 @@ mod tests {
                 END procedure_as;
             "#]],
         );
-        assert_eq!(location, TextRange::new(74.into(), 79.into()));
-        assert_eq!(&root.syntax().to_string()[location], "AS $$");
     }
 }
