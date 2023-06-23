@@ -16,7 +16,6 @@ use crate::analyzer::query::{analyze_query, DboQueryMetaData};
 use crate::analyzer::trigger::{analyze_trigger, DboTriggerMetaData};
 use crate::ast::{AstNode, Root};
 use crate::parser::*;
-use crate::rules::RuleHint;
 use crate::SqlIdent;
 
 mod function;
@@ -47,8 +46,6 @@ pub enum DboType {
 #[derive(Tsify, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DboMetaData {
-    pub rules: Vec<RuleHint>,
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub function: Option<DboFunctionMetaData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub procedure: Option<DboProcedureMetaData>,
@@ -117,11 +114,7 @@ impl DboAnalyzeContext {
         Self { tables }
     }
 
-    pub(crate) fn table_column(
-        &self,
-        table: &SqlIdent,
-        column: &SqlIdent,
-    ) -> Option<&DboTableColumn> {
+    pub fn table_column(&self, table: &SqlIdent, column: &SqlIdent) -> Option<&DboTableColumn> {
         self.tables.get(table).and_then(|t| t.columns.get(column))
     }
 }

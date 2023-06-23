@@ -7,8 +7,9 @@
 #![forbid(unsafe_code)]
 
 pub use analyzer::*;
+pub use ast::IdentGroup;
 pub use parser::*;
-pub use rules::apply_rule;
+pub use syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
 pub use util::SqlIdent;
 
 mod analyzer;
@@ -16,7 +17,6 @@ mod ast;
 mod grammar;
 mod lexer;
 mod parser;
-mod rules;
 mod sourcegen;
 mod syntax;
 mod util;

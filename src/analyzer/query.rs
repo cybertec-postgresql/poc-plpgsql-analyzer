@@ -8,7 +8,6 @@ use wasm_bindgen::prelude::*;
 
 use crate::analyzer::{AnalyzeError, DboAnalyzeContext, DboMetaData};
 use crate::ast::Root;
-use crate::rules::find_applicable_rules;
 use crate::syntax::SyntaxKind;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -39,7 +38,6 @@ pub(super) fn analyze_query(
         .unwrap_or(0);
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(input, &root, ctx),
         query: Some(DboQueryMetaData { outer_joins }),
         ..Default::default()
     })

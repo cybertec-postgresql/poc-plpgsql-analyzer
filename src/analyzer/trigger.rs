@@ -8,7 +8,6 @@ use wasm_bindgen::prelude::*;
 
 use crate::analyzer::{AnalyzeError, DboAnalyzeContext, DboMetaData};
 use crate::ast::Root;
-use crate::rules::find_applicable_rules;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -37,7 +36,6 @@ pub(super) fn analyze_trigger(
     let lines_of_code = body.matches('\n').count() + 1;
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(input, &root, ctx),
         trigger: Some(DboTriggerMetaData {
             name,
             body,
