@@ -6,9 +6,8 @@ use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
-use crate::analyzer::{AnalyzeError, DboAnalyzeContext, DboMetaData};
+use crate::analyzer::{AnalyzeError, DboMetaData};
 use crate::ast::Root;
-use crate::rules::find_applicable_rules;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
@@ -19,11 +18,7 @@ pub struct DboFunctionMetaData {
     pub lines_of_code: usize,
 }
 
-pub(super) fn analyze_function(
-    input: &str,
-    root: Root,
-    ctx: &DboAnalyzeContext,
-) -> Result<DboMetaData, AnalyzeError> {
+pub(super) fn analyze_function(root: Root) -> Result<DboMetaData, AnalyzeError> {
     let function = root
         .function()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find function".to_owned()))?;
@@ -37,7 +32,6 @@ pub(super) fn analyze_function(
     let lines_of_code = body.matches('\n').count() + 1;
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(input, &root, ctx),
         function: Some(DboFunctionMetaData {
             name,
             body,
@@ -52,6 +46,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::analyzer::{analyze, DboType};
+    use crate::DboAnalyzeContext;
 
     use super::*;
 

@@ -6,9 +6,8 @@ use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
-use crate::analyzer::{AnalyzeError, DboAnalyzeContext, DboMetaData};
+use crate::analyzer::{AnalyzeError, DboMetaData};
 use crate::ast::Root;
-use crate::rules::find_applicable_rules;
 use crate::syntax::SyntaxKind;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -20,11 +19,7 @@ pub struct DboQueryMetaData {
     pub outer_joins: usize,
 }
 
-pub(super) fn analyze_query(
-    input: &str,
-    root: Root,
-    ctx: &DboAnalyzeContext,
-) -> Result<DboMetaData, AnalyzeError> {
+pub(super) fn analyze_query(root: Root) -> Result<DboMetaData, AnalyzeError> {
     let query = root
         .query()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find query".to_owned()))?;
@@ -39,7 +34,6 @@ pub(super) fn analyze_query(
         .unwrap_or(0);
 
     Ok(DboMetaData {
-        rules: find_applicable_rules(input, &root, ctx),
         query: Some(DboQueryMetaData { outer_joins }),
         ..Default::default()
     })
@@ -50,6 +44,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::analyzer::{analyze, DboType};
+    use crate::DboAnalyzeContext;
 
     use super::*;
 
