@@ -46,6 +46,7 @@ pub enum DboType {
 #[derive(Tsify, Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]
 pub struct DboMetaData {
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub function: Option<DboFunctionMetaData>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub procedure: Option<DboProcedureMetaData>,

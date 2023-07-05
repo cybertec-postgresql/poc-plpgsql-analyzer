@@ -3,7 +3,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { analyze, applyRule, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
+import { analyze, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
 
 const FUNCTION_HEADINGS_DIR = '../function/heading';
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
@@ -21,7 +21,6 @@ describe('try to parse and analyze Oracle function', () => {
     const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function).toEqual(expect.anything());
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.procedure).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -31,7 +30,6 @@ describe('try to parse and analyze Oracle function', () => {
     const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function.name).toEqual('function_heading_example');
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.procedure).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -41,7 +39,6 @@ describe('try to parse and analyze Oracle function', () => {
     const metaData = analyze('function', content, { tables: {} });
 
     expect(metaData.function.linesOfCode).toEqual(3);
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.procedure).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -58,7 +55,6 @@ describe('try to parse and analyze Oracle procedures', () => {
     const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure).toEqual(expect.anything());
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -68,7 +64,6 @@ describe('try to parse and analyze Oracle procedures', () => {
     const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure.name).toEqual('add_job_history');
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -78,7 +73,6 @@ describe('try to parse and analyze Oracle procedures', () => {
     const metaData = analyze('procedure', content, { tables: {} });
 
     expect(metaData.procedure.linesOfCode).toEqual(5);
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.query).toBeUndefined();
   });
@@ -95,7 +89,6 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
     const metaData = analyze('query', content, { tables: {} });
 
     expect(metaData.query).toEqual(expect.anything());
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.procedure).toBeUndefined();
   });
@@ -105,7 +98,6 @@ describe('try to parse and analyze Oracle `SELECT` querys', () => {
 
     const metaData = analyze('query', content, { tables: {} });
     expect(metaData.query.outerJoins).toEqual(1);
-    expect(metaData.rules).toBeInstanceOf(Array);
     expect(metaData.function).toBeUndefined();
     expect(metaData.procedure).toBeUndefined();
   });
@@ -122,7 +114,6 @@ describe('try to parse and analyze Oracle triggers', () => {
     const metaData = analyze('trigger', content, { tables: {} });
 
     expect(metaData.trigger).toEqual(expect.anything());
-    expect(metaData.rules).toBeInstanceOf(Array);
   });
 
   it('should return the correct trigger name and lines of code', () => {
@@ -131,7 +122,6 @@ describe('try to parse and analyze Oracle triggers', () => {
 
     expect(metaData.trigger.name).toEqual('store.after_trigger');
     expect(metaData.trigger.linesOfCode).toEqual(4);
-    expect(metaData.rules).toBeInstanceOf(Array);
   });
 });
 
@@ -155,32 +145,7 @@ describe('passing type context information into analyzer', () => {
     expect(metaData.procedure.name).toEqual('log_last_login_fuzzy');
     expect(metaData.procedure.linesOfCode).toEqual(5);
 
-    expect(metaData.rules).toBeInstanceOf(Array);
-    expect(metaData.rules.length).toEqual(2);
-    expect(metaData.rules[0]).toEqual({
-      name: 'CYAR-0002',
-      locations: [
-        {
-          offset: { start: 315, end: 317 },
-          start: { line: 13, col: 1 },
-          end: { line: 13, col: 3 },
-        },
-      ],
-      short_desc: 'Replace procedure prologue',
-    });
     expect(content.substring(315, 317)).toEqual('IS');
-
-    expect(metaData.rules[1]).toEqual({
-      name: 'CYAR-0003',
-      locations: [
-        {
-          offset: { start: 574, end: 595 },
-          start: { line: 18, col: 4 },
-          end: { line: 18, col: 25 },
-        },
-      ],
-      short_desc: 'Replace procedure epilogue',
-    });
     expect(content.substring(571, 595)).toEqual('END log_last_login_fuzzy');
 
     expect(metaData.function).toBeUndefined();
