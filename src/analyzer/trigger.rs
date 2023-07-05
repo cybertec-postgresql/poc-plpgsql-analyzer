@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
-use crate::analyzer::{AnalyzeError, DboAnalyzeContext, DboMetaData};
+use crate::analyzer::{AnalyzeError, DboMetaData};
 use crate::ast::Root;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -18,11 +18,7 @@ pub struct DboTriggerMetaData {
     pub lines_of_code: usize,
 }
 
-pub(super) fn analyze_trigger(
-    input: &str,
-    root: Root,
-    ctx: &DboAnalyzeContext,
-) -> Result<DboMetaData, AnalyzeError> {
+pub(super) fn analyze_trigger(root: Root) -> Result<DboMetaData, AnalyzeError> {
     let trigger = root
         .trigger()
         .ok_or_else(|| AnalyzeError::ParseError("failed to find trigger".to_owned()))?;
@@ -50,6 +46,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::analyzer::{analyze, DboType};
+    use crate::DboAnalyzeContext;
 
     use super::*;
 

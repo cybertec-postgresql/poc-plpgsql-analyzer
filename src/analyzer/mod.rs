@@ -143,7 +143,7 @@ impl From<ParseError> for AnalyzeError {
 pub fn analyze(
     typ: DboType,
     sql: &str,
-    ctx: &DboAnalyzeContext,
+    _ctx: &DboAnalyzeContext,
 ) -> Result<DboMetaData, AnalyzeError> {
     let cast_to_root = |p: Parse| {
         Root::cast(p.syntax())
@@ -151,10 +151,10 @@ pub fn analyze(
     };
 
     match typ {
-        DboType::Function => analyze_function(sql, cast_to_root(parse_function(sql)?)?, ctx),
-        DboType::Procedure => analyze_procedure(sql, cast_to_root(parse_procedure(sql)?)?, ctx),
-        DboType::Query => analyze_query(sql, cast_to_root(parse_query(sql)?)?, ctx),
-        DboType::Trigger => analyze_trigger(sql, cast_to_root(parse_trigger(sql)?)?, ctx),
+        DboType::Function => analyze_function(cast_to_root(parse_function(sql)?)?),
+        DboType::Procedure => analyze_procedure(cast_to_root(parse_procedure(sql)?)?),
+        DboType::Query => analyze_query(cast_to_root(parse_query(sql)?)?),
+        DboType::Trigger => analyze_trigger(cast_to_root(parse_trigger(sql)?)?),
         _ => Err(AnalyzeError::Unsupported(typ)),
     }
 }
