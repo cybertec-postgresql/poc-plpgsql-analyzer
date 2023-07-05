@@ -87,7 +87,7 @@ jobs:
         uses: baptiste0928/cargo-install@v1
         with:
           crate: wasm-pack
-          version: "0.10.3"
+          version: "0.12.1"
 
       - name: Build using wasm-pack
         run: wasm-pack build --release --target nodejs
