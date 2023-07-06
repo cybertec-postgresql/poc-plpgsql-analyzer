@@ -302,8 +302,8 @@ Root@0..304
     Keyword@30..32 "AS"
     Whitespace@32..33 " "
     DollarQuote@33..35 "$$"
-    Block@35..282
-      Whitespace@35..36 "\n"
+    Whitespace@35..36 "\n"
+    Block@36..282
       Keyword@36..41 "BEGIN"
       Whitespace@41..44 "\n  "
       BlockStatement@44..277

@@ -15,6 +15,7 @@ use crate::ParseError;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
+    p.eat_ws();
     p.start(SyntaxKind::Block);
     parse_declare_section(p);
 
@@ -202,8 +203,8 @@ END log_last_login_fuzzy;"#,
             ),
             expect![[r#"
 Root@0..461
-  Block@0..461
-    Whitespace@0..1 "\n"
+  Whitespace@0..1 "\n"
+  Block@1..461
     DeclareSection@1..45
       Keyword@1..8 "DECLARE"
       Whitespace@8..13 "\n    "
