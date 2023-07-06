@@ -248,7 +248,8 @@ Root@0..461
           Whitespace@141..142 " "
         Keyword@142..146 "FROM"
         Whitespace@146..147 " "
-        Ident@147..151 "DUAL"
+        IdentGroup@147..151
+          Ident@147..151 "DUAL"
         Semicolon@151..152 ";"
       Whitespace@152..157 "\n    "
       Comment@157..172 "-- Nested block"
@@ -366,7 +367,8 @@ Root@0..54
           Text@15..38 "Expected token 'IntoKw'"
         Keyword@38..42 "FROM"
         Whitespace@42..43 " "
-        Ident@43..47 "dual"
+        IdentGroup@43..47
+          Ident@43..47 "dual"
         Semicolon@47..48 ";"
       Whitespace@48..49 " "
     Keyword@49..52 "END"

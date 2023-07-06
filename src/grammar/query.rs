@@ -111,7 +111,12 @@ fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 }
 
 fn parse_from_list(p: &mut Parser) {
-    while p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]) && p.eat(T![,]) {}
+    loop {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    }
 }
 
 fn parse_where_clause(p: &mut Parser) {
@@ -143,7 +148,8 @@ Root@0..19
     Whitespace@8..9 " "
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
-    Ident@14..19 "table"
+    IdentGroup@14..19
+      Ident@14..19 "table"
 "#]],
         );
     }
@@ -169,7 +175,8 @@ Root@0..26
       Whitespace@15..16 " "
     Keyword@16..20 "FROM"
     Whitespace@20..21 " "
-    Ident@21..26 "table"
+    IdentGroup@21..26
+      Ident@21..26 "table"
 "#]],
         );
     }
@@ -203,7 +210,8 @@ Root@0..38
         Whitespace@27..28 " "
     Keyword@28..32 "FROM"
     Whitespace@32..33 " "
-    Ident@33..37 "DUAL"
+    IdentGroup@33..37
+      Ident@33..37 "DUAL"
     Semicolon@37..38 ";"
 "#]],
         );
@@ -224,10 +232,12 @@ Root@0..328
     Whitespace@8..9 "\n"
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
-    Ident@14..21 "persons"
+    IdentGroup@14..21
+      Ident@14..21 "persons"
     Comma@21..22 ","
     Whitespace@22..23 " "
-    Ident@23..29 "places"
+    IdentGroup@23..29
+      Ident@23..29 "places"
     Whitespace@29..30 "\n"
     WhereClause@30..93
       Keyword@30..35 "WHERE"
@@ -280,13 +290,16 @@ Root@0..72
     Whitespace@8..9 "\n"
     Keyword@9..13 "FROM"
     Whitespace@13..14 " "
-    Ident@14..15 "a"
+    IdentGroup@14..15
+      Ident@14..15 "a"
     Comma@15..16 ","
     Whitespace@16..17 " "
-    Ident@17..18 "b"
+    IdentGroup@17..18
+      Ident@17..18 "b"
     Comma@18..19 ","
     Whitespace@19..20 " "
-    Ident@20..21 "c"
+    IdentGroup@20..21
+      Ident@20..21 "c"
     Whitespace@21..22 "\n"
     WhereClause@22..70
       Keyword@22..27 "WHERE"
@@ -367,7 +380,8 @@ Root@0..148
       Ident@65..73 "p_emp_id"
     Comma@73..74 ","
     Whitespace@74..75 " "
-    Keyword@75..82 "DEFAULT"
+    IdentGroup@75..82
+      Ident@75..82 "DEFAULT"
     RParen@82..83 ")"
     Whitespace@83..104 "\n                    "
     Keyword@104..113 "RETURNING"
