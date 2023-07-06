@@ -19,7 +19,7 @@ pub fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
 
     let checkpoint = p.checkpoint();
-    if p.eat(T![declare]) {
+    if p.eat(T![declare]) || p.current() != T![begin] {
         parse_declare_section(p, Some(checkpoint));
     }
 

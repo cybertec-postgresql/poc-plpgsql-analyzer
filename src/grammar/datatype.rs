@@ -64,7 +64,10 @@ pub fn parse_datatype(p: &mut Parser) {
         | T![int]
         | T![smallint]
         | T![double]
-        | T![real] => {
+        | T![real]
+        | T![string]
+        | T![binary_integer]
+        | T![pls_integer] => {
             p.bump_any();
 
             match datatype {
