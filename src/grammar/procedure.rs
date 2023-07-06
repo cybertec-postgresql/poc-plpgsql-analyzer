@@ -391,7 +391,7 @@ Root@0..304
     Whitespace@282..283 "\n"
     DollarQuote@283..285 "$$"
     Whitespace@285..286 " "
-    Ident@286..294 "LANGUAGE"
+    Keyword@286..294 "LANGUAGE"
     Whitespace@294..295 " "
     Ident@295..302 "plpgsql"
     Semicolon@302..303 ";"

@@ -49,13 +49,23 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
 
     let token = p.current();
     match token {
-        T![unquoted_ident]
-        | T![quoted_ident]
-        | T![quoted_literal]
-        | T![bind_var]
-        | T![int_literal] => {
+        token
+            if (token.is_ident() || token.is_literal())
+                // reserved identifiers
+                && ![
+                    T![and],
+                    T![between],
+                    T![ilike],
+                    T![in],
+                    T![like],
+                    T![not],
+                    T![or],
+                    T![then],
+                ]
+                .contains(&token) =>
+        {
             match token {
-                T![unquoted_ident] | T![quoted_ident] => {
+                token if token.is_ident() => {
                     parse_ident_or_function_invocation(p);
                 }
                 T![bind_var] => {
