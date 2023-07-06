@@ -115,7 +115,7 @@ pub fn parse_datatype(p: &mut Parser) {
             parse_ident(p, 1..3);
             let checkpoint = p.checkpoint();
             if p.eat(T![%]) {
-                p.expect(T![type]);
+                p.expect_one_of(&[T![type], T![rowtype]]);
                 p.start_node_at(checkpoint, SyntaxKind::TypeAttribute);
                 p.finish();
             }
