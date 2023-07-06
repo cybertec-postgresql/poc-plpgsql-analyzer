@@ -4,6 +4,7 @@
 
 //! Implements parsing of functions from a token tree.
 
+use crate::grammar::call_spec::opt_call_spec;
 use crate::lexer::TokenKind;
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
@@ -57,7 +58,9 @@ fn parse_body(p: &mut Parser) {
     p.expect_one_of(&[T![is], T![as]]);
     p.eat(T!["$$"]);
 
-    parse_block(p);
+    if !opt_call_spec(p) {
+        parse_block(p);
+    }
 
     p.eat_ws();
 }
