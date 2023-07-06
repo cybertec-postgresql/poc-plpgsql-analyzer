@@ -13,9 +13,9 @@ use crate::syntax::SyntaxKind;
 use super::*;
 
 /// Parses a complete procedure.
-pub(crate) fn parse_procedure(p: &mut Parser) {
+pub(crate) fn parse_procedure(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::Procedure);
-    parse_header(p);
+    parse_header(p, is_nested);
     parse_body(p);
     while !p.at(T![EOF]) {
         p.bump_any();
@@ -24,14 +24,17 @@ pub(crate) fn parse_procedure(p: &mut Parser) {
 }
 
 /// Parses the header of a procedure.
-fn parse_header(p: &mut Parser) {
+fn parse_header(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::ProcedureHeader);
-    p.expect(T![create]);
-    if p.eat(T![or]) {
-        p.expect(T![replace]);
-    }
 
-    p.eat_one_of(&[T![editionable], T![noneditionable]]);
+    if !is_nested {
+        p.expect(T![create]);
+        if p.eat(T![or]) {
+            p.expect(T![replace]);
+        }
+
+        p.eat_one_of(&[T![editionable], T![noneditionable]]);
+    }
 
     p.expect(T![procedure]);
 
@@ -62,7 +65,7 @@ mod tests {
     #[test]
     fn test_parse_header_without_replace() {
         check(
-            parse("CREATE PROCEDURE hello", parse_header),
+            parse("CREATE PROCEDURE hello", |p| parse_header(p, false)),
             expect![[r#"
 Root@0..22
   ProcedureHeader@0..22
@@ -79,7 +82,7 @@ Root@0..22
     #[test]
     fn test_parse_invalid_header() {
         check(
-            parse("CREATE hello", parse_header),
+            parse("CREATE hello", |p| parse_header(p, false)),
             expect![[r#"
 Root@0..40
   ProcedureHeader@0..40
@@ -97,7 +100,7 @@ Root@0..40
     fn test_parse_header_without_params() {
         const INPUT: &str = "CREATE OR REPLACE PROCEDURE test";
         check(
-            parse(INPUT, parse_header),
+            parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..32
   ProcedureHeader@0..32
@@ -123,7 +126,7 @@ CREATE PROCEDURE add_job_history
      , p_start_date      job_history.start_date%type
     )"#;
         check(
-            parse(INPUT, parse_header),
+            parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..146
   ProcedureHeader@0..146
@@ -207,7 +210,7 @@ Root@0..31
     fn test_parse_proc_with_quoted_ident() {
         const INPUT: &str = include_str!("../../tests/fixtures/unicode_characters.ora.sql");
         check(
-            parse(INPUT, parse_procedure),
+            parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..98
   Procedure@0..98
@@ -244,7 +247,7 @@ Root@0..98
     fn test_parse_procedure_with_schema_qualifier() {
         const INPUT: &str = include_str!("../../tests/procedure/heading/schema_qualified.ora.sql");
         check(
-            parse(INPUT, parse_procedure),
+            parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..124
   Procedure@0..124
@@ -281,7 +284,7 @@ Root@0..124
         const INPUT: &str = include_str!("../../tests/fixtures/secure_dml.pg.sql");
 
         check(
-            parse(INPUT, parse_procedure),
+            parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..304
   Procedure@0..304
@@ -403,7 +406,7 @@ Root@0..304
             include_str!("../../tests/procedure/heading/ignore_editionable.ora.sql");
 
         check(
-            parse(INPUT, parse_procedure),
+            parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..176
   Procedure@0..176
@@ -448,7 +451,7 @@ Root@0..176
             include_str!("../../tests/procedure/heading/ignore_noneditionable.ora.sql");
 
         check(
-            parse(INPUT, parse_procedure),
+            parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..193
   Procedure@0..193

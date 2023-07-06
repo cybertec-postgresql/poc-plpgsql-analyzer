@@ -12,9 +12,9 @@ use crate::syntax::SyntaxKind;
 use super::*;
 
 /// Parses a complete function.
-pub fn parse_function(p: &mut Parser) {
+pub fn parse_function(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::Function);
-    parse_header(p);
+    parse_header(p, is_nested);
     parse_body(p);
     while !p.at(T![EOF]) {
         p.bump_any();
@@ -23,14 +23,17 @@ pub fn parse_function(p: &mut Parser) {
 }
 
 /// Parses the header of a function.
-fn parse_header(p: &mut Parser) {
+fn parse_header(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::FunctionHeader);
-    p.expect(T![create]);
-    if p.eat(T![or]) {
-        p.expect(T![replace]);
-    }
 
-    p.eat_one_of(&[T![editionable], T![noneditionable]]);
+    if !is_nested {
+        p.expect(T![create]);
+        if p.eat(T![or]) {
+            p.expect(T![replace]);
+        }
+
+        p.eat_one_of(&[T![editionable], T![noneditionable]]);
+    }
 
     p.expect(T![function]);
 
@@ -75,7 +78,7 @@ mod tests {
     #[test]
     fn test_parse_header_without_replace() {
         check(
-            parse("CREATE FUNCTION hello", parse_header),
+            parse("CREATE FUNCTION hello", |p| parse_header(p, false)),
             expect![[r#"
 Root@0..21
   FunctionHeader@0..21
@@ -93,7 +96,7 @@ Root@0..21
     fn test_parse_header_without_params() {
         const INPUT: &str = "CREATE OR REPLACE FUNCTION test";
         check(
-            parse(INPUT, parse_header),
+            parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..31
   FunctionHeader@0..31
@@ -119,7 +122,7 @@ CREATE FUNCTION add_job_history
      , p_start_date      job_history.start_date%type
     )"#;
         check(
-            parse(INPUT, parse_header),
+            parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..145
   FunctionHeader@0..145
@@ -196,7 +199,7 @@ Root@0..25
         const INPUT: &str = include_str!("../../tests/function/heading/ignore_editionable.ora.sql");
 
         check(
-            parse(INPUT, parse_function),
+            parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..171
   Function@0..171
@@ -246,7 +249,7 @@ Root@0..171
             include_str!("../../tests/function/heading/ignore_noneditionable.ora.sql");
 
         check(
-            parse(INPUT, parse_function),
+            parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..180
   Function@0..180

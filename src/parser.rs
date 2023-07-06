@@ -66,7 +66,7 @@ pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a function
-    grammar::parse_function(&mut parser);
+    grammar::parse_function(&mut parser, false);
 
     // TODO handle any errors here
     Ok(parser.build())
@@ -77,7 +77,7 @@ pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a procedure
-    grammar::parse_procedure(&mut parser);
+    grammar::parse_procedure(&mut parser, false);
 
     // TODO handle any errors here
     Ok(parser.build())
