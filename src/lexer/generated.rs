@@ -32,6 +32,8 @@ pub enum TokenKind {
     Minus,
     #[token(".", ignore(case))]
     Dot,
+    #[token("..", ignore(case))]
+    DoubleDot,
     #[token("/", ignore(case))]
     Slash,
     #[token(":=", ignore(case))]
@@ -54,12 +56,16 @@ pub enum TokenKind {
     BindVar,
     #[token("after", ignore(case))]
     AfterKw,
+    #[token("agent", ignore(case))]
+    AgentKw,
     #[token("alter", ignore(case))]
     AlterKw,
     #[token("analyze", ignore(case))]
     AnalyzeKw,
     #[token("and", ignore(case))]
     AndKw,
+    #[token("array", ignore(case))]
+    ArrayKw,
     #[token("as", ignore(case))]
     AsKw,
     #[token("associate", ignore(case))]
@@ -78,28 +84,44 @@ pub enum TokenKind {
     BinaryDoubleKw,
     #[token("binary_float", ignore(case))]
     BinaryFloatKw,
+    #[token("binary_integer", ignore(case))]
+    BinaryIntegerKw,
     #[token("blob", ignore(case))]
     BlobKw,
+    #[token("by", ignore(case))]
+    ByKw,
     #[token("byte", ignore(case))]
     ByteKw,
+    #[regex("(?i)c", priority = 2)]
+    CKw,
     #[token("call", ignore(case))]
     CallKw,
     #[token("char", ignore(case))]
     CharKw,
     #[token("character", ignore(case))]
     CharacterKw,
+    #[token("charsetform", ignore(case))]
+    CharsetformKw,
+    #[token("charsetid", ignore(case))]
+    CharsetidKw,
     #[token("clob", ignore(case))]
     ClobKw,
     #[token("clone", ignore(case))]
     CloneKw,
     #[token("comment", ignore(case))]
     CommentKw,
+    #[token("constant", ignore(case))]
+    ConstantKw,
     #[token("container", ignore(case))]
     ContainerKw,
+    #[token("context", ignore(case))]
+    ContextKw,
     #[token("create", ignore(case))]
     CreateKw,
     #[token("crossedition", ignore(case))]
     CrosseditionKw,
+    #[token("cursor", ignore(case))]
+    CursorKw,
     #[token("database", ignore(case))]
     DatabaseKw,
     #[token("date", ignore(case))]
@@ -130,6 +152,8 @@ pub enum TokenKind {
     DoubleKw,
     #[token("drop", ignore(case))]
     DropKw,
+    #[token("duration", ignore(case))]
+    DurationKw,
     #[token("each", ignore(case))]
     EachKw,
     #[token("editionable", ignore(case))]
@@ -142,6 +166,12 @@ pub enum TokenKind {
     EnableKw,
     #[token("end", ignore(case))]
     EndKw,
+    #[token("env", ignore(case))]
+    EnvKw,
+    #[token("exception", ignore(case))]
+    ExceptionKw,
+    #[token("external", ignore(case))]
+    ExternalKw,
     #[token("float", ignore(case))]
     FloatKw,
     #[token("follows", ignore(case))]
@@ -162,6 +192,10 @@ pub enum TokenKind {
     IlikeKw,
     #[token("in", ignore(case))]
     InKw,
+    #[token("index", ignore(case))]
+    IndexKw,
+    #[token("indicator", ignore(case))]
+    IndicatorKw,
     #[token("insert", ignore(case))]
     InsertKw,
     #[token("instead", ignore(case))]
@@ -176,6 +210,14 @@ pub enum TokenKind {
     IntoKw,
     #[token("is", ignore(case))]
     IsKw,
+    #[token("java", ignore(case))]
+    JavaKw,
+    #[token("language", ignore(case))]
+    LanguageKw,
+    #[token("length", ignore(case))]
+    LengthKw,
+    #[token("library", ignore(case))]
+    LibraryKw,
     #[token("like", ignore(case))]
     LikeKw,
     #[token("local", ignore(case))]
@@ -186,8 +228,16 @@ pub enum TokenKind {
     LogonKw,
     #[token("long", ignore(case))]
     LongKw,
+    #[token("maxlen", ignore(case))]
+    MaxlenKw,
+    #[token("mle", ignore(case))]
+    MleKw,
+    #[token("module", ignore(case))]
+    ModuleKw,
     #[token("month", ignore(case))]
     MonthKw,
+    #[token("name", ignore(case))]
+    NameKw,
     #[token("national", ignore(case))]
     NationalKw,
     #[token("nchar", ignore(case))]
@@ -222,8 +272,16 @@ pub enum TokenKind {
     OrKw,
     #[token("out", ignore(case))]
     OutKw,
+    #[token("parallel_enable", ignore(case))]
+    ParallelEnableKw,
+    #[token("parameters", ignore(case))]
+    ParametersKw,
     #[token("parent", ignore(case))]
     ParentKw,
+    #[token("pipelined", ignore(case))]
+    PipelinedKw,
+    #[token("pls_integer", ignore(case))]
+    PlsIntegerKw,
     #[token("pluggable", ignore(case))]
     PluggableKw,
     #[token("precedes", ignore(case))]
@@ -232,16 +290,28 @@ pub enum TokenKind {
     PrecisionKw,
     #[token("procedure", ignore(case))]
     ProcedureKw,
+    #[token("range", ignore(case))]
+    RangeKw,
     #[token("raw", ignore(case))]
     RawKw,
     #[token("real", ignore(case))]
     RealKw,
+    #[token("record", ignore(case))]
+    RecordKw,
+    #[token("ref", ignore(case))]
+    RefKw,
+    #[token("reference", ignore(case))]
+    ReferenceKw,
     #[token("referencing", ignore(case))]
     ReferencingKw,
+    #[token("relies_on", ignore(case))]
+    ReliesOnKw,
     #[token("rename", ignore(case))]
     RenameKw,
     #[token("replace", ignore(case))]
     ReplaceKw,
+    #[token("result_cache", ignore(case))]
+    ResultCacheKw,
     #[token("return", ignore(case))]
     ReturnKw,
     #[token("returning", ignore(case))]
@@ -254,26 +324,42 @@ pub enum TokenKind {
     RowKw,
     #[token("rowid", ignore(case))]
     RowidKw,
+    #[token("rowtype", ignore(case))]
+    RowtypeKw,
     #[token("schema", ignore(case))]
     SchemaKw,
     #[token("second", ignore(case))]
     SecondKw,
     #[token("select", ignore(case))]
     SelectKw,
+    #[token("self", ignore(case))]
+    SelfKw,
     #[token("servererror", ignore(case))]
     ServererrorKw,
     #[token("set", ignore(case))]
     SetKw,
     #[token("shutdown", ignore(case))]
     ShutdownKw,
+    #[token("signature", ignore(case))]
+    SignatureKw,
     #[token("smallint", ignore(case))]
     SmallintKw,
     #[token("startup", ignore(case))]
     StartupKw,
     #[token("statistics", ignore(case))]
     StatisticsKw,
+    #[token("string", ignore(case))]
+    StringKw,
+    #[token("struct", ignore(case))]
+    StructKw,
+    #[token("subtype", ignore(case))]
+    SubtypeKw,
     #[token("suspend", ignore(case))]
     SuspendKw,
+    #[token("table", ignore(case))]
+    TableKw,
+    #[token("tdo", ignore(case))]
+    TdoKw,
     #[token("then", ignore(case))]
     ThenKw,
     #[token("time", ignore(case))]
@@ -300,6 +386,8 @@ pub enum TokenKind {
     VarcharKw,
     #[token("varchar2", ignore(case))]
     Varchar2Kw,
+    #[token("varray", ignore(case))]
+    VarrayKw,
     #[token("varying", ignore(case))]
     VaryingKw,
     #[token("when", ignore(case))]
@@ -335,6 +423,7 @@ impl TokenKind {
                 | Self::Comma
                 | Self::Minus
                 | Self::Dot
+                | Self::DoubleDot
                 | Self::Slash
                 | Self::Assign
                 | Self::Semicolon
@@ -367,5 +456,5 @@ impl std::fmt::Display for TokenKind {
         write!(f, "{self:?}")
     }
 }
-macro_rules ! T { [whitespace] => { TokenKind :: Whitespace } ; [comment] => { TokenKind :: Comment } ; [!] => { TokenKind :: Exclam } ; ["$$"] => { TokenKind :: DollarQuote } ; [%] => { TokenKind :: Percentage } ; ["("] => { TokenKind :: LParen } ; [(+)] => { TokenKind :: OracleJoin } ; [")"] => { TokenKind :: RParen } ; [*] => { TokenKind :: Asterisk } ; [+] => { TokenKind :: Plus } ; [,] => { TokenKind :: Comma } ; [-] => { TokenKind :: Minus } ; [.] => { TokenKind :: Dot } ; [/] => { TokenKind :: Slash } ; [:=] => { TokenKind :: Assign } ; [;] => { TokenKind :: Semicolon } ; [comparison] => { TokenKind :: Comparison } ; [||] => { TokenKind :: DoublePipe } ; [int_literal] => { TokenKind :: Integer } ; [unquoted_ident] => { TokenKind :: UnquotedIdent } ; [quoted_ident] => { TokenKind :: QuotedIdent } ; [quoted_literal] => { TokenKind :: QuotedLiteral } ; [bind_var] => { TokenKind :: BindVar } ; [after] => { TokenKind :: AfterKw } ; [alter] => { TokenKind :: AlterKw } ; [analyze] => { TokenKind :: AnalyzeKw } ; [and] => { TokenKind :: AndKw } ; [as] => { TokenKind :: AsKw } ; [associate] => { TokenKind :: AssociateKw } ; [audit] => { TokenKind :: AuditKw } ; [before] => { TokenKind :: BeforeKw } ; [begin] => { TokenKind :: BeginKw } ; [between] => { TokenKind :: BetweenKw } ; [bfile] => { TokenKind :: BfileKw } ; [binary_double] => { TokenKind :: BinaryDoubleKw } ; [binary_float] => { TokenKind :: BinaryFloatKw } ; [blob] => { TokenKind :: BlobKw } ; [byte] => { TokenKind :: ByteKw } ; [call] => { TokenKind :: CallKw } ; [char] => { TokenKind :: CharKw } ; [character] => { TokenKind :: CharacterKw } ; [clob] => { TokenKind :: ClobKw } ; [clone] => { TokenKind :: CloneKw } ; [comment] => { TokenKind :: CommentKw } ; [container] => { TokenKind :: ContainerKw } ; [create] => { TokenKind :: CreateKw } ; [crossedition] => { TokenKind :: CrosseditionKw } ; [database] => { TokenKind :: DatabaseKw } ; [date] => { TokenKind :: DateKw } ; [day] => { TokenKind :: DayKw } ; [db_role_change] => { TokenKind :: DbRoleChangeKw } ; [ddl] => { TokenKind :: DdlKw } ; [dec] => { TokenKind :: DecKw } ; [decimal] => { TokenKind :: DecimalKw } ; [declare] => { TokenKind :: DeclareKw } ; [default] => { TokenKind :: DefaultKw } ; [delete] => { TokenKind :: DeleteKw } ; [deterministic] => { TokenKind :: DeterministicKw } ; [disable] => { TokenKind :: DisableKw } ; [disassociate] => { TokenKind :: DisassociateKw } ; [double] => { TokenKind :: DoubleKw } ; [drop] => { TokenKind :: DropKw } ; [each] => { TokenKind :: EachKw } ; [editionable] => { TokenKind :: EditionableKw } ; [else] => { TokenKind :: ElseKw } ; [elsif] => { TokenKind :: ElsifKw } ; [enable] => { TokenKind :: EnableKw } ; [end] => { TokenKind :: EndKw } ; [float] => { TokenKind :: FloatKw } ; [follows] => { TokenKind :: FollowsKw } ; [for] => { TokenKind :: ForKw } ; [forward] => { TokenKind :: ForwardKw } ; [from] => { TokenKind :: FromKw } ; [function] => { TokenKind :: FunctionKw } ; [grant] => { TokenKind :: GrantKw } ; [if] => { TokenKind :: IfKw } ; [ilike] => { TokenKind :: IlikeKw } ; [in] => { TokenKind :: InKw } ; [insert] => { TokenKind :: InsertKw } ; [instead] => { TokenKind :: InsteadKw } ; [int] => { TokenKind :: IntKw } ; [integer] => { TokenKind :: IntegerKw } ; [interval] => { TokenKind :: IntervalKw } ; [into] => { TokenKind :: IntoKw } ; [is] => { TokenKind :: IsKw } ; [like] => { TokenKind :: LikeKw } ; [local] => { TokenKind :: LocalKw } ; [logoff] => { TokenKind :: LogoffKw } ; [logon] => { TokenKind :: LogonKw } ; [long] => { TokenKind :: LongKw } ; [month] => { TokenKind :: MonthKw } ; [national] => { TokenKind :: NationalKw } ; [nchar] => { TokenKind :: NcharKw } ; [nclob] => { TokenKind :: NclobKw } ; [new] => { TokenKind :: NewKw } ; [noaudit] => { TokenKind :: NoauditKw } ; [nocopy] => { TokenKind :: NocopyKw } ; [noneditionable] => { TokenKind :: NoneditionableKw } ; [not] => { TokenKind :: NotKw } ; [null] => { TokenKind :: NullKw } ; [number] => { TokenKind :: NumberKw } ; [numeric] => { TokenKind :: NumericKw } ; [nvarchar2] => { TokenKind :: Nvarchar2Kw } ; [of] => { TokenKind :: OfKw } ; [old] => { TokenKind :: OldKw } ; [on] => { TokenKind :: OnKw } ; [or] => { TokenKind :: OrKw } ; [out] => { TokenKind :: OutKw } ; [parent] => { TokenKind :: ParentKw } ; [pluggable] => { TokenKind :: PluggableKw } ; [precedes] => { TokenKind :: PrecedesKw } ; [precision] => { TokenKind :: PrecisionKw } ; [procedure] => { TokenKind :: ProcedureKw } ; [raw] => { TokenKind :: RawKw } ; [real] => { TokenKind :: RealKw } ; [referencing] => { TokenKind :: ReferencingKw } ; [rename] => { TokenKind :: RenameKw } ; [replace] => { TokenKind :: ReplaceKw } ; [return] => { TokenKind :: ReturnKw } ; [returning] => { TokenKind :: ReturningKw } ; [reverse] => { TokenKind :: ReverseKw } ; [revoke] => { TokenKind :: RevokeKw } ; [row] => { TokenKind :: RowKw } ; [rowid] => { TokenKind :: RowidKw } ; [schema] => { TokenKind :: SchemaKw } ; [second] => { TokenKind :: SecondKw } ; [select] => { TokenKind :: SelectKw } ; [servererror] => { TokenKind :: ServererrorKw } ; [set] => { TokenKind :: SetKw } ; [shutdown] => { TokenKind :: ShutdownKw } ; [smallint] => { TokenKind :: SmallintKw } ; [startup] => { TokenKind :: StartupKw } ; [statistics] => { TokenKind :: StatisticsKw } ; [suspend] => { TokenKind :: SuspendKw } ; [then] => { TokenKind :: ThenKw } ; [time] => { TokenKind :: TimeKw } ; [timestamp] => { TokenKind :: TimestampKw } ; [to] => { TokenKind :: ToKw } ; [trigger] => { TokenKind :: TriggerKw } ; [truncate] => { TokenKind :: TruncateKw } ; [type] => { TokenKind :: TypeKw } ; [unplug] => { TokenKind :: UnplugKw } ; [update] => { TokenKind :: UpdateKw } ; [urowid] => { TokenKind :: UrowidKw } ; [values] => { TokenKind :: ValuesKw } ; [varchar] => { TokenKind :: VarcharKw } ; [varchar2] => { TokenKind :: Varchar2Kw } ; [varying] => { TokenKind :: VaryingKw } ; [when] => { TokenKind :: WhenKw } ; [where] => { TokenKind :: WhereKw } ; [with] => { TokenKind :: WithKw } ; [year] => { TokenKind :: YearKw } ; [zone] => { TokenKind :: ZoneKw } ; [EOF] => { TokenKind :: Eof } ; }
+macro_rules ! T { [whitespace] => { TokenKind :: Whitespace } ; [comment] => { TokenKind :: Comment } ; [!] => { TokenKind :: Exclam } ; ["$$"] => { TokenKind :: DollarQuote } ; [%] => { TokenKind :: Percentage } ; ["("] => { TokenKind :: LParen } ; [(+)] => { TokenKind :: OracleJoin } ; [")"] => { TokenKind :: RParen } ; [*] => { TokenKind :: Asterisk } ; [+] => { TokenKind :: Plus } ; [,] => { TokenKind :: Comma } ; [-] => { TokenKind :: Minus } ; [.] => { TokenKind :: Dot } ; [..] => { TokenKind :: DoubleDot } ; [/] => { TokenKind :: Slash } ; [:=] => { TokenKind :: Assign } ; [;] => { TokenKind :: Semicolon } ; [comparison] => { TokenKind :: Comparison } ; [||] => { TokenKind :: DoublePipe } ; [int_literal] => { TokenKind :: Integer } ; [unquoted_ident] => { TokenKind :: UnquotedIdent } ; [quoted_ident] => { TokenKind :: QuotedIdent } ; [quoted_literal] => { TokenKind :: QuotedLiteral } ; [bind_var] => { TokenKind :: BindVar } ; [after] => { TokenKind :: AfterKw } ; [agent] => { TokenKind :: AgentKw } ; [alter] => { TokenKind :: AlterKw } ; [analyze] => { TokenKind :: AnalyzeKw } ; [and] => { TokenKind :: AndKw } ; [array] => { TokenKind :: ArrayKw } ; [as] => { TokenKind :: AsKw } ; [associate] => { TokenKind :: AssociateKw } ; [audit] => { TokenKind :: AuditKw } ; [before] => { TokenKind :: BeforeKw } ; [begin] => { TokenKind :: BeginKw } ; [between] => { TokenKind :: BetweenKw } ; [bfile] => { TokenKind :: BfileKw } ; [binary_double] => { TokenKind :: BinaryDoubleKw } ; [binary_float] => { TokenKind :: BinaryFloatKw } ; [binary_integer] => { TokenKind :: BinaryIntegerKw } ; [blob] => { TokenKind :: BlobKw } ; [by] => { TokenKind :: ByKw } ; [byte] => { TokenKind :: ByteKw } ; [c] => { TokenKind :: CKw } ; [call] => { TokenKind :: CallKw } ; [char] => { TokenKind :: CharKw } ; [character] => { TokenKind :: CharacterKw } ; [charsetform] => { TokenKind :: CharsetformKw } ; [charsetid] => { TokenKind :: CharsetidKw } ; [clob] => { TokenKind :: ClobKw } ; [clone] => { TokenKind :: CloneKw } ; [comment] => { TokenKind :: CommentKw } ; [constant] => { TokenKind :: ConstantKw } ; [container] => { TokenKind :: ContainerKw } ; [context] => { TokenKind :: ContextKw } ; [create] => { TokenKind :: CreateKw } ; [crossedition] => { TokenKind :: CrosseditionKw } ; [cursor] => { TokenKind :: CursorKw } ; [database] => { TokenKind :: DatabaseKw } ; [date] => { TokenKind :: DateKw } ; [day] => { TokenKind :: DayKw } ; [db_role_change] => { TokenKind :: DbRoleChangeKw } ; [ddl] => { TokenKind :: DdlKw } ; [dec] => { TokenKind :: DecKw } ; [decimal] => { TokenKind :: DecimalKw } ; [declare] => { TokenKind :: DeclareKw } ; [default] => { TokenKind :: DefaultKw } ; [delete] => { TokenKind :: DeleteKw } ; [deterministic] => { TokenKind :: DeterministicKw } ; [disable] => { TokenKind :: DisableKw } ; [disassociate] => { TokenKind :: DisassociateKw } ; [double] => { TokenKind :: DoubleKw } ; [drop] => { TokenKind :: DropKw } ; [duration] => { TokenKind :: DurationKw } ; [each] => { TokenKind :: EachKw } ; [editionable] => { TokenKind :: EditionableKw } ; [else] => { TokenKind :: ElseKw } ; [elsif] => { TokenKind :: ElsifKw } ; [enable] => { TokenKind :: EnableKw } ; [end] => { TokenKind :: EndKw } ; [env] => { TokenKind :: EnvKw } ; [exception] => { TokenKind :: ExceptionKw } ; [external] => { TokenKind :: ExternalKw } ; [float] => { TokenKind :: FloatKw } ; [follows] => { TokenKind :: FollowsKw } ; [for] => { TokenKind :: ForKw } ; [forward] => { TokenKind :: ForwardKw } ; [from] => { TokenKind :: FromKw } ; [function] => { TokenKind :: FunctionKw } ; [grant] => { TokenKind :: GrantKw } ; [if] => { TokenKind :: IfKw } ; [ilike] => { TokenKind :: IlikeKw } ; [in] => { TokenKind :: InKw } ; [index] => { TokenKind :: IndexKw } ; [indicator] => { TokenKind :: IndicatorKw } ; [insert] => { TokenKind :: InsertKw } ; [instead] => { TokenKind :: InsteadKw } ; [int] => { TokenKind :: IntKw } ; [integer] => { TokenKind :: IntegerKw } ; [interval] => { TokenKind :: IntervalKw } ; [into] => { TokenKind :: IntoKw } ; [is] => { TokenKind :: IsKw } ; [java] => { TokenKind :: JavaKw } ; [language] => { TokenKind :: LanguageKw } ; [length] => { TokenKind :: LengthKw } ; [library] => { TokenKind :: LibraryKw } ; [like] => { TokenKind :: LikeKw } ; [local] => { TokenKind :: LocalKw } ; [logoff] => { TokenKind :: LogoffKw } ; [logon] => { TokenKind :: LogonKw } ; [long] => { TokenKind :: LongKw } ; [maxlen] => { TokenKind :: MaxlenKw } ; [mle] => { TokenKind :: MleKw } ; [module] => { TokenKind :: ModuleKw } ; [month] => { TokenKind :: MonthKw } ; [name] => { TokenKind :: NameKw } ; [national] => { TokenKind :: NationalKw } ; [nchar] => { TokenKind :: NcharKw } ; [nclob] => { TokenKind :: NclobKw } ; [new] => { TokenKind :: NewKw } ; [noaudit] => { TokenKind :: NoauditKw } ; [nocopy] => { TokenKind :: NocopyKw } ; [noneditionable] => { TokenKind :: NoneditionableKw } ; [not] => { TokenKind :: NotKw } ; [null] => { TokenKind :: NullKw } ; [number] => { TokenKind :: NumberKw } ; [numeric] => { TokenKind :: NumericKw } ; [nvarchar2] => { TokenKind :: Nvarchar2Kw } ; [of] => { TokenKind :: OfKw } ; [old] => { TokenKind :: OldKw } ; [on] => { TokenKind :: OnKw } ; [or] => { TokenKind :: OrKw } ; [out] => { TokenKind :: OutKw } ; [parallel_enable] => { TokenKind :: ParallelEnableKw } ; [parameters] => { TokenKind :: ParametersKw } ; [parent] => { TokenKind :: ParentKw } ; [pipelined] => { TokenKind :: PipelinedKw } ; [pls_integer] => { TokenKind :: PlsIntegerKw } ; [pluggable] => { TokenKind :: PluggableKw } ; [precedes] => { TokenKind :: PrecedesKw } ; [precision] => { TokenKind :: PrecisionKw } ; [procedure] => { TokenKind :: ProcedureKw } ; [range] => { TokenKind :: RangeKw } ; [raw] => { TokenKind :: RawKw } ; [real] => { TokenKind :: RealKw } ; [record] => { TokenKind :: RecordKw } ; [ref] => { TokenKind :: RefKw } ; [reference] => { TokenKind :: ReferenceKw } ; [referencing] => { TokenKind :: ReferencingKw } ; [relies_on] => { TokenKind :: ReliesOnKw } ; [rename] => { TokenKind :: RenameKw } ; [replace] => { TokenKind :: ReplaceKw } ; [result_cache] => { TokenKind :: ResultCacheKw } ; [return] => { TokenKind :: ReturnKw } ; [returning] => { TokenKind :: ReturningKw } ; [reverse] => { TokenKind :: ReverseKw } ; [revoke] => { TokenKind :: RevokeKw } ; [row] => { TokenKind :: RowKw } ; [rowid] => { TokenKind :: RowidKw } ; [rowtype] => { TokenKind :: RowtypeKw } ; [schema] => { TokenKind :: SchemaKw } ; [second] => { TokenKind :: SecondKw } ; [select] => { TokenKind :: SelectKw } ; [self] => { TokenKind :: SelfKw } ; [servererror] => { TokenKind :: ServererrorKw } ; [set] => { TokenKind :: SetKw } ; [shutdown] => { TokenKind :: ShutdownKw } ; [signature] => { TokenKind :: SignatureKw } ; [smallint] => { TokenKind :: SmallintKw } ; [startup] => { TokenKind :: StartupKw } ; [statistics] => { TokenKind :: StatisticsKw } ; [string] => { TokenKind :: StringKw } ; [struct] => { TokenKind :: StructKw } ; [subtype] => { TokenKind :: SubtypeKw } ; [suspend] => { TokenKind :: SuspendKw } ; [table] => { TokenKind :: TableKw } ; [tdo] => { TokenKind :: TdoKw } ; [then] => { TokenKind :: ThenKw } ; [time] => { TokenKind :: TimeKw } ; [timestamp] => { TokenKind :: TimestampKw } ; [to] => { TokenKind :: ToKw } ; [trigger] => { TokenKind :: TriggerKw } ; [truncate] => { TokenKind :: TruncateKw } ; [type] => { TokenKind :: TypeKw } ; [unplug] => { TokenKind :: UnplugKw } ; [update] => { TokenKind :: UpdateKw } ; [urowid] => { TokenKind :: UrowidKw } ; [values] => { TokenKind :: ValuesKw } ; [varchar] => { TokenKind :: VarcharKw } ; [varchar2] => { TokenKind :: Varchar2Kw } ; [varray] => { TokenKind :: VarrayKw } ; [varying] => { TokenKind :: VaryingKw } ; [when] => { TokenKind :: WhenKw } ; [where] => { TokenKind :: WhereKw } ; [with] => { TokenKind :: WithKw } ; [year] => { TokenKind :: YearKw } ; [zone] => { TokenKind :: ZoneKw } ; [EOF] => { TokenKind :: Eof } ; }
 pub(crate) use T;
