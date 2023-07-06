@@ -4,9 +4,9 @@
 
 //! Implements parsing of SQL blocks from a token tree.
 
+use crate::grammar::declare_section::parse_declare_section;
 use crate::grammar::{
-    opt_expr, opt_function_invocation, parse_datatype, parse_expr, parse_ident, parse_insert,
-    parse_query,
+    opt_expr, opt_function_invocation, parse_expr, parse_ident, parse_insert, parse_query,
 };
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
@@ -15,8 +15,13 @@ use crate::ParseError;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
+    p.eat_ws();
     p.start(SyntaxKind::Block);
-    parse_declare_section(p);
+
+    let checkpoint = p.checkpoint();
+    if p.eat(T![declare]) || p.current() != T![begin] {
+        parse_declare_section(p, Some(checkpoint));
+    }
 
     p.expect(T![begin]);
 
@@ -28,34 +33,6 @@ pub fn parse_block(p: &mut Parser) {
     parse_ident(p, 0..1);
     p.expect(T![;]);
 
-    p.finish();
-}
-
-/// <https://docs.oracle.com/cd/B28359_01/appdev.111/b28370/block.htm#CJAIABJJ>
-fn parse_declare_section(p: &mut Parser) {
-    if p.at(T![begin]) {
-        return;
-    }
-
-    p.start(SyntaxKind::DeclareSection);
-    p.eat(T![declare]);
-    while !p.at(T![begin]) && !p.at(T![EOF]) {
-        p.start(SyntaxKind::VariableDecl);
-
-        if !p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]) {
-            break;
-        }
-
-        while !p.at(T![;]) && !p.at(T![EOF]) {
-            parse_datatype(p);
-        }
-
-        p.finish();
-
-        if !p.eat(T![;]) {
-            break;
-        }
-    }
     p.finish();
 }
 
@@ -202,19 +179,19 @@ END log_last_login_fuzzy;"#,
             ),
             expect![[r#"
 Root@0..461
-  Block@0..461
-    Whitespace@0..1 "\n"
+  Whitespace@0..1 "\n"
+  Block@1..461
     DeclareSection@1..45
       Keyword@1..8 "DECLARE"
       Whitespace@8..13 "\n    "
-      VariableDecl@13..43
+      IdentGroup@13..29
         Ident@13..29 "formatted_output"
-        Whitespace@29..30 " "
-        Datatype@30..43
-          Keyword@30..38 "VARCHAR2"
-          LParen@38..39 "("
-          Integer@39..42 "100"
-          RParen@42..43 ")"
+      Whitespace@29..30 " "
+      Datatype@30..43
+        Keyword@30..38 "VARCHAR2"
+        LParen@38..39 "("
+        Integer@39..42 "100"
+        RParen@42..43 ")"
       Semicolon@43..44 ";"
       Whitespace@44..45 "\n"
     Keyword@45..50 "BEGIN"
@@ -248,7 +225,8 @@ Root@0..461
           Whitespace@141..142 " "
         Keyword@142..146 "FROM"
         Whitespace@146..147 " "
-        Ident@147..151 "DUAL"
+        IdentGroup@147..151
+          Ident@147..151 "DUAL"
         Semicolon@151..152 ";"
       Whitespace@152..157 "\n    "
       Comment@157..172 "-- Nested block"
@@ -366,50 +344,13 @@ Root@0..54
           Text@15..38 "Expected token 'IntoKw'"
         Keyword@38..42 "FROM"
         Whitespace@42..43 " "
-        Ident@43..47 "dual"
+        IdentGroup@43..47
+          Ident@43..47 "dual"
         Semicolon@47..48 ";"
       Whitespace@48..49 " "
     Keyword@49..52 "END"
     Whitespace@52..53 " "
     Semicolon@53..54 ";"
-"#]],
-        );
-    }
-
-    #[test]
-    fn test_declare_section() {
-        const INPUT: &str = "
-    l_credit_limit NUMBER (10,0);
-    l_contact_name VARCHAR2(255);";
-
-        check(
-            parse(INPUT, parse_declare_section),
-            expect![[r#"
-Root@0..68
-  Whitespace@0..5 "\n    "
-  DeclareSection@5..68
-    VariableDecl@5..33
-      Ident@5..19 "l_credit_limit"
-      Whitespace@19..20 " "
-      Datatype@20..33
-        Keyword@20..26 "NUMBER"
-        Whitespace@26..27 " "
-        LParen@27..28 "("
-        Integer@28..30 "10"
-        Comma@30..31 ","
-        Integer@31..32 "0"
-        RParen@32..33 ")"
-    Semicolon@33..34 ";"
-    Whitespace@34..39 "\n    "
-    VariableDecl@39..67
-      Ident@39..53 "l_contact_name"
-      Whitespace@53..54 " "
-      Datatype@54..67
-        Keyword@54..62 "VARCHAR2"
-        LParen@62..63 "("
-        Integer@63..66 "255"
-        RParen@66..67 ")"
-    Semicolon@67..68 ";"
 "#]],
         );
     }

@@ -471,11 +471,11 @@ Root@0..518
       DeclareSection@95..118
         Keyword@95..102 "DECLARE"
         Whitespace@102..107 "\n    "
-        VariableDecl@107..116
+        IdentGroup@107..109
           Ident@107..109 "id"
-          Whitespace@109..110 " "
-          Datatype@110..116
-            Keyword@110..116 "NUMBER"
+        Whitespace@109..110 " "
+        Datatype@110..116
+          Keyword@110..116 "NUMBER"
         Semicolon@116..117 ";"
         Whitespace@117..118 "\n"
       Keyword@118..123 "BEGIN"

@@ -22,7 +22,9 @@ use crate::syntax::SyntaxKind;
 use crate::ParseError;
 
 mod block;
+mod call_spec;
 mod datatype;
+mod declare_section;
 mod expressions;
 mod function;
 mod function_invocation;
