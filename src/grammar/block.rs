@@ -36,7 +36,7 @@ pub fn parse_block(p: &mut Parser) {
     p.finish();
 }
 
-fn parse_stmt(p: &mut Parser) {
+pub(super) fn parse_stmt(p: &mut Parser) {
     p.start(SyntaxKind::BlockStatement);
 
     match p.current() {

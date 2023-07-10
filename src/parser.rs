@@ -72,6 +72,17 @@ pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
+/// Tries to parse a package from a string.
+pub fn parse_package(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    // Expect a package
+    grammar::parse_package(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
 /// Tries to parse a procedure from a string.
 pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
