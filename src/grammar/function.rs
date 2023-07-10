@@ -16,9 +16,6 @@ pub fn parse_function(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::Function);
     parse_header(p, is_nested);
     parse_body(p);
-    while !p.at(T![EOF]) {
-        p.bump_any();
-    }
     p.finish();
 }
 
@@ -64,6 +61,12 @@ fn parse_body(p: &mut Parser) {
     if !opt_call_spec(p) {
         parse_block(p);
     }
+
+    p.eat(T!["$$"]);
+    p.eat(T![language]);
+    p.eat(T![plpgsql]);
+    p.eat(T![;]);
+    p.eat(T![/]);
 
     p.eat_ws();
 }
