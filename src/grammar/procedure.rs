@@ -396,7 +396,7 @@ Root@0..304
     Whitespace@285..286 " "
     Keyword@286..294 "LANGUAGE"
     Whitespace@294..295 " "
-    Ident@295..302 "plpgsql"
+    Keyword@295..302 "plpgsql"
     Semicolon@302..303 ";"
     Whitespace@303..304 "\n"
 "#]],
