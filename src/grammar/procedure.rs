@@ -17,9 +17,6 @@ pub(crate) fn parse_procedure(p: &mut Parser, is_nested: bool) {
     p.start(SyntaxKind::Procedure);
     parse_header(p, is_nested);
     parse_body(p);
-    while !p.at(T![EOF]) {
-        p.bump_any();
-    }
     p.finish();
 }
 
@@ -51,6 +48,12 @@ fn parse_body(p: &mut Parser) {
     if !opt_call_spec(p) {
         parse_block(p);
     }
+
+    p.eat(T!["$$"]);
+    p.eat(T![language]);
+    p.eat(T![plpgsql]);
+    p.eat(T![;]);
+    p.eat(T![/]);
 
     p.eat_ws();
 }
@@ -393,7 +396,7 @@ Root@0..304
     Whitespace@285..286 " "
     Keyword@286..294 "LANGUAGE"
     Whitespace@294..295 " "
-    Ident@295..302 "plpgsql"
+    Keyword@295..302 "plpgsql"
     Semicolon@302..303 ";"
     Whitespace@303..304 "\n"
 "#]],

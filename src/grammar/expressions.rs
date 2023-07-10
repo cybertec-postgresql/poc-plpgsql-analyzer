@@ -211,7 +211,7 @@ fn infix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         T![or] => Operator::new_with_map(1, SyntaxKind::LogicOp),
         T![and] => Operator::new_with_map(3, SyntaxKind::LogicOp),
-        T![comparison] => Operator::new_plain(7),
+        T![=] | T![comparison] => Operator::new_plain(7),
         T![like] | T![ilike] | T![between] | T![in] => Operator::new_with_cb(
             9,
             match op {

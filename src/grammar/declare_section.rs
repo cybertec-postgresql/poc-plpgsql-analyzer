@@ -36,8 +36,8 @@ pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoin
         }
 
         match p.current() {
-            // while the docs don't specify it anywhere, `BEGIN` may not be used as an identifier here
-            T![begin] => break,
+            // while the docs don't specify it anywhere, `BEGIN` and `END` may not be used as an identifier here
+            T![begin] | T![end] => break,
             T![cursor] | T![function] | T![procedure] | T![type] | T![subtype] => continue,
             token if token.is_ident() => continue,
             _ => break,

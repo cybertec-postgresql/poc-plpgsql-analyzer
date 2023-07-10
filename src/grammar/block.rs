@@ -36,7 +36,7 @@ pub fn parse_block(p: &mut Parser) {
     p.finish();
 }
 
-fn parse_stmt(p: &mut Parser) {
+pub(super) fn parse_stmt(p: &mut Parser) {
     p.start(SyntaxKind::BlockStatement);
 
     match p.current() {
@@ -47,7 +47,7 @@ fn parse_stmt(p: &mut Parser) {
         T![return] => parse_return_stmt(p),
         T![select] => parse_query(p, true),
         current_token => {
-            if !(opt_procedure_call(p)) {
+            if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
                 p.error(ParseError::ExpectedStatement(current_token));
                 p.bump_any();
             }
@@ -104,6 +104,31 @@ fn opt_procedure_call(p: &mut Parser) -> bool {
     } else {
         false
     }
+}
+
+fn opt_assignment_stmt(p: &mut Parser) -> bool {
+    if (p.current().is_ident() && p.nth(1).unwrap_or(T![EOF]) == T![:=])
+        || (p.current().is_ident()
+            && p.nth(1).unwrap_or(T![EOF]) == T![.]
+            && p.nth(2).unwrap_or(T![EOF]).is_ident()
+            && p.nth(3).unwrap_or(T![EOF]) == T![:=])
+        || (p.current().is_ident()
+            && p.nth(1).unwrap_or(T![EOF]) == T!["("]
+            && p.nth(2).unwrap_or(T![EOF]) == T![int_literal]
+            && p.nth(3).unwrap_or(T![EOF]) == T![")"]
+            && p.nth(4).unwrap_or(T![EOF]) == T![:=])
+    {
+        parse_ident(p, 1..2);
+        if p.eat(T!["("]) {
+            p.expect(T![int_literal]);
+            p.expect(T![")"]);
+        }
+        p.expect(T![:=]);
+        parse_expr(p);
+        p.expect(T![;]);
+        return true;
+    }
+    false
 }
 
 #[cfg(test)]
@@ -172,15 +197,17 @@ BEGIN
         ELSIF TRUE THEN NULL;
         ELSE NULL;
     END IF;
+    -- Assignment operation
+    formatted_output := 'abc';
     -- Return statement
     RETURN 1;
 END log_last_login_fuzzy;"#,
                 parse_block,
             ),
             expect![[r#"
-Root@0..461
+Root@0..520
   Whitespace@0..1 "\n"
-  Block@1..461
+  Block@1..520
     DeclareSection@1..45
       Keyword@1..8 "DECLARE"
       Whitespace@8..13 "\n    "
@@ -305,20 +332,32 @@ Root@0..461
       Keyword@394..396 "IF"
       Semicolon@396..397 ";"
     Whitespace@397..402 "\n    "
-    Comment@402..421 "-- Return statement"
-    Whitespace@421..426 "\n    "
-    BlockStatement@426..435
-      Keyword@426..432 "RETURN"
-      Expression@432..434
-        Whitespace@432..433 " "
-        Integer@433..434 "1"
-      Semicolon@434..435 ";"
-    Whitespace@435..436 "\n"
-    Keyword@436..439 "END"
-    Whitespace@439..440 " "
-    IdentGroup@440..460
-      Ident@440..460 "log_last_login_fuzzy"
-    Semicolon@460..461 ";"
+    Comment@402..425 "-- Assignment operation"
+    Whitespace@425..430 "\n    "
+    BlockStatement@430..456
+      IdentGroup@430..446
+        Ident@430..446 "formatted_output"
+      Whitespace@446..447 " "
+      Assign@447..449 ":="
+      Expression@449..455
+        Whitespace@449..450 " "
+        QuotedLiteral@450..455 "'abc'"
+      Semicolon@455..456 ";"
+    Whitespace@456..461 "\n    "
+    Comment@461..480 "-- Return statement"
+    Whitespace@480..485 "\n    "
+    BlockStatement@485..494
+      Keyword@485..491 "RETURN"
+      Expression@491..493
+        Whitespace@491..492 " "
+        Integer@492..493 "1"
+      Semicolon@493..494 ";"
+    Whitespace@494..495 "\n"
+    Keyword@495..498 "END"
+    Whitespace@498..499 " "
+    IdentGroup@499..519
+      Ident@499..519 "log_last_login_fuzzy"
+    Semicolon@519..520 ";"
 "#]],
         );
     }
@@ -351,6 +390,74 @@ Root@0..54
     Keyword@49..52 "END"
     Whitespace@52..53 " "
     Semicolon@53..54 ";"
+"#]],
+        );
+    }
+
+    #[test]
+    fn test_assignment_operations() {
+        check(
+            parse(
+                r#"BEGIN
+                a := 1;
+                a.b := 1;
+                :a := 1;
+                a(1) := 1;
+            END;"#,
+                parse_block,
+            ),
+            expect![[r#"
+Root@0..124
+  Block@0..124
+    Keyword@0..5 "BEGIN"
+    Whitespace@5..22 "\n                "
+    BlockStatement@22..29
+      IdentGroup@22..23
+        Ident@22..23 "a"
+      Whitespace@23..24 " "
+      Assign@24..26 ":="
+      Expression@26..28
+        Whitespace@26..27 " "
+        Integer@27..28 "1"
+      Semicolon@28..29 ";"
+    Whitespace@29..46 "\n                "
+    BlockStatement@46..55
+      IdentGroup@46..49
+        Ident@46..47 "a"
+        Dot@47..48 "."
+        Ident@48..49 "b"
+      Whitespace@49..50 " "
+      Assign@50..52 ":="
+      Expression@52..54
+        Whitespace@52..53 " "
+        Integer@53..54 "1"
+      Semicolon@54..55 ";"
+    Whitespace@55..72 "\n                "
+    BlockStatement@72..80
+      IdentGroup@72..74
+        BindVar@72..74 ":a"
+      Whitespace@74..75 " "
+      Assign@75..77 ":="
+      Expression@77..79
+        Whitespace@77..78 " "
+        Integer@78..79 "1"
+      Semicolon@79..80 ";"
+    Whitespace@80..97 "\n                "
+    BlockStatement@97..107
+      IdentGroup@97..98
+        Ident@97..98 "a"
+      LParen@98..99 "("
+      Integer@99..100 "1"
+      RParen@100..101 ")"
+      Whitespace@101..102 " "
+      Assign@102..104 ":="
+      Expression@104..106
+        Whitespace@104..105 " "
+        Integer@105..106 "1"
+      Semicolon@106..107 ";"
+    Whitespace@107..120 "\n            "
+    Keyword@120..123 "END"
+    Semicolon@123..124 ";"
 "#]],
         );
     }
