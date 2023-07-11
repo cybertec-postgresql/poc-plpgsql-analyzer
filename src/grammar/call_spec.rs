@@ -177,6 +177,7 @@ Root@0..54
     Whitespace@18..19 " "
     QuotedLiteral@19..54 "'Adjuster.raiseSalary ..."
 "#]],
+            vec![],
         );
     }
 
@@ -198,6 +199,7 @@ Root@0..34
   Expression@24..34
     QuotedLiteral@24..34 "'return 1'"
 "#]],
+            vec![],
         );
     }
 
@@ -221,6 +223,7 @@ Root@0..55
     Whitespace@31..32 " "
     QuotedLiteral@32..55 "'mod_func(Out<number>)'"
 "#]],
+            vec![],
         );
     }
 }

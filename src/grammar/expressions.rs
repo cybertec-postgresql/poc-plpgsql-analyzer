@@ -247,6 +247,9 @@ fn in_cond(p: &mut Parser, min_bp: u8) {
 mod tests {
     use expect_test::expect;
 
+    use crate::lexer::TokenKind::RParen;
+    use crate::ParseError::{ExpectedToken, Incomplete, UnbalancedParens};
+
     use super::super::tests::{check, parse};
     use super::*;
 
@@ -259,6 +262,7 @@ Root@0..1
   Expression@0..1
     Integer@0..1 "1"
 "#]],
+            vec![],
         );
     }
 
@@ -273,6 +277,7 @@ Root@0..2
     IdentGroup@1..2
       Ident@1..2 "a"
 "#]],
+            vec![],
         );
     }
 
@@ -287,6 +292,7 @@ Root@0..2
       Ident@0..1 "a"
     Exclam@1..2 "!"
 "#]],
+            vec![],
         );
     }
 
@@ -303,6 +309,7 @@ Root@0..3
         Ident@1..2 "a"
       Exclam@2..3 "!"
 "#]],
+            vec![],
         );
     }
 
@@ -328,6 +335,7 @@ Root@0..11
     Whitespace@9..10 " "
     Integer@10..11 "2"
 "#]],
+            vec![],
         );
     }
 
@@ -356,6 +364,7 @@ Root@0..22
       IdentGroup@18..22
         Ident@18..22 "true"
 "#]],
+            vec![],
         );
     }
 
@@ -373,6 +382,7 @@ Root@0..5
     IdentGroup@4..5
       Ident@4..5 "a"
 "#]],
+            vec![],
         );
     }
 
@@ -390,6 +400,7 @@ Root@0..8
     IdentGroup@7..8
       Ident@7..8 "a"
 "#]],
+            vec![],
         );
     }
 
@@ -427,6 +438,7 @@ Root@0..34
       Integer@32..33 "2"
     RParen@33..34 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -454,6 +466,7 @@ Root@0..17
     Integer@15..16 "3"
     RParen@16..17 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -521,6 +534,7 @@ Root@0..113
       QuotedLiteral@107..112 "'SUN'"
       RParen@112..113 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -543,6 +557,7 @@ Root@0..9
       Whitespace@7..8 " "
       Integer@8..9 "2"
 "#]],
+            vec![],
         );
     }
 
@@ -574,6 +589,7 @@ Root@0..17
     Whitespace@15..16 " "
     Integer@16..17 "5"
 "#]],
+            vec![],
         );
     }
 
@@ -593,6 +609,7 @@ Root@0..7
       Ident@5..6 "a"
   RParen@6..7 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -610,6 +627,7 @@ Root@0..7
   RParen@5..6 ")"
   RParen@6..7 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -640,6 +658,7 @@ Root@0..15
     IdentGroup@14..15
       Ident@14..15 "b"
 "#]],
+            vec![],
         );
     }
 
@@ -670,6 +689,7 @@ Root@0..17
       RParen@15..16 ")"
     RParen@16..17 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -738,6 +758,7 @@ Root@0..75
           QuotedLiteral@64..74 "'%stonks%'"
     RParen@74..75 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -764,6 +785,7 @@ Root@0..28
           QuotedLiteral@21..27 "'John'"
       RParen@27..28 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -772,7 +794,7 @@ Root@0..28
         check(
             parse("(a < 100))", parse_expr),
             expect![[r#"
-Root@0..38
+Root@0..9
   LParen@0..1 "("
   Expression@1..8
     IdentGroup@1..2
@@ -782,9 +804,8 @@ Root@0..38
     Whitespace@4..5 " "
     Integer@5..8 "100"
   RParen@8..9 ")"
-  Error@9..38
-    Text@9..38 "Incomplete input; unp ..."
 "#]],
+            vec![Incomplete(")".to_string())],
         );
     }
 
@@ -793,7 +814,7 @@ Root@0..38
         check(
             parse("(a < 100", parse_expr),
             expect![[r#"
-Root@0..67
+Root@0..8
   LParen@0..1 "("
   Expression@1..8
     IdentGroup@1..2
@@ -802,11 +823,8 @@ Root@0..67
     ComparisonOp@3..4 "<"
     Whitespace@4..5 " "
     Integer@5..8 "100"
-  Error@8..31
-    Text@8..31 "Expected token 'RParen'"
-  Error@31..67
-    Text@31..67 "Unbalanced pair of pa ..."
 "#]],
+            vec![ExpectedToken(RParen), UnbalancedParens],
         );
     }
 }

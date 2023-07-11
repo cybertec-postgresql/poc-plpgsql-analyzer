@@ -267,6 +267,7 @@ Root@0..174
     Whitespace@170..171 " "
     Keyword@171..174 "ROW"
 "#]],
+            vec![],
         );
     }
 
@@ -329,6 +330,7 @@ Root@0..228
     IdentGroup@216..228
       Ident@216..228 "my_trigger_2"
 "#]],
+            vec![],
         );
     }
 
@@ -427,6 +429,7 @@ Root@0..237
       Semicolon@235..236 ";"
     Whitespace@236..237 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -614,6 +617,7 @@ Root@0..518
       Semicolon@515..516 ";"
     Whitespace@516..518 "\n\n"
 "#]],
+            vec![],
         );
     }
 
@@ -655,6 +659,7 @@ Root@0..84
       Semicolon@82..83 ";"
     Whitespace@83..84 "\n"
 "#]],
+            vec![],
         );
     }
 }

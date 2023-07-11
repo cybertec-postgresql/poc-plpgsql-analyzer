@@ -148,6 +148,7 @@ Root@0..11
     Integer@9..10 "2"
     RParen@10..11 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -165,6 +166,7 @@ Root@0..16
     Keyword@11..15 "byte"
     RParen@15..16 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -182,6 +184,7 @@ Root@0..16
     Keyword@11..15 "char"
     RParen@15..16 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -194,6 +197,7 @@ Root@0..6
   Datatype@0..6
     Keyword@0..6 "number"
 "#]],
+            vec![],
         );
     }
 
@@ -209,6 +213,7 @@ Root@0..9
     Integer@7..8 "1"
     RParen@8..9 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -227,6 +232,7 @@ Root@0..12
     Integer@10..11 "2"
     RParen@11..12 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -241,6 +247,7 @@ Root@0..8
     Whitespace@4..5 " "
     Keyword@5..8 "raw"
 "#]],
+            vec![],
         );
     }
 
@@ -264,6 +271,7 @@ Root@0..33
     Whitespace@28..29 " "
     Keyword@29..33 "zone"
 "#]],
+            vec![],
         );
     }
 
@@ -289,6 +297,7 @@ Root@0..29
     Integer@27..28 "2"
     RParen@28..29 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -307,6 +316,7 @@ Root@0..16
     Integer@14..15 "2"
     RParen@15..16 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -327,6 +337,7 @@ Root@0..26
     Integer@23..25 "20"
     RParen@25..26 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -342,6 +353,7 @@ Root@0..11
       Dot@3..4 "."
       Ident@4..11 "anytype"
 "#]],
+            vec![],
         );
     }
 
@@ -357,6 +369,7 @@ Root@0..17
       Dot@9..10 "."
       Ident@10..17 "my_type"
 "#]],
+            vec![],
         );
     }
 
@@ -377,6 +390,7 @@ Root@0..33
       Percentage@28..29 "%"
       Keyword@29..33 "type"
 "#]],
+            vec![],
         );
     }
 }

@@ -324,6 +324,7 @@ Root@0..97
       Ident@88..96 "employee"
     Semicolon@96..97 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -356,6 +357,7 @@ Root@0..61
     Keyword@49..60 "PLS_INTEGER"
     Semicolon@60..61 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -426,6 +428,7 @@ Root@0..156
         Ident@144..155 "custom_type"
     Semicolon@155..156 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -475,6 +478,7 @@ Root@0..62
         Keyword@58..61 "END"
         Semicolon@61..62 ";"
 "#]],
+            vec![],
         );
     }
 }
