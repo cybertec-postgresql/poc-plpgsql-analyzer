@@ -337,11 +337,7 @@ impl<'a> Parser<'a> {
 
     /// Mark the given error.
     pub(crate) fn error(&mut self, error: ParseError) {
-        self.start(SyntaxKind::Error);
-        self.builder
-            .token(SyntaxKind::Text.into(), error.to_string().as_str());
         self.errors.push(error);
-        self.finish();
     }
 
     /// Function to consume the next token, regardless of any [`TokenKind`]
