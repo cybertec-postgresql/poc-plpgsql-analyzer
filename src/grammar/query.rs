@@ -151,6 +151,7 @@ Root@0..19
     IdentGroup@14..19
       Ident@14..19 "table"
 "#]],
+            vec![],
         );
     }
 
@@ -178,6 +179,7 @@ Root@0..26
     IdentGroup@21..26
       Ident@21..26 "table"
 "#]],
+            vec![],
         );
     }
 
@@ -214,6 +216,7 @@ Root@0..38
       Ident@33..37 "DUAL"
     Semicolon@37..38 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -272,6 +275,7 @@ Root@0..328
   Comment@291..327 "-- places.person_id ( ..."
   Whitespace@327..328 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -339,6 +343,7 @@ Root@0..72
     Semicolon@70..71 ";"
   Whitespace@71..72 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -407,6 +412,7 @@ Root@0..148
       Ident@143..147 "name"
     Semicolon@147..148 ";"
 "#]],
+            vec![],
         );
     }
 }

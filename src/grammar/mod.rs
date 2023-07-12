@@ -20,7 +20,7 @@ pub(crate) use trigger::*;
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 mod block;
 mod call_spec;
@@ -143,7 +143,7 @@ fn parse_single_ident(p: &mut Parser) {
             p.bump_any_map(SyntaxKind::Ident)
         }
     } else {
-        p.error(ParseError::ExpectedIdent)
+        p.error(ParseErrorType::ExpectedIdent)
     }
 }
 
@@ -158,6 +158,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::parser::{Parse, Parser};
+    use crate::ParseError;
 
     use super::*;
 
@@ -174,8 +175,9 @@ mod tests {
     /// Helper function to compare the build syntax tree with the expected
     /// output.
     #[track_caller]
-    pub fn check(parse: Parse, expected_tree: Expect) {
-        expected_tree.assert_eq(&format!("{:#?}", parse.syntax()))
+    pub fn check(parse: Parse, expected_tree: Expect, expected_errors: Vec<ParseError>) {
+        expected_tree.assert_eq(&format!("{:#?}", parse.syntax()));
+        assert_eq!(parse.errors, expected_errors);
     }
 
     #[test]
@@ -187,6 +189,7 @@ Root@0..5
   IdentGroup@0..5
     Ident@0..5 "hello"
 "#]],
+            vec![],
         );
     }
 
@@ -201,6 +204,7 @@ Root@0..16
     Dot@4..5 "."
     Ident@5..16 "employee_id"
 "#]],
+            vec![],
         );
     }
 
@@ -213,6 +217,7 @@ Root@0..9
   IdentGroup@0..9
     Ident@0..9 "procedure"
 "#]],
+            vec![],
         );
     }
 
@@ -228,6 +233,7 @@ Root@0..15
   IdentGroup@12..15
     Ident@12..15 "foo"
 "#]],
+            vec![],
         );
     }
 
@@ -250,6 +256,7 @@ Root@0..12
     Datatype@4..12
       Keyword@4..12 "VARCHAR2"
 "#]],
+            vec![],
         );
 
         check(
@@ -268,6 +275,7 @@ Root@0..14
         Percentage@9..10 "%"
         Keyword@10..14 "type"
 "#]],
+            vec![],
         );
     }
 
@@ -289,6 +297,7 @@ Root@0..26
       Whitespace@14..15 " "
       QuotedLiteral@15..26 "'not empty'"
 "#]],
+            vec![],
         );
     }
 }

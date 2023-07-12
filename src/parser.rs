@@ -5,6 +5,8 @@
 
 //! Implements parsers for different SQL language constructs.
 
+use std::ops::Range;
+
 use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
 
 use crate::grammar;
@@ -13,7 +15,7 @@ use crate::syntax::{SyntaxKind, SyntaxNode};
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]
-pub enum ParseError {
+pub enum ParseErrorType {
     /// The input is incomplete, i.e. it could not be fully parsed through.
     #[error("Incomplete input; unparsed: {0}")]
     Incomplete(String),
@@ -47,6 +49,28 @@ pub enum ParseError {
     /// Any parser error currently not described further ("catch-all").
     #[error("Unhandled error: {0}; unparsed: {1}")]
     Unhandled(String, String),
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct ParseError {
+    pub(crate) typ: ParseErrorType,
+    pub(crate) offset: Range<u32>,
+}
+
+impl ParseError {
+    pub fn new(typ: ParseErrorType, offset: Range<u32>) -> ParseError {
+        ParseError { typ, offset }
+    }
+}
+
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} at position {} to {}",
+            self.typ, self.offset.start, self.offset.end
+        )
+    }
 }
 
 /// Tries to parse any string of SQL tokens.
@@ -164,7 +188,7 @@ impl<'a> Parser<'a> {
     pub fn build(mut self) -> Parse {
         if !self.tokens.is_empty() {
             let remaining_tokens = self.tokens.iter().map(|t| t.text).collect::<String>();
-            self.error(ParseError::Incomplete(remaining_tokens));
+            self.error(ParseErrorType::Incomplete(remaining_tokens));
         }
 
         self.finish();
@@ -276,7 +300,7 @@ impl<'a> Parser<'a> {
                 self.do_bump();
             }
         } else {
-            self.error(ParseError::ExpectedToken(token_kind));
+            self.error(ParseErrorType::ExpectedToken(token_kind));
         }
     }
 
@@ -285,7 +309,7 @@ impl<'a> Parser<'a> {
         if self.eat(token_kind) {
             return true;
         }
-        self.error(ParseError::ExpectedToken(token_kind));
+        self.error(ParseErrorType::ExpectedToken(token_kind));
         false
     }
 
@@ -296,7 +320,7 @@ impl<'a> Parser<'a> {
             return true;
         }
 
-        self.error(ParseError::ExpectedOneOfTokens(token_kinds.to_vec()));
+        self.error(ParseErrorType::ExpectedOneOfTokens(token_kinds.to_vec()));
         false
     }
 
@@ -336,12 +360,14 @@ impl<'a> Parser<'a> {
     }
 
     /// Mark the given error.
-    pub(crate) fn error(&mut self, error: ParseError) {
-        self.start(SyntaxKind::Error);
-        self.builder
-            .token(SyntaxKind::Text.into(), error.to_string().as_str());
-        self.errors.push(error);
-        self.finish();
+    pub(crate) fn error(&mut self, typ: ParseErrorType) {
+        let range = self
+            .tokens
+            .last()
+            .map(|r| Range::from(r.range))
+            // TODO: determine the last position of the whole input
+            .unwrap_or(0..0);
+        self.errors.push(ParseError::new(typ, range));
     }
 
     /// Function to consume the next token, regardless of any [`TokenKind`]
@@ -349,7 +375,7 @@ impl<'a> Parser<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         if token.kind == TokenKind::Error {
-            self.error(ParseError::UnknownToken(token.text.to_string()));
+            self.error(ParseErrorType::UnknownToken(token.text.to_string()));
         }
         let syntax_kind: SyntaxKind = token.kind.into();
         self.builder.token(syntax_kind.into(), token.text);
@@ -361,7 +387,7 @@ impl<'a> Parser<'a> {
         assert!(!self.tokens.is_empty());
         let token = self.tokens.pop().unwrap();
         if token.kind == TokenKind::Error {
-            self.error(ParseError::UnknownToken(token.text.to_string()));
+            self.error(ParseErrorType::UnknownToken(token.text.to_string()));
         }
         self.builder.token(target.into(), token.text);
     }

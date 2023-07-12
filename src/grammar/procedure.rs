@@ -62,6 +62,10 @@ fn parse_body(p: &mut Parser) {
 mod tests {
     use expect_test::expect;
 
+    use crate::lexer::TokenKind::ProcedureKw;
+    use crate::ParseError;
+    use crate::ParseErrorType::ExpectedToken;
+
     use super::super::tests::{check, parse};
     use super::*;
 
@@ -79,6 +83,7 @@ Root@0..22
     IdentGroup@17..22
       Ident@17..22 "hello"
 "#]],
+            vec![],
         );
     }
 
@@ -87,15 +92,14 @@ Root@0..22
         check(
             parse("CREATE hello", |p| parse_header(p, false)),
             expect![[r#"
-Root@0..40
-  ProcedureHeader@0..40
+Root@0..12
+  ProcedureHeader@0..12
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
-    Error@7..35
-      Text@7..35 "Expected token 'Proce ..."
-    IdentGroup@35..40
-      Ident@35..40 "hello"
+    IdentGroup@7..12
+      Ident@7..12 "hello"
 "#]],
+            vec![ParseError::new(ExpectedToken(ProcedureKw), 7..12)],
         );
     }
 
@@ -118,6 +122,7 @@ Root@0..32
     IdentGroup@28..32
       Ident@28..32 "test"
 "#]],
+            vec![],
         );
     }
 
@@ -174,6 +179,7 @@ Root@0..146
           Whitespace@140..145 "\n    "
       RParen@145..146 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -206,6 +212,7 @@ Root@0..31
     Semicolon@29..30 ";"
   Whitespace@30..31 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -243,6 +250,7 @@ Root@0..98
       Semicolon@96..97 ";"
     Whitespace@97..98 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -279,6 +287,7 @@ Root@0..124
       Semicolon@122..123 ";"
     Whitespace@123..124 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -400,6 +409,7 @@ Root@0..304
     Semicolon@302..303 ";"
     Whitespace@303..304 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -445,6 +455,7 @@ Root@0..176
       Semicolon@174..175 ";"
     Whitespace@175..176 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -490,6 +501,7 @@ Root@0..193
       Semicolon@191..192 ";"
     Whitespace@192..193 "\n"
 "#]],
+            vec![],
         );
     }
 }

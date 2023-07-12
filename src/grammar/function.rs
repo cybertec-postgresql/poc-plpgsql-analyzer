@@ -92,6 +92,7 @@ Root@0..21
     IdentGroup@16..21
       Ident@16..21 "hello"
 "#]],
+            vec![],
         );
     }
 
@@ -114,6 +115,7 @@ Root@0..31
     IdentGroup@27..31
       Ident@27..31 "test"
 "#]],
+            vec![],
         );
     }
 
@@ -170,6 +172,7 @@ Root@0..145
           Whitespace@139..144 "\n    "
       RParen@144..145 ")"
 "#]],
+            vec![],
         );
     }
 
@@ -194,6 +197,7 @@ Root@0..25
       Ident@19..24 "hello"
     Semicolon@24..25 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -243,6 +247,7 @@ Root@0..171
       Semicolon@169..170 ";"
     Whitespace@170..171 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -293,6 +298,7 @@ Root@0..180
       Semicolon@178..179 ";"
     Whitespace@179..180 "\n"
 "#]],
+            vec![],
         );
     }
 }

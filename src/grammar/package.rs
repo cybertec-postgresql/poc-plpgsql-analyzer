@@ -124,6 +124,7 @@ Root@0..99
   Whitespace@96..97 " "
   Keyword@97..99 "AS"
 "#]],
+            vec![],
         );
     }
 
@@ -199,6 +200,7 @@ Root@0..153
     Semicolon@151..152 ";"
   Whitespace@152..153 "\n"
 "#]],
+            vec![],
         );
     }
 }

@@ -14,7 +14,7 @@ use crate::grammar::{
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoint>) {
     let checkpoint = if let Some(checkpoint) = checkpoint {
@@ -102,7 +102,7 @@ fn parse_type_definition(p: &mut Parser) {
         // ref cursor
         T![ref] => parse_ref_cursor_type_definition(p),
         // subtype
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T![array],
             T![record],
             T![ref],
@@ -147,7 +147,7 @@ fn parse_varray_type_def(p: &mut Parser) {
             p.bump_any();
             p.expect(T![array]);
         }
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T![array],
             T![varray],
             T![varying],
@@ -225,7 +225,7 @@ fn parse_subtype_definition(p: &mut Parser) {
             p.expect(T![..]);
             p.expect(T![int_literal]);
         }
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T!["("],
             T![character],
             T![range],
@@ -324,6 +324,7 @@ Root@0..97
       Ident@88..96 "employee"
     Semicolon@96..97 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -356,6 +357,7 @@ Root@0..61
     Keyword@49..60 "PLS_INTEGER"
     Semicolon@60..61 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -426,6 +428,7 @@ Root@0..156
         Ident@144..155 "custom_type"
     Semicolon@155..156 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -475,6 +478,7 @@ Root@0..62
         Keyword@58..61 "END"
         Semicolon@61..62 ";"
 "#]],
+            vec![],
         );
     }
 }

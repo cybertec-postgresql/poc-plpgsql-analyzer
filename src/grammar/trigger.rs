@@ -43,7 +43,9 @@ fn parse_header(p: &mut Parser) {
             };
         }
         T![for] => {
-            p.error(ParseError::Unimplemented("compound trigger".to_string()));
+            p.error(ParseErrorType::Unimplemented(
+                "compound trigger".to_string(),
+            ));
         }
         _ => {
             p.expect_one_of(&[T![before], T![instead], T![after], T![for]]);
@@ -108,7 +110,7 @@ fn parse_system_trigger(p: &mut Parser) {
 
             [T![before], T![set], T![container]] | [T![after], T![set], T![container]] => 3,
             _ => {
-                p.error(ParseError::ExpectedDdlOrDatabaseEvent);
+                p.error(ParseErrorType::ExpectedDdlOrDatabaseEvent);
                 return;
             }
         };
@@ -267,6 +269,7 @@ Root@0..174
     Whitespace@170..171 " "
     Keyword@171..174 "ROW"
 "#]],
+            vec![],
         );
     }
 
@@ -329,6 +332,7 @@ Root@0..228
     IdentGroup@216..228
       Ident@216..228 "my_trigger_2"
 "#]],
+            vec![],
         );
     }
 
@@ -427,6 +431,7 @@ Root@0..237
       Semicolon@235..236 ";"
     Whitespace@236..237 "\n"
 "#]],
+            vec![],
         );
     }
 
@@ -614,6 +619,7 @@ Root@0..518
       Semicolon@515..516 ";"
     Whitespace@516..518 "\n\n"
 "#]],
+            vec![],
         );
     }
 
@@ -655,6 +661,7 @@ Root@0..84
       Semicolon@82..83 ";"
     Whitespace@83..84 "\n"
 "#]],
+            vec![],
         );
     }
 }

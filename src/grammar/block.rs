@@ -11,7 +11,7 @@ use crate::grammar::{
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -48,7 +48,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![select] => parse_query(p, true),
         current_token => {
             if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
-                p.error(ParseError::ExpectedStatement(current_token));
+                p.error(ParseErrorType::ExpectedStatement(current_token));
                 p.bump_any();
             }
         }
@@ -135,6 +135,10 @@ fn opt_assignment_stmt(p: &mut Parser) -> bool {
 mod tests {
     use expect_test::expect;
 
+    use crate::lexer::TokenKind::{IntoKw, UnquotedIdent};
+    use crate::ParseError;
+    use crate::ParseErrorType::{ExpectedStatement, ExpectedToken};
+
     use super::super::tests::{check, parse};
     use super::*;
 
@@ -143,18 +147,17 @@ mod tests {
         check(
             parse(r#"BEGIN ABC END;"#, parse_block),
             expect![[r#"
-Root@0..54
-  Block@0..54
+Root@0..14
+  Block@0..14
     Keyword@0..5 "BEGIN"
     Whitespace@5..6 " "
-    BlockStatement@6..49
-      Error@6..46
-        Text@6..46 "Expected statement, f ..."
-      Ident@46..49 "ABC"
-    Whitespace@49..50 " "
-    Keyword@50..53 "END"
-    Semicolon@53..54 ";"
+    BlockStatement@6..9
+      Ident@6..9 "ABC"
+    Whitespace@9..10 " "
+    Keyword@10..13 "END"
+    Semicolon@13..14 ";"
 "#]],
+            vec![ParseError::new(ExpectedStatement(UnquotedIdent), 6..9)],
         );
     }
 
@@ -174,6 +177,7 @@ Root@0..16
     Keyword@12..15 "END"
     Semicolon@15..16 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -359,6 +363,7 @@ Root@0..520
       Ident@499..519 "log_last_login_fuzzy"
     Semicolon@519..520 ";"
 "#]],
+            vec![],
         );
     }
 
@@ -367,30 +372,29 @@ Root@0..520
         check(
             parse(r#"BEGIN SELECT 1 FROM dual; END ;"#, parse_block),
             expect![[r#"
-Root@0..54
-  Block@0..54
+Root@0..31
+  Block@0..31
     Keyword@0..5 "BEGIN"
     Whitespace@5..6 " "
-    BlockStatement@6..49
-      SelectStmt@6..48
+    BlockStatement@6..26
+      SelectStmt@6..25
         Keyword@6..12 "SELECT"
         Whitespace@12..13 " "
         SelectClause@13..15
           ColumnExpr@13..15
             Integer@13..14 "1"
             Whitespace@14..15 " "
-        Error@15..38
-          Text@15..38 "Expected token 'IntoKw'"
-        Keyword@38..42 "FROM"
-        Whitespace@42..43 " "
-        IdentGroup@43..47
-          Ident@43..47 "dual"
-        Semicolon@47..48 ";"
-      Whitespace@48..49 " "
-    Keyword@49..52 "END"
-    Whitespace@52..53 " "
-    Semicolon@53..54 ";"
+        Keyword@15..19 "FROM"
+        Whitespace@19..20 " "
+        IdentGroup@20..24
+          Ident@20..24 "dual"
+        Semicolon@24..25 ";"
+      Whitespace@25..26 " "
+    Keyword@26..29 "END"
+    Whitespace@29..30 " "
+    Semicolon@30..31 ";"
 "#]],
+            vec![ParseError::new(ExpectedToken(IntoKw), 15..19)],
         );
     }
 
@@ -459,6 +463,7 @@ Root@0..124
     Keyword@120..123 "END"
     Semicolon@123..124 ";"
 "#]],
+            vec![],
         );
     }
 }
