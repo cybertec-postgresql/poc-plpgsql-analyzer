@@ -14,7 +14,7 @@ use crate::grammar::{parse_ident, parse_ident_or_function_invocation};
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 /// Attempts to parse an expression if applicable
 pub(crate) fn opt_expr(p: &mut Parser) -> bool {
@@ -44,7 +44,7 @@ pub(crate) fn parse_expr(p: &mut Parser) {
 ///
 /// A binding power of `0` is used to start off the recursion, as well as after encountering parenthesis.
 ///
-fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
+fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
     let checkpoint = p.checkpoint();
 
     let token = p.current();
@@ -84,7 +84,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             p.bump_any();
             expr_bp(p, 0)?;
             if !p.expect(T![")"]) {
-                p.error(ParseError::UnbalancedParens);
+                p.error(ParseErrorType::UnbalancedParens);
             }
         }
         T![not] | T![+] | T![-] => {
@@ -97,7 +97,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseError> {
             }
         }
         _ => {
-            return Err(ParseError::ExpectedOneOfTokens(vec![
+            return Err(ParseErrorType::ExpectedOneOfTokens(vec![
                 T![unquoted_ident],
                 T![quoted_ident],
                 T![int_literal],
@@ -248,7 +248,8 @@ mod tests {
     use expect_test::expect;
 
     use crate::lexer::TokenKind::RParen;
-    use crate::ParseError::{ExpectedToken, Incomplete, UnbalancedParens};
+    use crate::ParseError;
+    use crate::ParseErrorType::{ExpectedToken, Incomplete, UnbalancedParens};
 
     use super::super::tests::{check, parse};
     use super::*;
@@ -805,7 +806,7 @@ Root@0..9
     Integer@5..8 "100"
   RParen@8..9 ")"
 "#]],
-            vec![Incomplete(")".to_string())],
+            vec![ParseError::new(Incomplete(")".to_string()), 9..10)],
         );
     }
 
@@ -824,7 +825,10 @@ Root@0..8
     Whitespace@4..5 " "
     Integer@5..8 "100"
 "#]],
-            vec![ExpectedToken(RParen), UnbalancedParens],
+            vec![
+                ParseError::new(ExpectedToken(RParen), 0..0),
+                ParseError::new(UnbalancedParens, 0..0),
+            ],
         );
     }
 }

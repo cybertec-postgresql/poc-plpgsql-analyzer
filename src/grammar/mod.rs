@@ -20,7 +20,7 @@ pub(crate) use trigger::*;
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 mod block;
 mod call_spec;
@@ -143,7 +143,7 @@ fn parse_single_ident(p: &mut Parser) {
             p.bump_any_map(SyntaxKind::Ident)
         }
     } else {
-        p.error(ParseError::ExpectedIdent)
+        p.error(ParseErrorType::ExpectedIdent)
     }
 }
 
@@ -158,6 +158,7 @@ mod tests {
     use expect_test::{expect, Expect};
 
     use crate::parser::{Parse, Parser};
+    use crate::ParseError;
 
     use super::*;
 

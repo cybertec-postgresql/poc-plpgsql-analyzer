@@ -135,8 +135,8 @@ pub enum AnalyzeError {
     InvalidContext(String),
 }
 
-impl From<ParseError> for AnalyzeError {
-    fn from(error: ParseError) -> Self {
+impl From<ParseErrorType> for AnalyzeError {
+    fn from(error: ParseErrorType) -> Self {
         AnalyzeError::ParseError(error.to_string())
     }
 }

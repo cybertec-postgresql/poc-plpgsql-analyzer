@@ -43,7 +43,9 @@ fn parse_header(p: &mut Parser) {
             };
         }
         T![for] => {
-            p.error(ParseError::Unimplemented("compound trigger".to_string()));
+            p.error(ParseErrorType::Unimplemented(
+                "compound trigger".to_string(),
+            ));
         }
         _ => {
             p.expect_one_of(&[T![before], T![instead], T![after], T![for]]);
@@ -108,7 +110,7 @@ fn parse_system_trigger(p: &mut Parser) {
 
             [T![before], T![set], T![container]] | [T![after], T![set], T![container]] => 3,
             _ => {
-                p.error(ParseError::ExpectedDdlOrDatabaseEvent);
+                p.error(ParseErrorType::ExpectedDdlOrDatabaseEvent);
                 return;
             }
         };

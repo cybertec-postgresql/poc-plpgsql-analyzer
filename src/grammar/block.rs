@@ -11,7 +11,7 @@ use crate::grammar::{
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -48,7 +48,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![select] => parse_query(p, true),
         current_token => {
             if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
-                p.error(ParseError::ExpectedStatement(current_token));
+                p.error(ParseErrorType::ExpectedStatement(current_token));
                 p.bump_any();
             }
         }
@@ -136,7 +136,8 @@ mod tests {
     use expect_test::expect;
 
     use crate::lexer::TokenKind::{IntoKw, UnquotedIdent};
-    use crate::ParseError::{ExpectedStatement, ExpectedToken};
+    use crate::ParseError;
+    use crate::ParseErrorType::{ExpectedStatement, ExpectedToken};
 
     use super::super::tests::{check, parse};
     use super::*;
@@ -156,7 +157,7 @@ Root@0..14
     Keyword@10..13 "END"
     Semicolon@13..14 ";"
 "#]],
-            vec![ExpectedStatement(UnquotedIdent)],
+            vec![ParseError::new(ExpectedStatement(UnquotedIdent), 6..9)],
         );
     }
 
@@ -393,7 +394,7 @@ Root@0..31
     Whitespace@29..30 " "
     Semicolon@30..31 ";"
 "#]],
-            vec![ExpectedToken(IntoKw)],
+            vec![ParseError::new(ExpectedToken(IntoKw), 15..19)],
         );
     }
 

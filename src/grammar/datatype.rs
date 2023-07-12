@@ -9,7 +9,7 @@ use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 /// Parses a complete datatype.
 pub fn parse_datatype(p: &mut Parser) {
@@ -123,7 +123,7 @@ pub fn parse_datatype(p: &mut Parser) {
                 p.finish();
             }
         }
-        _ => p.error(ParseError::UnknownToken(datatype.to_string())),
+        _ => p.error(ParseErrorType::UnknownToken(datatype.to_string())),
     }
 
     p.finish();

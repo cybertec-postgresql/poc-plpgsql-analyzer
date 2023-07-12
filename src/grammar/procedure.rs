@@ -63,7 +63,8 @@ mod tests {
     use expect_test::expect;
 
     use crate::lexer::TokenKind::ProcedureKw;
-    use crate::ParseError::ExpectedToken;
+    use crate::ParseError;
+    use crate::ParseErrorType::ExpectedToken;
 
     use super::super::tests::{check, parse};
     use super::*;
@@ -98,7 +99,7 @@ Root@0..12
     IdentGroup@7..12
       Ident@7..12 "hello"
 "#]],
-            vec![ExpectedToken(ProcedureKw)],
+            vec![ParseError::new(ExpectedToken(ProcedureKw), 7..12)],
         );
     }
 

@@ -14,7 +14,7 @@ use crate::grammar::{
 use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
 use crate::syntax::SyntaxKind;
-use crate::ParseError;
+use crate::ParseErrorType;
 
 pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoint>) {
     let checkpoint = if let Some(checkpoint) = checkpoint {
@@ -102,7 +102,7 @@ fn parse_type_definition(p: &mut Parser) {
         // ref cursor
         T![ref] => parse_ref_cursor_type_definition(p),
         // subtype
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T![array],
             T![record],
             T![ref],
@@ -147,7 +147,7 @@ fn parse_varray_type_def(p: &mut Parser) {
             p.bump_any();
             p.expect(T![array]);
         }
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T![array],
             T![varray],
             T![varying],
@@ -225,7 +225,7 @@ fn parse_subtype_definition(p: &mut Parser) {
             p.expect(T![..]);
             p.expect(T![int_literal]);
         }
-        _ => p.error(ParseError::ExpectedOneOfTokens(vec![
+        _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
             T!["("],
             T![character],
             T![range],
