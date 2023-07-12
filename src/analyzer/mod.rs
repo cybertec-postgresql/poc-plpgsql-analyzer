@@ -137,7 +137,7 @@ pub enum AnalyzeError {
 
 impl From<ParseError> for AnalyzeError {
     fn from(error: ParseError) -> Self {
-        AnalyzeError::ParseError(error.typ.to_string())
+        AnalyzeError::ParseError(error.to_string())
     }
 }
 
