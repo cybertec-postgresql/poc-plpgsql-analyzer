@@ -64,7 +64,7 @@ impl ParseError {
 }
 
 /// Tries to parse any string of SQL tokens.
-pub fn parse_any(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     while !parser.at(T![EOF]) {
@@ -76,7 +76,7 @@ pub fn parse_any(input: &str) -> Result<Parse, ParseErrorType> {
 }
 
 /// Tries to parse a function from a string.
-pub fn parse_function(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a function
@@ -87,7 +87,7 @@ pub fn parse_function(input: &str) -> Result<Parse, ParseErrorType> {
 }
 
 /// Tries to parse a package from a string.
-pub fn parse_package(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_package(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a package
@@ -98,7 +98,7 @@ pub fn parse_package(input: &str) -> Result<Parse, ParseErrorType> {
 }
 
 /// Tries to parse a procedure from a string.
-pub fn parse_procedure(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_procedure(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a procedure
@@ -108,7 +108,7 @@ pub fn parse_procedure(input: &str) -> Result<Parse, ParseErrorType> {
     Ok(parser.build())
 }
 
-pub fn parse_query(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_query(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a query `SELECT`
@@ -118,7 +118,7 @@ pub fn parse_query(input: &str) -> Result<Parse, ParseErrorType> {
     Ok(parser.build())
 }
 
-pub fn parse_trigger(input: &str) -> Result<Parse, ParseErrorType> {
+pub fn parse_trigger(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
 
     // Expect a query `SELECT`
