@@ -63,6 +63,18 @@ impl ParseError {
     }
 }
 
+impl std::fmt::Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} at position {} to {}",
+            self.typ.to_string(),
+            self.offset.start,
+            self.offset.end
+        )
+    }
+}
+
 /// Tries to parse any string of SQL tokens.
 pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);
