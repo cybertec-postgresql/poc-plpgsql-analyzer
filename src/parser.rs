@@ -68,9 +68,7 @@ impl std::fmt::Display for ParseError {
         write!(
             f,
             "{} at position {} to {}",
-            self.typ.to_string(),
-            self.offset.start,
-            self.offset.end
+            self.typ, self.offset.start, self.offset.end
         )
     }
 }
