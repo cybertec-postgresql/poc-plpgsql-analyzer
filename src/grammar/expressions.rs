@@ -349,8 +349,8 @@ Root@0..22
   Expression@0..22
     Expression@0..10
       LogicOp@0..3 "NOT"
-      Expression@3..10
-        Whitespace@3..4 " "
+      Whitespace@3..4 " "
+      Expression@4..10
         Integer@4..5 "1"
         Whitespace@5..6 " "
         ComparisonOp@6..7 ">"
@@ -358,8 +358,8 @@ Root@0..22
         Integer@8..9 "2"
         Whitespace@9..10 " "
     LogicOp@10..13 "AND"
-    Expression@13..22
-      Whitespace@13..14 " "
+    Whitespace@13..14 " "
+    Expression@14..22
       LogicOp@14..17 "NOT"
       Whitespace@17..18 " "
       IdentGroup@18..22
@@ -509,8 +509,8 @@ Root@0..113
       QuotedLiteral@53..60 "'18:00'"
       Whitespace@60..69 "\n        "
     LogicOp@69..71 "OR"
-    Expression@71..113
-      Whitespace@71..72 " "
+    Whitespace@71..72 " "
+    Expression@72..113
       FunctionInvocation@72..95
         IdentGroup@72..79
           Ident@72..79 "TO_CHAR"
@@ -549,8 +549,8 @@ Root@0..9
     Integer@0..1 "1"
     Whitespace@1..2 " "
     ArithmeticOp@2..3 "+"
-    Expression@3..9
-      Whitespace@3..4 " "
+    Whitespace@3..4 " "
+    Expression@4..9
       IdentGroup@4..5
         Ident@4..5 "a"
       Whitespace@5..6 " "
@@ -573,9 +573,9 @@ Root@0..17
       Integer@0..1 "1"
       Whitespace@1..2 " "
       ArithmeticOp@2..3 "+"
-      Expression@3..14
-        Expression@3..10
-          Whitespace@3..4 " "
+      Whitespace@3..4 " "
+      Expression@4..14
+        Expression@4..10
           Integer@4..5 "2"
           Whitespace@5..6 " "
           ArithmeticOp@6..7 "*"
@@ -725,8 +725,8 @@ Root@0..75
           Ident@19..20 "b"
         Whitespace@20..21 " "
       LogicOp@21..23 "OR"
-      Expression@23..74
-        Whitespace@23..24 " "
+      Whitespace@23..24 " "
+      Expression@24..74
         LParen@24..25 "("
         Expression@25..48
           Expression@25..35
@@ -738,8 +738,8 @@ Root@0..75
             QuotedLiteral@29..34 "'foo'"
             Whitespace@34..35 " "
           LogicOp@35..38 "AND"
-          Expression@38..48
-            Whitespace@38..39 " "
+          Whitespace@38..39 " "
+          Expression@39..48
             IdentGroup@39..42
               Ident@39..42 "bar"
             Whitespace@42..43 " "
@@ -749,8 +749,8 @@ Root@0..75
         RParen@48..49 ")"
         Whitespace@49..50 " "
         LogicOp@50..53 "AND"
-        Expression@53..74
-          Whitespace@53..54 " "
+        Whitespace@53..54 " "
+        Expression@54..74
           IdentGroup@54..57
             Ident@54..57 "foo"
           Whitespace@57..58 " "

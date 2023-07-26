@@ -20,7 +20,6 @@ pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoin
     let checkpoint = if let Some(checkpoint) = checkpoint {
         checkpoint
     } else {
-        p.eat_ws();
         p.checkpoint()
     };
     p.start_node_at(checkpoint, SyntaxKind::DeclareSection);
@@ -309,8 +308,8 @@ Root@0..97
   RParen@48..49 ")"
   Whitespace@49..50 " "
   Keyword@50..52 "IS"
-  SelectStmt@52..97
-    Whitespace@52..65 "\n            "
+  Whitespace@52..65 "\n            "
+  SelectStmt@65..97
     Keyword@65..71 "SELECT"
     Whitespace@71..72 " "
     SelectClause@72..83

@@ -180,7 +180,7 @@ impl<'a> Parser<'a> {
             builder: GreenNodeBuilder::new(),
             errors: Vec::new(),
         };
-        parser.start(SyntaxKind::Root);
+        parser.builder.start_node(SyntaxKind::Root.into());
         parser
     }
 
@@ -326,7 +326,7 @@ impl<'a> Parser<'a> {
 
     /// Consume all whitespaces / comments & attach
     /// them to the current node to preserve them.
-    pub fn eat_ws(&mut self) {
+    fn eat_ws(&mut self) {
         loop {
             match self.tokens.last() {
                 Some(token) if token.kind.is_trivia() => {
@@ -341,6 +341,7 @@ impl<'a> Parser<'a> {
 
     /// Start a new (nested) node
     pub(crate) fn start(&mut self, kind: SyntaxKind) {
+        self.eat_ws();
         self.builder.start_node(kind.into());
     }
 
@@ -350,6 +351,8 @@ impl<'a> Parser<'a> {
     }
 
     pub(crate) fn checkpoint(&self) -> Checkpoint {
+    pub(crate) fn checkpoint(&mut self) -> Checkpoint {
+        self.eat_ws();
         self.builder.checkpoint()
     }
 

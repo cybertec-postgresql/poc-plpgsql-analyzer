@@ -244,10 +244,10 @@ Root@0..328
     Whitespace@29..30 "\n"
     WhereClause@30..93
       Keyword@30..35 "WHERE"
-      Expression@35..93
-        Whitespace@35..38 "\n  "
-        Comment@38..58 "-- LEFT (OUTER) JOIN"
-        Whitespace@58..61 "\n  "
+      Whitespace@35..38 "\n  "
+      Comment@38..58 "-- LEFT (OUTER) JOIN"
+      Whitespace@58..61 "\n  "
+      Expression@61..93
         IdentGroup@61..77
           Ident@61..67 "places"
           Dot@67..68 "."
@@ -307,9 +307,9 @@ Root@0..72
     Whitespace@21..22 "\n"
     WhereClause@22..70
       Keyword@22..27 "WHERE"
-      Expression@27..70
-        Expression@27..38
-          Whitespace@27..28 " "
+      Whitespace@27..28 " "
+      Expression@28..70
+        Expression@28..38
           Integer@28..31 "100"
           Whitespace@31..32 " "
           ComparisonOp@32..33 "<"
@@ -330,8 +330,8 @@ Root@0..72
             Integer@48..50 "50"
             Whitespace@50..51 " "
           LogicOp@51..53 "OR"
-          Expression@53..68
-            Whitespace@53..54 " "
+          Whitespace@53..54 " "
+          Expression@54..68
             IdentGroup@54..55
               Ident@54..55 "c"
             Whitespace@55..56 " "
@@ -390,8 +390,8 @@ Root@0..148
     RParen@82..83 ")"
     Whitespace@83..104 "\n                    "
     Keyword@104..113 "RETURNING"
-    Expression@113..126
-      Whitespace@113..114 " "
+    Whitespace@113..114 " "
+    Expression@114..126
       IdentGroup@114..122
         Ident@114..122 "p_emp_id"
       Whitespace@122..123 " "

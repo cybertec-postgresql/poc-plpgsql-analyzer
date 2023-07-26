@@ -110,8 +110,6 @@ fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
     assert!(expected_components.end > 0);
     assert!(expected_components.start <= expected_components.end);
 
-    p.eat_ws();
-
     if expected_components.start == 0 && !p.current().is_ident() {
         return;
     }
@@ -265,6 +263,8 @@ Root@0..12
 Root@0..14
   Param@0..14
     Whitespace@0..2 "  "
+  Whitespace@0..2 "  "
+  Param@2..14
     IdentGroup@2..5
       Ident@2..5 "foo"
     Whitespace@5..6 " "
@@ -295,6 +295,8 @@ Root@0..26
     Assign@12..14 ":="
     Expression@14..26
       Whitespace@14..15 " "
+    Whitespace@14..15 " "
+    Expression@15..26
       QuotedLiteral@15..26 "'not empty'"
 "#]],
             vec![],

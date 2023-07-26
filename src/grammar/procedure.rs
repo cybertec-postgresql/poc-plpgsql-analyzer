@@ -54,8 +54,6 @@ fn parse_body(p: &mut Parser) {
     p.eat(T![plpgsql]);
     p.eat(T![;]);
     p.eat(T![/]);
-
-    p.eat_ws();
 }
 
 #[cfg(test)]
@@ -139,6 +137,8 @@ CREATE PROCEDURE add_job_history
 Root@0..146
   ProcedureHeader@0..146
     Whitespace@0..1 "\n"
+  Whitespace@0..1 "\n"
+  ProcedureHeader@1..146
     Keyword@1..7 "CREATE"
     Whitespace@7..8 " "
     Keyword@8..17 "PROCEDURE"
@@ -261,10 +261,10 @@ Root@0..98
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..124
-  Procedure@0..124
-    ProcedureHeader@0..100
-      Comment@0..58 "-- test: Qualify the  ..."
-      Whitespace@58..59 "\n"
+  Comment@0..58 "-- test: Qualify the  ..."
+  Whitespace@58..59 "\n"
+  Procedure@59..124
+    ProcedureHeader@59..100
       Keyword@59..65 "CREATE"
       Whitespace@65..66 " "
       Keyword@66..75 "PROCEDURE"
@@ -320,9 +320,9 @@ Root@0..304
       Whitespace@41..44 "\n  "
       BlockStatement@44..277
         Keyword@44..46 "IF"
-        Expression@46..161
-          Expression@46..116
-            Whitespace@46..47 " "
+        Whitespace@46..47 " "
+        Expression@47..161
+          Expression@47..116
             FunctionInvocation@47..75
               IdentGroup@47..54
                 Ident@47..54 "TO_CHAR"
@@ -349,8 +349,8 @@ Root@0..304
             QuotedLiteral@100..107 "'18:00'"
             Whitespace@107..116 "\n        "
           LogicOp@116..118 "OR"
-          Expression@118..161
-            Whitespace@118..119 " "
+          Whitespace@118..119 " "
+          Expression@119..161
             FunctionInvocation@119..142
               IdentGroup@119..126
                 Ident@119..126 "TO_CHAR"
@@ -422,10 +422,10 @@ Root@0..304
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..176
-  Procedure@0..176
-    ProcedureHeader@0..133
-      Comment@0..73 "-- test: ignore EDITI ..."
-      Whitespace@73..74 "\n"
+  Comment@0..73 "-- test: ignore EDITI ..."
+  Whitespace@73..74 "\n"
+  Procedure@74..176
+    ProcedureHeader@74..133
       Keyword@74..80 "CREATE"
       Whitespace@80..81 " "
       Keyword@81..83 "OR"
@@ -468,10 +468,10 @@ Root@0..176
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..193
-  Procedure@0..193
-    ProcedureHeader@0..147
-      Comment@0..81 "-- test: ignore NONED ..."
-      Whitespace@81..82 "\n"
+  Comment@0..81 "-- test: ignore NONED ..."
+  Whitespace@81..82 "\n"
+  Procedure@82..193
+    ProcedureHeader@82..147
       Keyword@82..88 "CREATE"
       Whitespace@88..89 " "
       Keyword@89..91 "OR"

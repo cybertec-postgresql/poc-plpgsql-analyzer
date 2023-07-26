@@ -15,7 +15,6 @@ use crate::ParseErrorType;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
-    p.eat_ws();
     p.start(SyntaxKind::Block);
 
     let checkpoint = p.checkpoint();
@@ -343,8 +342,8 @@ Root@0..520
         Ident@430..446 "formatted_output"
       Whitespace@446..447 " "
       Assign@447..449 ":="
-      Expression@449..455
-        Whitespace@449..450 " "
+      Whitespace@449..450 " "
+      Expression@450..455
         QuotedLiteral@450..455 "'abc'"
       Semicolon@455..456 ";"
     Whitespace@456..461 "\n    "
@@ -352,8 +351,8 @@ Root@0..520
     Whitespace@480..485 "\n    "
     BlockStatement@485..494
       Keyword@485..491 "RETURN"
-      Expression@491..493
-        Whitespace@491..492 " "
+      Whitespace@491..492 " "
+      Expression@492..493
         Integer@492..493 "1"
       Semicolon@493..494 ";"
     Whitespace@494..495 "\n"
@@ -420,8 +419,8 @@ Root@0..124
         Ident@22..23 "a"
       Whitespace@23..24 " "
       Assign@24..26 ":="
-      Expression@26..28
-        Whitespace@26..27 " "
+      Whitespace@26..27 " "
+      Expression@27..28
         Integer@27..28 "1"
       Semicolon@28..29 ";"
     Whitespace@29..46 "\n                "
@@ -432,8 +431,8 @@ Root@0..124
         Ident@48..49 "b"
       Whitespace@49..50 " "
       Assign@50..52 ":="
-      Expression@52..54
-        Whitespace@52..53 " "
+      Whitespace@52..53 " "
+      Expression@53..54
         Integer@53..54 "1"
       Semicolon@54..55 ";"
     Whitespace@55..72 "\n                "
@@ -442,8 +441,8 @@ Root@0..124
         BindVar@72..74 ":a"
       Whitespace@74..75 " "
       Assign@75..77 ":="
-      Expression@77..79
-        Whitespace@77..78 " "
+      Whitespace@77..78 " "
+      Expression@78..79
         Integer@78..79 "1"
       Semicolon@79..80 ";"
     Whitespace@80..97 "\n                "
@@ -455,8 +454,8 @@ Root@0..124
       RParen@100..101 ")"
       Whitespace@101..102 " "
       Assign@102..104 ":="
-      Expression@104..106
-        Whitespace@104..105 " "
+      Whitespace@104..105 " "
+      Expression@105..106
         Integer@105..106 "1"
       Semicolon@106..107 ";"
     Whitespace@107..120 "\n            "

@@ -173,8 +173,8 @@ Root@0..54
   Keyword@9..13 "JAVA"
   Whitespace@13..14 " "
   Keyword@14..18 "NAME"
-  Expression@18..54
-    Whitespace@18..19 " "
+  Whitespace@18..19 " "
+  Expression@19..54
     QuotedLiteral@19..54 "'Adjuster.raiseSalary ..."
 "#]],
             vec![],
@@ -219,8 +219,8 @@ Root@0..55
     Ident@11..21 "custom_mod"
   Whitespace@21..22 " "
   Keyword@22..31 "SIGNATURE"
-  Expression@31..55
-    Whitespace@31..32 " "
+  Whitespace@31..32 " "
+  Expression@32..55
     QuotedLiteral@32..55 "'mod_func(Out<number>)'"
 "#]],
             vec![],
