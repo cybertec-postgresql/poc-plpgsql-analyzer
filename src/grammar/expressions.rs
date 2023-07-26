@@ -12,7 +12,7 @@ use rowan::Checkpoint;
 
 use crate::grammar::{parse_ident, parse_ident_or_function_invocation};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
 
@@ -236,10 +236,13 @@ fn between_cond(p: &mut Parser, min_bp: u8) {
 fn in_cond(p: &mut Parser, min_bp: u8) {
     p.expect(T!["("]);
 
-    let _ = expr_bp(p, min_bp);
-    while p.eat(T![,]) {
+    safe_loop!(p, {
         let _ = expr_bp(p, min_bp);
-    }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+
     p.expect(T![")"]);
 }
 

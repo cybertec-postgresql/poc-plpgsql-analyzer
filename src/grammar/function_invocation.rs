@@ -7,7 +7,7 @@
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 
 /// Looks ahead and parses a function invocation if applicable
@@ -33,8 +33,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
 
     if !p.at(T![")"]) {
         p.start(SyntaxKind::ArgumentList);
-
-        loop {
+        safe_loop!(p, {
             match p.current() {
                 T![,] => {
                     p.bump(T![,]);
@@ -48,7 +47,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
                     p.finish();
                 }
             }
-        }
+        });
 
         p.finish();
     }

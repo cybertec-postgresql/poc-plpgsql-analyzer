@@ -7,7 +7,7 @@
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
 
 /// Attempts to parse a call_spec if applicable
@@ -90,13 +90,13 @@ fn parse_c_declaration(p: &mut Parser) {
     if p.eat(T![agent]) {
         p.expect(T![in]);
         p.expect(T!["("]);
-        loop {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
 
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
         p.expect(T![")"]);
     }
 
@@ -106,7 +106,7 @@ fn parse_c_declaration(p: &mut Parser) {
 
     if p.eat(T![parameters]) {
         p.expect(T!["("]);
-        loop {
+        safe_loop!(p, {
             match p.current() {
                 T![context] => p.bump_any(),
                 T![self] => {
@@ -133,7 +133,7 @@ fn parse_c_declaration(p: &mut Parser) {
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
         p.expect(T![")"]);
     }
 }

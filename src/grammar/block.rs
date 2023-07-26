@@ -9,7 +9,7 @@ use crate::grammar::{
     opt_expr, opt_function_invocation, parse_expr, parse_ident, parse_insert, parse_query,
 };
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
 
@@ -24,9 +24,12 @@ pub fn parse_block(p: &mut Parser) {
 
     p.expect(T![begin]);
 
-    while !p.at(T![end]) {
+    safe_loop!(p, {
         parse_stmt(p);
-    }
+        if p.at(T![end]) {
+            break;
+        }
+    });
 
     p.expect(T![end]);
     parse_ident(p, 0..1);
@@ -61,23 +64,36 @@ fn parse_if_stmt(p: &mut Parser) {
     parse_expr(p);
     p.expect(T![then]);
 
-    while ![T![elsif], T![else], T![end]].contains(&p.current()) {
+    safe_loop!(p, {
         parse_stmt(p);
-    }
+        if [T![elsif], T![else], T![end]].contains(&p.current()) {
+            break;
+        }
+    });
 
-    while p.eat(T![elsif]) {
+    safe_loop!(p, {
+        if !p.eat(T![elsif]) {
+            break;
+        }
+
         parse_expr(p);
         p.expect(T![then]);
 
-        while ![T![elsif], T![else], T![end]].contains(&p.current()) {
+        safe_loop!(p, {
             parse_stmt(p);
-        }
-    }
+            if [T![elsif], T![else], T![end]].contains(&p.current()) {
+                break;
+            }
+        });
+    });
 
     if p.eat(T![else]) {
-        while !p.at(T![end]) {
+        safe_loop!(p, {
             parse_stmt(p);
-        }
+            if p.at(T![end]) {
+                break;
+            }
+        });
     }
 
     p.expect(T![end]);

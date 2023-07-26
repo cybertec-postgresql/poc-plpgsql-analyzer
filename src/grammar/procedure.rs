@@ -135,8 +135,6 @@ CREATE PROCEDURE add_job_history
             parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..146
-  ProcedureHeader@0..146
-    Whitespace@0..1 "\n"
   Whitespace@0..1 "\n"
   ProcedureHeader@1..146
     Keyword@1..7 "CREATE"

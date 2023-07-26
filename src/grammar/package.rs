@@ -50,25 +50,31 @@ fn parse_body(p: &mut Parser) {
     parse_declare_section(p, None);
 
     if p.eat(T![begin]) {
-        while !(p.at(T![exception]) || p.at(T![end])) {
+        safe_loop!(p, {
             parse_stmt(p);
-        }
+
+            if p.at(T![exception]) || p.at(T![end]) {
+                break;
+            }
+        });
 
         if p.eat(T![exception]) {
             p.expect(T![when]);
             if !p.eat(T![others]) {
-                loop {
+                safe_loop!(p, {
                     parse_ident(p, 1..1);
-
                     if !p.eat(T![or]) {
                         break;
                     }
-                }
+                });
             }
             p.expect(T![then]);
-            while !p.at(T![end]) {
+            safe_loop!(p, {
                 parse_stmt(p);
-            }
+                if p.at(T![end]) {
+                    break;
+                }
+            });
         }
     }
 

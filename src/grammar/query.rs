@@ -6,7 +6,7 @@
 
 use crate::grammar::{opt_expr, parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
@@ -33,37 +33,42 @@ pub(crate) fn parse_insert(p: &mut Parser) {
     parse_ident(p, 0..1);
 
     if p.eat(T!["("]) {
-        parse_ident(p, 1..1);
-        while p.eat(T![,]) {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
-        }
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
         p.expect(T![")"]);
     }
 
     p.expect(T![values]);
     p.expect(T!["("]);
-    parse_expr(p);
-    while p.eat(T![,]) {
+
+    safe_loop!(p, {
         if !opt_expr(p) {
             p.expect(T![default]);
         }
-    }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.expect(T![")"]);
 
     if p.eat_one_of(&[T![return], T![returning]]) {
-        loop {
+        safe_loop!(p, {
             parse_expr(p);
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
         p.expect(T![into]);
-        loop {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
     }
 
     p.eat(T![;]);
@@ -77,7 +82,7 @@ fn parse_column_expr(p: &mut Parser) {
 
     p.start(SyntaxKind::SelectClause);
 
-    while !p.at(T![into]) && !p.at(T![from]) && !p.at(T![EOF]) && !p.at(T![;]) {
+    safe_loop!(p, {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
@@ -85,7 +90,11 @@ fn parse_column_expr(p: &mut Parser) {
         p.finish();
 
         p.eat(T![,]);
-    }
+
+        if [T![into], T![from], T![EOF], T![;]].contains(&p.current()) {
+            break;
+        }
+    });
 
     p.finish();
 }
@@ -101,22 +110,24 @@ fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
         return;
     }
 
-    parse_ident(p, 1..1);
-    while p.eat(T![,]) {
+    safe_loop!(p, {
         parse_ident(p, 1..1);
-    }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
 
     p.start_node_at(checkpoint, SyntaxKind::IntoClause);
     p.finish();
 }
 
 fn parse_from_list(p: &mut Parser) {
-    loop {
+    safe_loop!(p, {
         parse_ident(p, 1..1);
         if !p.eat(T![,]) {
             break;
         }
-    }
+    });
 }
 
 fn parse_where_clause(p: &mut Parser) {
