@@ -7,7 +7,7 @@
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 
 /// Looks ahead and parses a function invocation if applicable
@@ -33,8 +33,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
 
     if !p.at(T![")"]) {
         p.start(SyntaxKind::ArgumentList);
-
-        loop {
+        safe_loop!(p, {
             match p.current() {
                 T![,] => {
                     p.bump(T![,]);
@@ -48,7 +47,7 @@ pub(crate) fn parse_function_invocation(p: &mut Parser) {
                     p.finish();
                 }
             }
-        }
+        });
 
         p.finish();
     }
@@ -133,7 +132,7 @@ Root@0..28
     }
 
     #[test]
-    fn parse_recursive_function_call() {
+    fn parse_nested_function_call() {
         check(
             parse("func(1 + func2(123) / 2)", parse_function_invocation),
             expect![[r#"
@@ -148,8 +147,8 @@ Root@0..24
           Integer@5..6 "1"
           Whitespace@6..7 " "
           ArithmeticOp@7..8 "+"
-          Expression@8..23
-            Whitespace@8..9 " "
+          Whitespace@8..9 " "
+          Expression@9..23
             FunctionInvocation@9..19
               IdentGroup@9..14
                 Ident@9..14 "func2"

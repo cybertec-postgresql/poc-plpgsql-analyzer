@@ -6,7 +6,7 @@
 
 use crate::grammar::{opt_expr, parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
@@ -33,37 +33,42 @@ pub(crate) fn parse_insert(p: &mut Parser) {
     parse_ident(p, 0..1);
 
     if p.eat(T!["("]) {
-        parse_ident(p, 1..1);
-        while p.eat(T![,]) {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
-        }
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
         p.expect(T![")"]);
     }
 
     p.expect(T![values]);
     p.expect(T!["("]);
-    parse_expr(p);
-    while p.eat(T![,]) {
+
+    safe_loop!(p, {
         if !opt_expr(p) {
             p.expect(T![default]);
         }
-    }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.expect(T![")"]);
 
     if p.eat_one_of(&[T![return], T![returning]]) {
-        loop {
+        safe_loop!(p, {
             parse_expr(p);
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
         p.expect(T![into]);
-        loop {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
     }
 
     p.eat(T![;]);
@@ -77,7 +82,7 @@ fn parse_column_expr(p: &mut Parser) {
 
     p.start(SyntaxKind::SelectClause);
 
-    while !p.at(T![into]) && !p.at(T![from]) && !p.at(T![EOF]) && !p.at(T![;]) {
+    safe_loop!(p, {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
@@ -85,7 +90,11 @@ fn parse_column_expr(p: &mut Parser) {
         p.finish();
 
         p.eat(T![,]);
-    }
+
+        if [T![into], T![from], T![EOF], T![;]].contains(&p.current()) {
+            break;
+        }
+    });
 
     p.finish();
 }
@@ -101,22 +110,24 @@ fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
         return;
     }
 
-    parse_ident(p, 1..1);
-    while p.eat(T![,]) {
+    safe_loop!(p, {
         parse_ident(p, 1..1);
-    }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
 
     p.start_node_at(checkpoint, SyntaxKind::IntoClause);
     p.finish();
 }
 
 fn parse_from_list(p: &mut Parser) {
-    loop {
+    safe_loop!(p, {
         parse_ident(p, 1..1);
         if !p.eat(T![,]) {
             break;
         }
-    }
+    });
 }
 
 fn parse_where_clause(p: &mut Parser) {
@@ -244,10 +255,10 @@ Root@0..328
     Whitespace@29..30 "\n"
     WhereClause@30..93
       Keyword@30..35 "WHERE"
-      Expression@35..93
-        Whitespace@35..38 "\n  "
-        Comment@38..58 "-- LEFT (OUTER) JOIN"
-        Whitespace@58..61 "\n  "
+      Whitespace@35..38 "\n  "
+      Comment@38..58 "-- LEFT (OUTER) JOIN"
+      Whitespace@58..61 "\n  "
+      Expression@61..93
         IdentGroup@61..77
           Ident@61..67 "places"
           Dot@67..68 "."
@@ -307,9 +318,9 @@ Root@0..72
     Whitespace@21..22 "\n"
     WhereClause@22..70
       Keyword@22..27 "WHERE"
-      Expression@27..70
-        Expression@27..38
-          Whitespace@27..28 " "
+      Whitespace@27..28 " "
+      Expression@28..70
+        Expression@28..38
           Integer@28..31 "100"
           Whitespace@31..32 " "
           ComparisonOp@32..33 "<"
@@ -330,8 +341,8 @@ Root@0..72
             Integer@48..50 "50"
             Whitespace@50..51 " "
           LogicOp@51..53 "OR"
-          Expression@53..68
-            Whitespace@53..54 " "
+          Whitespace@53..54 " "
+          Expression@54..68
             IdentGroup@54..55
               Ident@54..55 "c"
             Whitespace@55..56 " "
@@ -390,8 +401,8 @@ Root@0..148
     RParen@82..83 ")"
     Whitespace@83..104 "\n                    "
     Keyword@104..113 "RETURNING"
-    Expression@113..126
-      Whitespace@113..114 " "
+    Whitespace@113..114 " "
+    Expression@114..126
       IdentGroup@114..122
         Ident@114..122 "p_emp_id"
       Whitespace@122..123 " "

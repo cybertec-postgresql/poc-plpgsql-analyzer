@@ -12,7 +12,7 @@ use crate::grammar::{
     parse_procedure, parse_query,
 };
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
 
@@ -20,12 +20,11 @@ pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoin
     let checkpoint = if let Some(checkpoint) = checkpoint {
         checkpoint
     } else {
-        p.eat_ws();
         p.checkpoint()
     };
     p.start_node_at(checkpoint, SyntaxKind::DeclareSection);
 
-    loop {
+    safe_loop!(p, {
         match p.current() {
             T![cursor] => parse_cursor(p),
             T![function] => parse_function(p, true),
@@ -38,11 +37,11 @@ pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoin
         match p.current() {
             // while the docs don't specify it anywhere, `BEGIN` and `END` may not be used as an identifier here
             T![begin] | T![end] => break,
-            T![cursor] | T![function] | T![procedure] | T![type] | T![subtype] => continue,
-            token if token.is_ident() => continue,
+            T![cursor] | T![function] | T![procedure] | T![type] | T![subtype] => {}
+            token if token.is_ident() => {}
             _ => break,
         }
-    }
+    });
 
     p.finish();
 }
@@ -52,7 +51,7 @@ fn parse_cursor(p: &mut Parser) {
     parse_ident(p, 1..1);
 
     if p.eat(T!["("]) {
-        loop {
+        safe_loop!(p, {
             parse_ident(p, 1..1);
             p.eat(T![in]);
             parse_datatype(p);
@@ -64,7 +63,7 @@ fn parse_cursor(p: &mut Parser) {
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
 
         p.expect(T![")"]);
     }
@@ -170,7 +169,7 @@ fn parse_record_type_definition(p: &mut Parser) {
     p.expect(T![record]);
 
     p.expect(T!["("]);
-    loop {
+    safe_loop!(p, {
         parse_ident(p, 1..1);
         parse_datatype(p);
 
@@ -185,7 +184,7 @@ fn parse_record_type_definition(p: &mut Parser) {
         if !p.eat(T![,]) {
             break;
         }
-    }
+    });
     p.expect(T![")"]);
 }
 
@@ -309,8 +308,8 @@ Root@0..97
   RParen@48..49 ")"
   Whitespace@49..50 " "
   Keyword@50..52 "IS"
-  SelectStmt@52..97
-    Whitespace@52..65 "\n            "
+  Whitespace@52..65 "\n            "
+  SelectStmt@65..97
     Keyword@65..71 "SELECT"
     Whitespace@71..72 " "
     SelectClause@72..83

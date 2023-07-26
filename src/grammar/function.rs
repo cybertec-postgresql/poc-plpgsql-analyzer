@@ -67,8 +67,6 @@ fn parse_body(p: &mut Parser) {
     p.eat(T![plpgsql]);
     p.eat(T![;]);
     p.eat(T![/]);
-
-    p.eat_ws();
 }
 
 #[cfg(test)]
@@ -130,8 +128,8 @@ CREATE FUNCTION add_job_history
             parse(INPUT, |p| parse_header(p, false)),
             expect![[r#"
 Root@0..145
-  FunctionHeader@0..145
-    Whitespace@0..1 "\n"
+  Whitespace@0..1 "\n"
+  FunctionHeader@1..145
     Keyword@1..7 "CREATE"
     Whitespace@7..8 " "
     Keyword@8..16 "FUNCTION"
@@ -209,10 +207,10 @@ Root@0..25
             parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..171
-  Function@0..171
-    FunctionHeader@0..146
-      Comment@0..73 "-- test: ignore EDITI ..."
-      Whitespace@73..74 "\n"
+  Comment@0..73 "-- test: ignore EDITI ..."
+  Whitespace@73..74 "\n"
+  Function@74..171
+    FunctionHeader@74..146
       Keyword@74..80 "CREATE"
       Whitespace@80..81 " "
       Keyword@81..83 "OR"
@@ -227,8 +225,8 @@ Root@0..171
         Ident@113..131 "ignore_editionable"
       Whitespace@131..132 "\n"
       Keyword@132..138 "RETURN"
-      Datatype@138..146
-        Whitespace@138..139 " "
+      Whitespace@138..139 " "
+      Datatype@139..146
         Keyword@139..145 "number"
         Whitespace@145..146 " "
     Keyword@146..148 "IS"
@@ -238,8 +236,8 @@ Root@0..171
       Whitespace@154..156 "\n "
       BlockStatement@156..165
         Keyword@156..162 "RETURN"
-        Expression@162..164
-          Whitespace@162..163 " "
+        Whitespace@162..163 " "
+        Expression@163..164
           Integer@163..164 "1"
         Semicolon@164..165 ";"
       Whitespace@165..166 "\n"
@@ -260,10 +258,10 @@ Root@0..171
             parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..180
-  Function@0..180
-    FunctionHeader@0..155
-      Comment@0..76 "-- test: ignore NONED ..."
-      Whitespace@76..77 "\n"
+  Comment@0..76 "-- test: ignore NONED ..."
+  Whitespace@76..77 "\n"
+  Function@77..180
+    FunctionHeader@77..155
       Keyword@77..83 "CREATE"
       Whitespace@83..84 " "
       Keyword@84..86 "OR"
@@ -278,8 +276,8 @@ Root@0..180
         Ident@119..140 "ignore_noneditionable"
       Whitespace@140..141 "\n"
       Keyword@141..147 "RETURN"
-      Datatype@147..155
-        Whitespace@147..148 " "
+      Whitespace@147..148 " "
+      Datatype@148..155
         Keyword@148..154 "number"
         Whitespace@154..155 " "
     Keyword@155..157 "IS"
@@ -289,8 +287,8 @@ Root@0..180
       Whitespace@163..165 "\n "
       BlockStatement@165..174
         Keyword@165..171 "RETURN"
-        Expression@171..173
-          Whitespace@171..172 " "
+        Whitespace@171..172 " "
+        Expression@172..173
           Integer@172..173 "1"
         Semicolon@173..174 ";"
       Whitespace@174..175 "\n"

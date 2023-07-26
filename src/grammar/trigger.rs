@@ -77,7 +77,7 @@ fn parse_simple_dml_trigger(p: &mut Parser) {
 }
 
 fn parse_system_trigger(p: &mut Parser) {
-    loop {
+    safe_loop!(p, {
         let bump_n = match [
             p.current(),
             p.nth(1).unwrap_or(T![EOF]),
@@ -122,7 +122,7 @@ fn parse_system_trigger(p: &mut Parser) {
         if !p.eat(T![or]) {
             break;
         }
-    }
+    });
 
     p.expect(T![on]);
 
@@ -141,7 +141,7 @@ fn parse_system_trigger(p: &mut Parser) {
 }
 
 fn parse_dml_event_clause(p: &mut Parser) {
-    loop {
+    safe_loop!(p, {
         let token = p.current();
 
         if !p.expect_one_of(&[T![insert], T![update], T![delete]]) {
@@ -149,16 +149,18 @@ fn parse_dml_event_clause(p: &mut Parser) {
         }
 
         if token == T![update] && p.eat(T![of]) {
-            parse_ident(p, 1..1);
-            while p.eat(T![,]) {
+            safe_loop!(p, {
                 parse_ident(p, 1..1);
-            }
+                if !p.eat(T![,]) {
+                    break;
+                }
+            });
         }
 
         if !p.eat(T![or]) {
             break;
         }
-    }
+    });
     p.expect(T![on]);
     parse_ident(p, 1..2);
 }
@@ -166,7 +168,7 @@ fn parse_dml_event_clause(p: &mut Parser) {
 const REFERENCING_TOKENS: &[TokenKind] = &[T![old], T![new], T![parent]];
 fn parse_referencing_clause(p: &mut Parser) {
     if p.eat(T![referencing]) {
-        loop {
+        safe_loop!(p, {
             if !p.expect_one_of(REFERENCING_TOKENS) {
                 break;
             }
@@ -176,7 +178,7 @@ fn parse_referencing_clause(p: &mut Parser) {
             if !REFERENCING_TOKENS.contains(&p.current()) {
                 break;
             }
-        }
+        });
     }
 }
 
@@ -188,12 +190,12 @@ fn parse_trigger_edition_clause(p: &mut Parser) {
 
 fn parse_trigger_ordering_clause(p: &mut Parser) {
     if p.eat_one_of(&[T![follows], T![precedes]]) {
-        loop {
+        safe_loop!(p, {
             parse_ident(p, 1..2);
             if !p.eat(T![,]) {
                 break;
             }
-        }
+        });
     }
 }
 

@@ -18,7 +18,7 @@ pub(crate) use query::*;
 pub(crate) use trigger::*;
 
 use crate::lexer::{TokenKind, T};
-use crate::parser::Parser;
+use crate::parser::{safe_loop, Parser};
 use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
 
@@ -40,7 +40,7 @@ fn parse_param_list(p: &mut Parser) {
         p.start(SyntaxKind::ParamList);
         p.bump(T!["("]);
 
-        loop {
+        safe_loop!(p, {
             match p.current() {
                 T![,] => {
                     p.bump(T![,]);
@@ -52,7 +52,7 @@ fn parse_param_list(p: &mut Parser) {
                     parse_param(p);
                 }
             }
-        }
+        });
 
         p.expect(T![")"]);
         p.finish();
@@ -109,8 +109,6 @@ fn parse_param(p: &mut Parser) {
 fn parse_ident(p: &mut Parser, expected_components: Range<u8>) {
     assert!(expected_components.end > 0);
     assert!(expected_components.start <= expected_components.end);
-
-    p.eat_ws();
 
     if expected_components.start == 0 && !p.current().is_ident() {
         return;
@@ -263,8 +261,8 @@ Root@0..12
             parse("  foo bar%type", parse_param),
             expect![[r#"
 Root@0..14
-  Param@0..14
-    Whitespace@0..2 "  "
+  Whitespace@0..2 "  "
+  Param@2..14
     IdentGroup@2..5
       Ident@2..5 "foo"
     Whitespace@5..6 " "
@@ -293,8 +291,8 @@ Root@0..26
       Keyword@3..11 "VARCHAR2"
       Whitespace@11..12 " "
     Assign@12..14 ":="
-    Expression@14..26
-      Whitespace@14..15 " "
+    Whitespace@14..15 " "
+    Expression@15..26
       QuotedLiteral@15..26 "'not empty'"
 "#]],
             vec![],

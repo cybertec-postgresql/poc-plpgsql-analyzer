@@ -40,6 +40,9 @@ pub enum ParseErrorType {
     /// The parser stumbled upon an unbalanced pair of parentheses.
     #[error("Unbalanced pair of parentheses found")]
     UnbalancedParens,
+    /// The parser made a loop iteration without processing any tokens
+    #[error("The parser detected an endless loop and had to break it")]
+    EndlessLoop,
     /// The parser stumbled upon the end of input, but expecting further input.
     #[error("Unexpected end of input found")]
     Eof,
@@ -180,7 +183,7 @@ impl<'a> Parser<'a> {
             builder: GreenNodeBuilder::new(),
             errors: Vec::new(),
         };
-        parser.start(SyntaxKind::Root);
+        parser.builder.start_node(SyntaxKind::Root.into());
         parser
     }
 
@@ -326,7 +329,7 @@ impl<'a> Parser<'a> {
 
     /// Consume all whitespaces / comments & attach
     /// them to the current node to preserve them.
-    pub fn eat_ws(&mut self) {
+    fn eat_ws(&mut self) {
         loop {
             match self.tokens.last() {
                 Some(token) if token.kind.is_trivia() => {
@@ -341,6 +344,7 @@ impl<'a> Parser<'a> {
 
     /// Start a new (nested) node
     pub(crate) fn start(&mut self, kind: SyntaxKind) {
+        self.eat_ws();
         self.builder.start_node(kind.into());
     }
 
@@ -349,7 +353,8 @@ impl<'a> Parser<'a> {
         self.builder.start_node_at(checkpoint, kind.into())
     }
 
-    pub(crate) fn checkpoint(&self) -> Checkpoint {
+    pub(crate) fn checkpoint(&mut self) -> Checkpoint {
+        self.eat_ws();
         self.builder.checkpoint()
     }
 
@@ -391,4 +396,26 @@ impl<'a> Parser<'a> {
         }
         self.builder.token(target.into(), token.text);
     }
+
+    pub fn token_len(&mut self) -> usize {
+        self.tokens.len()
+    }
 }
+
+/// Takes a parser and a loop body.
+/// Should the token vec not be modified during a iteration, the
+/// loop will be broken and an error generated.
+macro_rules! safe_loop {
+    ($parser:expr, $body:block) => {
+        let mut tokens_len = $parser.token_len();
+        loop {
+            $body;
+            if tokens_len == $parser.token_len() {
+                $parser.error(crate::ParseErrorType::EndlessLoop);
+                break;
+            }
+            tokens_len = $parser.token_len();
+        }
+    };
+}
+pub(crate) use safe_loop;
