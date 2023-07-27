@@ -36,53 +36,81 @@ pub fn parse_datatype(p: &mut Parser) {
                 p.expect(T![")"]);
             }
         }
-        T![char]
-        | T![varchar2]
-        | T![nchar]
-        | T![nvarchar2]
-        | T![number]
-        | T![float]
-        | T![binary_float]
+        T![bfile]
+        | T![binary]
         | T![binary_double]
-        | T![long]
-        | T![raw]
-        | T![date]
-        | T![timestamp]
-        | T![blob]
-        | T![clob]
-        | T![nclob]
-        | T![bfile]
-        | T![rowid]
-        | T![urowid]
-        | T![character]
-        | T![varchar]
-        | T![national]
-        | T![numeric]
-        | T![decimal]
-        | T![dec]
-        | T![integer]
-        | T![int]
-        | T![smallint]
-        | T![double]
-        | T![real]
-        | T![string]
+        | T![binary_float]
         | T![binary_integer]
-        | T![pls_integer] => {
+        | T![blob]
+        | T![char]
+        | T![character]
+        | T![clob]
+        | T![date]
+        | T![dec]
+        | T![decimal]
+        | T![double]
+        | T![float]
+        | T![int]
+        | T![integer]
+        | T![long]
+        | T![national]
+        | T![nchar]
+        | T![nclob]
+        | T![number]
+        | T![numeric]
+        | T![nvarchar2]
+        | T![pls_integer]
+        | T![raw]
+        | T![real]
+        | T![rowid]
+        | T![smallint]
+        | T![string]
+        | T![timestamp]
+        | T![urowid]
+        | T![varchar2]
+        | T![varchar] => {
             p.bump_any();
 
             match datatype {
-                T![character] | T![char] | T![nchar] => {
-                    p.eat(T![varying]);
-                }
-                T![national] => {
-                    p.expect_one_of(&[T![character], T![char]]);
-                    p.eat(T![varying]);
-                }
+                T![character] | T![char] | T![nchar] => match p.current() {
+                    T![varying] => p.bump_any(),
+                    T![large] => {
+                        p.bump_any();
+                        p.expect(T![object]);
+                    }
+                    _ => {}
+                },
+                T![national] => match p.current() {
+                    T![char] => {
+                        p.bump_any();
+                        p.eat(T![varying]);
+                    }
+                    T![character] => {
+                        p.bump_any();
+                        match p.current() {
+                            T![large] => {
+                                p.bump_any();
+                                p.expect(T![object]);
+                            }
+                            _ => {
+                                p.eat(T![varying]);
+                            }
+                        };
+                    }
+                    _ => p.error(ParseErrorType::ExpectedOneOfTokens(vec![
+                        T![char],
+                        T![character],
+                    ])),
+                },
                 T![double] => {
                     p.eat(T![precision]);
                 }
                 T![long] => {
                     p.eat(T![raw]);
+                }
+                T![binary] => {
+                    p.expect(T![large]);
+                    p.expect(T![object]);
                 }
                 _ => {}
             }
