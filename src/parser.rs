@@ -31,6 +31,9 @@ pub enum ParseErrorType {
     /// The parser expected a statement
     #[error("Expected statement, found: {0}")]
     ExpectedStatement(TokenKind),
+    /// The parser expected a constraint
+    #[error("Expected constraint, found: {0}")]
+    ExpectedConstraint(TokenKind),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
@@ -136,6 +139,15 @@ pub fn parse_trigger(input: &str) -> Result<Parse, ParseError> {
 
     // Expect a query `SELECT`
     grammar::parse_trigger(&mut parser);
+
+    // TODO handle any errors here
+    Ok(parser.build())
+}
+
+pub fn parse_view(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+
+    grammar::parse_view(&mut parser);
 
     // TODO handle any errors here
     Ok(parser.build())

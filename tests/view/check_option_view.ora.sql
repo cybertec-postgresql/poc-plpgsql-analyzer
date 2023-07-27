@@ -1,0 +1,3 @@
+CREATE VIEW check_option_view AS
+  SELECT 1 FROM dual
+WITH CHECK OPTION;

@@ -1,0 +1,2 @@
+CREATE EDITIONABLE VIEW editionable_view
+  AS SELECT 1 FROM DUAL;
