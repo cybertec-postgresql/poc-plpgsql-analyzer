@@ -1,0 +1,3 @@
+CREATE VIEW read_only_view
+  AS SELECT 1 FROM dual
+WITH READ ONLY;
