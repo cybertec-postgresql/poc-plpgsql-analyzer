@@ -8,6 +8,7 @@
 use std::ops::Range;
 
 pub(crate) use block::*;
+pub(crate) use constraint::*;
 pub(crate) use datatype::*;
 pub(crate) use expressions::*;
 pub(crate) use function::*;
@@ -24,6 +25,7 @@ use crate::ParseErrorType;
 
 mod block;
 mod call_spec;
+mod constraint;
 mod datatype;
 mod declare_section;
 mod expressions;
@@ -143,6 +145,18 @@ fn parse_single_ident(p: &mut Parser) {
     } else {
         p.error(ParseErrorType::ExpectedIdent)
     }
+}
+
+/// Parses a column list, e.g. `(col1, col2)`
+fn parse_column_list(p: &mut Parser) {
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
 }
 
 fn parse_ident_or_function_invocation(p: &mut Parser) {

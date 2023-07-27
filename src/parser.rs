@@ -31,6 +31,9 @@ pub enum ParseErrorType {
     /// The parser expected a statement
     #[error("Expected statement, found: {0}")]
     ExpectedStatement(TokenKind),
+    /// The parser expected a constraint
+    #[error("Expected constraint, found: {0}")]
+    ExpectedConstraint(TokenKind),
     /// The parser expected a specifc token, but found another.
     #[error("Expected token '{0}'")]
     ExpectedToken(TokenKind),
