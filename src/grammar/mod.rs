@@ -17,6 +17,7 @@ pub(crate) use package::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
 pub(crate) use trigger::*;
+pub(crate) use view::*;
 
 use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
@@ -35,6 +36,7 @@ mod package;
 mod procedure;
 mod query;
 mod trigger;
+mod view;
 
 /// Parses the parameter list in the procedure header
 fn parse_param_list(p: &mut Parser) {
