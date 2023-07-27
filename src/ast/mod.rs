@@ -14,6 +14,7 @@ pub use function_invocation::*;
 pub use procedure::*;
 pub use query::*;
 pub use trigger::*;
+pub use view::*;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
 
@@ -24,6 +25,7 @@ mod function_invocation;
 mod procedure;
 mod query;
 mod trigger;
+mod view;
 
 macro_rules! typed_syntax {
     ($synty:ty, $astty:ty, $name:ident $(; { $( $additional:item )+ } )? ) => {
@@ -125,6 +127,11 @@ impl Root {
     /// Finds the (next) trigger query in this root node.
     pub fn trigger(&self) -> Option<Trigger> {
         self.syntax.children().find_map(Trigger::cast)
+    }
+
+    /// Finds the (next) view in this root node.
+    pub fn view(&self) -> Option<View> {
+        self.syntax.children().find_map(View::cast)
     }
 }
 

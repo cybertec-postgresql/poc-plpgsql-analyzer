@@ -7,8 +7,9 @@ import { analyze, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
 
 const FUNCTION_HEADINGS_DIR = '../function/heading';
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
-const TRIGGERS_DIR = '../trigger';
 const QUERYS_DIR = '../dql';
+const TRIGGERS_DIR = '../trigger';
+const VIEWS_DIR = '../view';
 
 describe('try to parse and analyze Oracle function', () => {
   const files = fs
@@ -122,6 +123,28 @@ describe('try to parse and analyze Oracle triggers', () => {
 
     expect(metaData.trigger.name).toEqual('store.after_trigger');
     expect(metaData.trigger.linesOfCode).toEqual(4);
+  });
+});
+
+describe('try to parse and analyze Oracle views', () => {
+  const files = fs
+    .readdirSync(VIEWS_DIR)
+    .filter(name => name.match(/^(.+)\.ora\.sql$/))
+    .map(name => path.join(VIEWS_DIR, name));
+
+  it.each(files)('should parse %s successfully', path => {
+    const content = fs.readFileSync(path, 'utf8');
+    const metaData = analyze('view', content, { tables: {} });
+
+    expect(metaData.view).toEqual(expect.anything());
+  });
+
+  it('should return the correct view name', () => {
+    const metaData = analyze('view', 'CREATE VIEW store_view AS SELECT name FROM stores', {
+      tables: {},
+    });
+
+    expect(metaData.view.name).toEqual('store_view');
   });
 });
 
