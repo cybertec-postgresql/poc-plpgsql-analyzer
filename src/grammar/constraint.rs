@@ -6,6 +6,7 @@
 
 use super::*;
 
+#[allow(unused)]
 /// Parses a complete constraint
 pub(crate) fn parse_constraint(p: &mut Parser) {
     p.start(SyntaxKind::Constraint);
@@ -33,7 +34,20 @@ pub(crate) fn parse_constraint(p: &mut Parser) {
     p.finish();
 }
 
-fn parse_inline_constraint(p: &mut Parser) {
+pub(crate) fn at_inline_constraint(p: &mut Parser) -> bool {
+    [
+        T![check],
+        T![constraint],
+        T![not],
+        T![null],
+        T![primary],
+        T![references],
+        T![unique],
+    ]
+    .contains(&p.current())
+}
+
+pub(crate) fn parse_inline_constraint(p: &mut Parser) {
     if p.eat(T![constraint]) {
         parse_ident(p, 1..1); // TODO: Check 1..1
     }
@@ -69,7 +83,18 @@ fn parse_inline_constraint(p: &mut Parser) {
     p.eat_one_of(&[T![precheck], T![noprecheck]]);
 }
 
-fn parse_out_of_line_constraint(p: &mut Parser) {
+pub(crate) fn at_out_of_line_constraint(p: &mut Parser) -> bool {
+    [
+        T![check],
+        T![constraint],
+        T![foreign],
+        T![primary],
+        T![unique],
+    ]
+    .contains(&p.current())
+}
+
+pub(crate) fn parse_out_of_line_constraint(p: &mut Parser) {
     if p.eat(T![constraint]) {
         parse_ident(p, 1..1); // TODO: Check 1..1
     }
