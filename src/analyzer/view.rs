@@ -42,7 +42,7 @@ mod tests {
     fn test_analyze_view() {
         const INPUT: &str = "CREATE VIEW store_view AS SELECT name FROM stores";
         let result = analyze(DboType::View, INPUT, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {

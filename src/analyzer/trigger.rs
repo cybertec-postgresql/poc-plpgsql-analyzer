@@ -55,7 +55,7 @@ mod tests {
         const INPUT: &str = include_str!("../../tests/trigger/after_trigger.ora.sql");
 
         let result = analyze(DboType::Trigger, INPUT, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {

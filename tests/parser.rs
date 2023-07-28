@@ -24,7 +24,7 @@ fn test_parse_coverage(path: &Path) -> datatest_stable::Result<()> {
         "view" => parse_view(&content),
         typ => panic!("Can not parse typ {}", typ),
     };
-    assert!(result.is_ok(), "{:#?}", result);
+    assert!(result.is_ok(), "{result:#?}");
 
     let parse = result.unwrap();
     assert!(
