@@ -3,7 +3,7 @@
 // <office@cybertec.at>
 
 //! Implements parsing of PL/SQL call specifications from a token tree.
-//! Refer to https://docs.oracle.com/en/database/oracle/oracle-database/23/lnpls/call-specification.html#GUID-C5F117AE-E9A2-499B-BA6A-35D072575BAD
+//! Refer to <https://docs.oracle.com/en/database/oracle/oracle-database/23/lnpls/call-specification.html#GUID-C5F117AE-E9A2-499B-BA6A-35D072575BAD>
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
