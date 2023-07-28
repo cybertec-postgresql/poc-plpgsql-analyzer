@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-//! Generates the [`SyntaxKind`] enum and the mapping of the [`TokenKind`] enum
+//! Generates the [`crate::SyntaxKind`] enum and the mapping of the [`crate::TokenKind`] enum
 
 #[cfg(test)]
 pub mod lib {

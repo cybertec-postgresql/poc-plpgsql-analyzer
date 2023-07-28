@@ -10,7 +10,8 @@ use std::ops;
 use logos::Logos;
 use rowan::{TextRange, TextSize};
 
-pub(crate) use generated::{TokenKind, T};
+pub use generated::TokenKind;
+pub(crate) use generated::T;
 
 mod generated;
 

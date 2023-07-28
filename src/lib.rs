@@ -9,8 +9,9 @@
 
 pub use analyzer::*;
 pub use ast::*;
+pub use lexer::*;
 pub use parser::*;
-pub use syntax::{SyntaxElement, SyntaxKind, SyntaxNode, SyntaxToken};
+pub use syntax::*;
 pub use util::SqlIdent;
 
 mod analyzer;

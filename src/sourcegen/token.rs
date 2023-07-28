@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-//! Generates the [`TokenKind`] enum
+//! Generates the [`crate::TokenKind`] enum
 
 #[cfg(test)]
 pub mod lib {

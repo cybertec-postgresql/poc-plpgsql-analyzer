@@ -32,5 +32,4 @@ pub type SyntaxNode = rowan::SyntaxNode<SqlProcedureLang>;
 /// Typed [`SyntaxToken`] with our [`SqlProcedureLang`] language definition.
 pub type SyntaxToken = rowan::SyntaxToken<SqlProcedureLang>;
 /// Typed [`SyntaxElement`] with our [`SqlProcedureLang`] language definition.
-#[allow(unused)]
 pub type SyntaxElement = rowan::SyntaxElement<SqlProcedureLang>;
