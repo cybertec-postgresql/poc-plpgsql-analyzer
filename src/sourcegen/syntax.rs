@@ -57,7 +57,7 @@ pub mod syntax {
 
     #[test]
     fn sourcegen_syntax() {
-        let file = project_path().join("src/syntax/generated.rs").to_owned();
+        let file = project_path().join("src/syntax/generated.rs");
         let content = rustfmt_content(add_preamble(file!(), generate_content()));
         guarantee_file_content(&file, content.as_str());
     }
