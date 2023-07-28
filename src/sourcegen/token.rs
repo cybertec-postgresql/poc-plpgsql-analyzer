@@ -5,13 +5,13 @@
 //! Generates the [`TokenKind`] enum
 
 #[cfg(test)]
-pub mod token {
+pub mod lib {
     use heck::ToUpperCamelCase;
     use proc_macro2::{Ident, Literal, Punct, Spacing, TokenStream};
     use quote::__private::ext::RepToTokensExt;
     use quote::{format_ident, quote};
 
-    use crate::sourcegen::data::data::TOKENS;
+    use crate::sourcegen::data::lib::TOKENS;
     use crate::sourcegen::lib::{
         add_preamble, guarantee_file_content, project_path, rustfmt_content,
     };
@@ -104,7 +104,7 @@ pub mod token {
             )
         };
         ($shorthand:literal, $name:literal, $syntax_kind:expr, $regex:expr, $priority:expr) => {
-            crate::sourcegen::token::token::Token {
+            crate::sourcegen::token::lib::Token {
                 shorthand: $shorthand,
                 name: $name,
                 syntax_kind: $syntax_kind,
