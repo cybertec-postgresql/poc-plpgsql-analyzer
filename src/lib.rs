@@ -5,6 +5,7 @@
 //! Proof of concept interface and implementation for a PL/SQL parser.
 
 #![forbid(unsafe_code)]
+#![deny(warnings)]
 
 pub use analyzer::*;
 pub use ast::*;
