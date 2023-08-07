@@ -5,9 +5,9 @@
 //! Specifies the token and syntax kinds to be generated
 
 #[cfg(test)]
-pub mod data {
-    use crate::sourcegen::syntax::syntax::{SyntaxNode, S};
-    use crate::sourcegen::token::token::{Tokens, T};
+pub mod lib {
+    use crate::sourcegen::syntax::lib::{SyntaxNode, S};
+    use crate::sourcegen::token::lib::{Tokens, T};
 
     pub(crate) const TOKENS: Tokens<'_> = Tokens {
         trivia: &[

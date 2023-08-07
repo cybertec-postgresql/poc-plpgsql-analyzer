@@ -56,7 +56,7 @@ mod tests {
             include_str!("../../tests/function/heading/function_heading_example.ora.sql");
 
         let result = analyze(DboType::Function, INPUT, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {

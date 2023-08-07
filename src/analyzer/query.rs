@@ -52,7 +52,7 @@ mod tests {
     fn test_analyze_query() {
         const INPUT: &str = include_str!("../../tests/dql/select_left_join.ora.sql");
         let result = analyze(DboType::Query, INPUT, &DboAnalyzeContext::default());
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {

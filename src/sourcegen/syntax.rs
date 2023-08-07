@@ -2,16 +2,16 @@
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-//! Generates the [`SyntaxKind`] enum and the mapping of the [`TokenKind`] enum
+//! Generates the [`crate::SyntaxKind`] enum and the mapping of the [`crate::TokenKind`] enum
 
 #[cfg(test)]
-pub mod syntax {
+pub mod lib {
     use heck::ToUpperCamelCase;
     use proc_macro2::{Ident, TokenStream};
     use quote::{format_ident, quote};
 
-    use crate::sourcegen::data::data::SYNTAX_NODES;
-    use crate::sourcegen::data::data::TOKENS;
+    use crate::sourcegen::data::lib::SYNTAX_NODES;
+    use crate::sourcegen::data::lib::TOKENS;
     use crate::sourcegen::lib::{
         add_preamble, guarantee_file_content, project_path, rustfmt_content,
     };
@@ -57,7 +57,7 @@ pub mod syntax {
 
     #[test]
     fn sourcegen_syntax() {
-        let file = project_path().join("src/syntax/generated.rs").to_owned();
+        let file = project_path().join("src/syntax/generated.rs");
         let content = rustfmt_content(add_preamble(file!(), generate_content()));
         guarantee_file_content(&file, content.as_str());
     }

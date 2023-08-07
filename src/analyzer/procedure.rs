@@ -58,7 +58,7 @@ mod tests {
             ADD_JOB_HISTORY,
             &DboAnalyzeContext::default(),
         );
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {
@@ -87,7 +87,7 @@ mod tests {
             SECURE_DML,
             &DboAnalyzeContext::default(),
         );
-        assert!(result.is_ok(), "{:#?}", result);
+        assert!(result.is_ok(), "{result:#?}");
         let result = result.unwrap();
 
         match result {

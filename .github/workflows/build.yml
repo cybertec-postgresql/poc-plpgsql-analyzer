@@ -49,7 +49,7 @@ jobs:
         run: cargo build
 
       - name: Run clippy
-        run: cargo clippy --no-deps
+        run: cargo clippy --all-targets -- -D warnings
 
       - name: Run tests
         run: cargo test --features coverage-tests

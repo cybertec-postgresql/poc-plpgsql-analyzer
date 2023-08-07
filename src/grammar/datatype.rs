@@ -3,7 +3,7 @@
 // <office@cybertec.at>
 
 //! A lax implementation for parsing datatypes from a token tree.
-//! See https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/Data-Types.html#GUID-A3C0D836-BADB-44E5-A5D4-265BA5968483
+//! See <https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/Data-Types.html#GUID-A3C0D836-BADB-44E5-A5D4-265BA5968483>
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::lexer::{TokenKind, T};
