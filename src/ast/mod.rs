@@ -7,6 +7,7 @@
 
 pub use rowan::ast::AstNode;
 
+pub use argument_list::*;
 pub use datatype::*;
 pub use expressions::*;
 pub use function::*;
@@ -18,6 +19,7 @@ pub use view::*;
 
 use crate::syntax::{SyntaxKind, SyntaxToken};
 
+mod argument_list;
 mod datatype;
 mod expressions;
 mod function;
