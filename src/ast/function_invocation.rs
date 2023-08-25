@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
-// SPDX-FileCopyrightText: 2022 CYBERTEC PostgreSQL International GmbH
+// SPDX-FileCopyrightText: 2022-2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
 //! Typed AST nodes for PL/SQL function invocations.
@@ -24,15 +24,8 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_unqualified_function() {
-        const INPUT: &str = "SELECT NVL(first_name, 'John') FROM DUAL";
-        let result = crate::parse_query(INPUT).unwrap();
-        let root = Root::cast(result.syntax());
-        assert!(root.is_some());
-
-        let function_invocation = root
-            .unwrap()
+    fn find_function_invocation(root: Option<Root>) -> Option<FunctionInvocation> {
+        root.unwrap()
             .query()
             .unwrap()
             .select_clause()
@@ -43,7 +36,17 @@ mod tests {
             .unwrap()
             .syntax()
             .children()
-            .find_map(FunctionInvocation::cast);
+            .find_map(FunctionInvocation::cast)
+    }
+
+    #[test]
+    fn test_unqualified_function() {
+        const INPUT: &str = "SELECT NVL(first_name, 'John') FROM DUAL";
+        let result = crate::parse_query(INPUT).unwrap();
+        let root = Root::cast(result.syntax());
+        assert!(root.is_some());
+
+        let function_invocation = find_function_invocation(root);
 
         assert!(function_invocation.is_some());
         assert_eq!(
@@ -59,19 +62,7 @@ mod tests {
         let root = Root::cast(result.syntax());
         assert!(root.is_some());
 
-        let function_invocation = root
-            .unwrap()
-            .query()
-            .unwrap()
-            .select_clause()
-            .unwrap()
-            .syntax()
-            .children()
-            .find_map(ColumnExpr::cast)
-            .unwrap()
-            .syntax()
-            .children()
-            .find_map(FunctionInvocation::cast);
+        let function_invocation = find_function_invocation(root);
 
         assert!(function_invocation.is_some());
         assert_eq!(
