@@ -461,4 +461,52 @@ Root@0..148
             vec![],
         );
     }
+
+    #[test]
+    fn test_connect_by() {
+        check(
+            parse(
+                r#"SELECT employee_id, last_name, manager_id, LEVEL FROM employees CONNECT BY PRIOR employee_id = manager_id ;"#,
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+SelectStmt@0..81
+  Keyword@0..6 "SELECT"
+  Whitespace@6..7 " "
+  SelectClause@7..49
+    ColumnExpr@7..18
+      IdentGroup@7..18
+        Ident@7..18 "employee_id"
+    Comma@18..19 ","
+    Whitespace@19..20 " "
+    ColumnExpr@20..29
+      IdentGroup@20..29
+        Ident@20..29 "last_name"
+    Comma@29..30 ","
+    Whitespace@30..31 " "
+    ColumnExpr@31..41
+      IdentGroup@31..41
+        Ident@31..41 "manager_id"
+    Comma@41..42 ","
+    Whitespace@42..43 " "
+    ColumnExpr@43..49
+      IdentGroup@43..48
+        Ident@43..48 "LEVEL"
+      Whitespace@48..49 " "
+  Keyword@49..53 "FROM"
+  Whitespace@53..54 " "
+  IdentGroup@54..63
+    Ident@54..63 "employees"
+  Whitespace@63..64 " "
+  Connect@64..81
+    Keyword@64..71 "CONNECT"
+    Whitespace@71..72 " "
+    Keyword@72..74 "BY"
+    Whitespace@74..75 " "
+    Prior@75..80 "PRIOR"
+    Whitespace@80..81 " "
+"#]],
+            vec![],
+        );
+    }
 }
