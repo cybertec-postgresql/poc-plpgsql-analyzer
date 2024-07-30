@@ -136,7 +136,7 @@ mod syntax {
 mod lexer {
     use super::*;
 
-    fn sourcegen_token() {
+    pub fn sourcegen_token() {
         let file = project_path().join("src/lexer/generated.rs");
         let content = rustfmt_content(add_preamble(file!(), generate_content()));
         guarantee_file_content(&file, content.as_str());
@@ -219,3 +219,5 @@ mod lexer {
         }
     }
 }
+
+fn main() -> () {}
