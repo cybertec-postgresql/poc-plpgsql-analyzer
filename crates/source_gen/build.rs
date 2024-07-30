@@ -36,12 +36,6 @@ pub fn guarantee_file_content(file: &Path, content: &str) {
         }
     }
 
-    eprintln!("{} was not up-to-date, updating\n", file.display());
-
-    if std::env::var("CI").is_ok() {
-        eprintln!("NOTE: run `cargo test` locally and commit the generated files\n");
-    }
-
     fs::write(file, content).unwrap();
     println!("cargo:warning=A file was not up-to-date and has been updated!");
 }
