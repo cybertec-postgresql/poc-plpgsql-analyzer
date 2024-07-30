@@ -10,7 +10,6 @@ use quote::{format_ident, quote};
 
 use crate::data::SYNTAX_NODES;
 use crate::data::TOKENS;
-use crate::{add_preamble, guarantee_file_content, project_path, rustfmt_content};
 
 pub struct SyntaxNode<'a> {
     pub name: &'a str,
@@ -50,63 +49,3 @@ macro_rules! S {
     };
 }
 pub(crate) use S;
-
-fn sourcegen_syntax() {
-    let file = project_path().join("src/syntax/generated.rs");
-    let content = rustfmt_content(add_preamble(file!(), generate_content()));
-    guarantee_file_content(&file, content.as_str());
-}
-
-fn generate_content() -> String {
-    // All variants of the `SyntaxKind` enum
-    let syntax_nodes: TokenStream = SYNTAX_NODES.iter().map(|t| t.to_enum_variant()).collect();
-
-    let tokens: TokenStream = TOKENS
-        .iter()
-        .map(|t| {
-            let token = t.to_ident();
-            let syntax = if let Some(syntax_kind) = t.syntax_kind {
-                format_ident!("{}", syntax_kind.to_upper_camel_case())
-            } else {
-                format_ident!("Keyword")
-            };
-            quote! { TokenKind::#token => SyntaxKind::#syntax, }
-        })
-        .collect();
-
-    let content = quote! {
-        use num_derive::{FromPrimitive, ToPrimitive};
-        use num_traits::ToPrimitive;
-
-        use crate::lexer::TokenKind;
-
-        /// Represents all possible kind of syntax items the parser can process.
-        ///
-        /// Examples
-        /// * <https://blog.kiranshila.com/blog/easy_cst.md>
-        /// * <https://arzg.github.io/lang/10/>
-        /// * <https://github.com/rust-analyzer/rowan/blob/master/examples/s_expressions.rs>
-        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
-        #[repr(u16)]
-        pub enum SyntaxKind {
-            #syntax_nodes
-        }
-
-        impl From<SyntaxKind> for rowan::SyntaxKind {
-            fn from(kind: SyntaxKind) -> Self {
-                rowan::SyntaxKind(kind.to_u16().unwrap())
-            }
-        }
-
-        impl From<TokenKind> for SyntaxKind {
-            fn from(kind: TokenKind) -> Self {
-                match kind {
-                    #tokens
-                    TokenKind::Error => SyntaxKind::Error,
-                    TokenKind::Eof => unreachable!(),
-                }
-            }
-        }
-    };
-    content.to_string()
-}

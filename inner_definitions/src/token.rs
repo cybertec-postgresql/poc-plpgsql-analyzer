@@ -10,7 +10,6 @@ use quote::__private::ext::RepToTokensExt;
 use quote::{format_ident, quote};
 
 use crate::data::TOKENS;
-use crate::{add_preamble, guarantee_file_content, project_path, rustfmt_content};
 
 pub struct Token<'a> {
     pub shorthand: &'a str,
@@ -100,7 +99,7 @@ macro_rules! T {
         )
     };
     ($shorthand:literal, $name:literal, $syntax_kind:expr, $regex:expr, $priority:expr) => {
-        crate::sourcegen::token::lib::Token {
+        crate::token::Token {
             shorthand: $shorthand,
             name: $name,
             syntax_kind: $syntax_kind,
@@ -126,88 +125,5 @@ impl Tokens<'static> {
             .chain(TOKENS.punctuation.iter())
             .chain(TOKENS.literals.iter())
             .chain(TOKENS.keywords.iter())
-    }
-}
-
-fn sourcegen_token() {
-    let file = project_path().join("src/lexer/generated.rs");
-    let content = rustfmt_content(add_preamble(file!(), generate_content()));
-    guarantee_file_content(&file, content.as_str());
-}
-
-fn generate_content() -> String {
-    let token_kind_enum = generate_token_kind_enum();
-    let token_kind_impl = generate_token_kind_impl();
-    let token_kind_macro = generate_token_kind_macro();
-
-    let content = quote! {
-        #token_kind_enum
-        #token_kind_impl
-        #token_kind_macro
-    };
-    content.to_string()
-}
-
-fn generate_token_kind_enum() -> TokenStream {
-    let tokens: TokenStream = TOKENS.iter().map(|t| t.to_enum_variant()).collect();
-
-    quote! {
-        #[derive(logos::Logos, Debug, Copy, Clone, PartialEq, Eq)]
-        pub enum TokenKind {
-            #tokens
-
-            #[error]
-            Error,
-
-            /// Marker token to indicate end of input, not used by lexer directly.
-            Eof,
-        }
-    }
-}
-
-fn generate_token_kind_impl() -> TokenStream {
-    let trivia: Vec<Ident> = TOKENS.trivia.iter().map(|t| t.to_ident()).collect();
-    let punctuation: Vec<Ident> = TOKENS.punctuation.iter().map(|t| t.to_ident()).collect();
-    let literals: Vec<Ident> = TOKENS.literals.iter().map(|t| t.to_ident()).collect();
-    quote! {
-        impl TokenKind {
-            pub fn is_trivia(self) -> bool {
-                matches!(self, #( Self :: #trivia )|*)
-            }
-
-            pub fn is_punct(self) -> bool {
-                matches!(self, #(Self::#punctuation)|*)
-            }
-
-            pub fn is_literal(self) -> bool {
-                matches!(self, #(Self::#literals)|*)
-            }
-
-            pub fn is_ident(self) -> bool {
-                matches!(self, Self::UnquotedIdent | Self::QuotedIdent | Self::BindVar)
-                    || !(self.is_trivia()
-                        || self.is_punct()
-                        || self.is_literal()
-                        || matches!(self, Self::Eof | Self::Error))
-            }
-        }
-
-        impl std::fmt::Display for TokenKind {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                write!(f, "{self:?}")
-            }
-        }
-    }
-}
-
-fn generate_token_kind_macro() -> TokenStream {
-    let rules: TokenStream = TOKENS.iter().map(|t| t.to_macro_variant()).collect();
-
-    quote! {
-        macro_rules! T {
-            #rules
-            [EOF] => { TokenKind::Eof };
-        }
-        pub(crate) use T;
     }
 }

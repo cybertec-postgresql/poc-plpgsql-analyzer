@@ -1,6 +1,7 @@
 /target/
 /pkg/
 **/node_modules/
+*/target/
 
 Cargo.lock
 
@@ -9,3 +10,4 @@ Cargo.lock
 
 # IDEs
 .idea
+
