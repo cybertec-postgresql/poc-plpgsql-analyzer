@@ -46,6 +46,8 @@ pub enum SyntaxKind {
     ComparisonOp,
     #[doc = "A concatination operator `||`"]
     Concat,
+    #[doc = "The CONNECT BY clause in selects"]
+    Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
     #[doc = "Any built-in oracle datatype"]
@@ -313,6 +315,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::NoKw => SyntaxKind::Keyword,
             TokenKind::NoauditKw => SyntaxKind::Keyword,
             TokenKind::NocopyKw => SyntaxKind::Keyword,
+            TokenKind::NocycleKw => SyntaxKind::Keyword,
             TokenKind::NoneKw => SyntaxKind::Keyword,
             TokenKind::NoneditionableKw => SyntaxKind::Keyword,
             TokenKind::NonschemaKw => SyntaxKind::Keyword,
