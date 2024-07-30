@@ -6,9 +6,10 @@
 //! Refer to <https://docs.oracle.com/en/database/oracle/oracle-database/23/lnpls/call-specification.html#GUID-C5F117AE-E9A2-499B-BA6A-35D072575BAD>
 
 use crate::grammar::{parse_expr, parse_ident};
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::T;
 
 /// Attempts to parse a call_spec if applicable
 pub(crate) fn opt_call_spec(p: &mut Parser) -> bool {

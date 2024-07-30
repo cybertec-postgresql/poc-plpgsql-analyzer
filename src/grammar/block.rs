@@ -8,10 +8,11 @@ use crate::grammar::declare_section::parse_declare_section;
 use crate::grammar::{
     opt_expr, opt_function_invocation, parse_expr, parse_ident, parse_insert, parse_query,
 };
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::syntax::SyntaxKind;
+use inner_source_gen::T;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {

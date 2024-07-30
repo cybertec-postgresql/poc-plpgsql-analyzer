@@ -33,7 +33,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     use crate::ast::{ComparisonOpType, Root};
-    use crate::syntax::SyntaxKind;
+    use inner_source_gen::syntax::SyntaxKind;
 
     use super::*;
 

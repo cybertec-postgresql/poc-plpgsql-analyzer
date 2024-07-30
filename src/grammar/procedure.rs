@@ -6,9 +6,9 @@
 //! Implements parsing of procedures from a token tree.
 
 use crate::grammar::call_spec::opt_call_spec;
-use crate::lexer::TokenKind;
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::syntax::SyntaxKind;
 
 use super::*;
 

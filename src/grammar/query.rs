@@ -5,9 +5,10 @@
 //! Implements parsing of procedures from a token tree.
 
 use crate::grammar::{opt_expr, parse_expr, parse_ident};
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::syntax::SyntaxKind;
+use inner_source_gen::T;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);

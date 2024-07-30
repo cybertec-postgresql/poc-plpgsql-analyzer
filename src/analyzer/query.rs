@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::analyzer::{AnalyzeError, DboMetaData};
 use crate::ast::Root;
-use crate::syntax::SyntaxKind;
+use inner_source_gen::syntax::SyntaxKind;
 
 #[derive(Tsify, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 #[tsify(into_wasm_abi, from_wasm_abi)]

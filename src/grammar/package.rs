@@ -3,9 +3,9 @@
 // <office@cybertec.at>
 
 use crate::grammar::declare_section::parse_declare_section;
-use crate::lexer::TokenKind;
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
+use inner_source_gen::syntax::SyntaxKind;
+use inner_source_gen::T;
 
 use super::*;
 

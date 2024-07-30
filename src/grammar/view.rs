@@ -4,9 +4,9 @@
 
 //! Implements parsing of views from a token tree.
 
-use crate::lexer::TokenKind;
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::syntax::SyntaxKind;
 
 use super::*;
 

@@ -9,16 +9,11 @@
 
 pub use analyzer::*;
 pub use ast::*;
-pub use lexer::*;
 pub use parser::*;
-pub use syntax::*;
 pub use util::SqlIdent;
 
 mod analyzer;
 mod ast;
 mod grammar;
-mod lexer;
 mod parser;
-mod sourcegen;
-mod syntax;
 mod util;

@@ -11,10 +11,11 @@
 use rowan::Checkpoint;
 
 use crate::grammar::{parse_ident, parse_ident_or_function_invocation};
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use inner_source_gen::lexer::TokenKind;
+use inner_source_gen::syntax::SyntaxKind;
+use inner_source_gen::T;
 
 /// Attempts to parse an expression if applicable
 pub(crate) fn opt_expr(p: &mut Parser) -> bool {
