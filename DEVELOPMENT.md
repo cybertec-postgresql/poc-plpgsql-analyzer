@@ -1,5 +1,7 @@
 # Development
 
+## Repository Structure
+
 ## Contributing
 
 Contributions are welcome! If you have any ideas, suggestions, or bug reports, please open an issue or submit a pull
@@ -36,7 +38,7 @@ To contribute to this project, follow these steps:
 
 ## Requirements
 
-* A working Rust toolchain using [rustup](https://rustup.rs/) (at least 1.69.0)
+* A working Rust toolchain using [rustup](https://rustup.rs/) (at least 1.80.0)
 * [`wasm-pack`](https://rustwasm.github.io/wasm-pack/installer/) (for building WebAssembly)
 
 ## Getting started

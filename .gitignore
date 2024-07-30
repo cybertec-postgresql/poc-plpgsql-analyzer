@@ -1,9 +1,7 @@
-/target/
+**/target/
 /pkg/
 **/node_modules/
 
-crates/definitions/target/
-crates/source_gen/target/
 
 
 Cargo.lock
