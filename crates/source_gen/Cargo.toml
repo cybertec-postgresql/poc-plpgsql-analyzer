@@ -1,0 +1,18 @@
+[package]
+name = "source_gen"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+logos = "0.14.0"
+num-derive = "0.4.2"
+num-traits = "0.2.19"
+rowan = "0.15.15"
+
+[build-dependencies]
+definitions = { path = "../definitions" }
+quote = "1.0.36"
+heck = "0.5.0"
+proc-macro2 = "1.0.86"

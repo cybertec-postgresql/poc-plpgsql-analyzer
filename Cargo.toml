@@ -33,11 +33,11 @@ wasm-bindgen = "^0.2.86"
 version = "^1.0"
 features = ["derive"]
 
-[dependencies.inner_source_gen]
-path = "./inner_source_gen"
+[dependencies.source_gen]
+path = "./crates/source_gen"
 
-[dependencies.inner_definitions]
-path = "./inner_definitions"
+[dependencies.definitions]
+path = "../crates/definitions"
 
 [dev-dependencies]
 datatest-stable = "^0.1.3"
