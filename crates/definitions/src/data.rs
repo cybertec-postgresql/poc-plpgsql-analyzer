@@ -352,6 +352,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("select_stmt", "A node that marks a full SELECT statement"),
     S!("semicolon", "A semi colon"),
     S!("slash", "Slash char `/`"),
+    S!("starts", "A STARTS WITH clause in a SELECT statement"),
     S!("text", "A text slice node"),
     S!("trigger","A node that marks a full CREATE [..] TRIGGER block"),
     S!("trigger_header","A node that marks a TRIGGER header"),

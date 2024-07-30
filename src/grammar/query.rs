@@ -47,7 +47,18 @@ pub(crate) fn parse_connect_by(p: &mut Parser) {
     }
 }
 
-pub(crate) fn parse_starts_with(_p: &mut Parser) {}
+pub(crate) fn parse_starts_with(p: &mut Parser) {
+    p.start(SyntaxKind::Starts);
+    p.expect(T![starts]);
+    p.expect(T![with]);
+    parse_expr(p);
+    p.expect(T![connect]);
+    p.expect(T![by]);
+    if p.at(T![nocycle]) {
+        p.eat(T![nocycle]);
+    }
+    parse_expr(p);
+}
 
 pub(crate) fn parse_insert(p: &mut Parser) {
     p.start(SyntaxKind::InsertStmt);

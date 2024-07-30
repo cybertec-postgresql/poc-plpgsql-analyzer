@@ -124,6 +124,8 @@ pub enum SyntaxKind {
     Semicolon,
     #[doc = "Slash char `/`"]
     Slash,
+    #[doc = "A STARTS WITH clause in a SELECT statement"]
+    Starts,
     #[doc = "A text slice node"]
     Text,
     #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
