@@ -8,10 +8,11 @@ use crate::grammar::declare_section::parse_declare_section;
 use crate::grammar::{
     opt_expr, opt_function_invocation, parse_expr, parse_ident, parse_insert, parse_query,
 };
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -150,9 +151,9 @@ fn opt_assignment_stmt(p: &mut Parser) -> bool {
 mod tests {
     use expect_test::expect;
 
-    use crate::lexer::TokenKind::{IntoKw, UnquotedIdent};
     use crate::ParseError;
     use crate::ParseErrorType::{ExpectedStatement, ExpectedToken};
+    use source_gen::lexer::TokenKind::{IntoKw, UnquotedIdent};
 
     use super::super::tests::{check, parse};
     use super::*;

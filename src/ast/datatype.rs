@@ -5,8 +5,8 @@
 //! Typed AST nodes for PL/SQL datatypes.
 
 use crate::ast::IdentGroup;
-use crate::syntax::SyntaxKind;
 use rowan::ast::AstNode;
+use source_gen::syntax::SyntaxKind;
 
 use super::typed_syntax_node;
 

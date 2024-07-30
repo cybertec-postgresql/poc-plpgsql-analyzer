@@ -6,9 +6,9 @@
 //! Implements parsing of procedures from a token tree.
 
 use crate::grammar::call_spec::opt_call_spec;
-use crate::lexer::TokenKind;
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
 
 use super::*;
 
@@ -60,9 +60,9 @@ fn parse_body(p: &mut Parser) {
 mod tests {
     use expect_test::expect;
 
-    use crate::lexer::TokenKind::ProcedureKw;
     use crate::ParseError;
     use crate::ParseErrorType::ExpectedToken;
+    use source_gen::lexer::TokenKind::ProcedureKw;
 
     use super::super::tests::{check, parse};
     use super::*;

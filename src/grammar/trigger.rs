@@ -2,9 +2,9 @@
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH
 // <office@cybertec.at>
 
-use crate::lexer::TokenKind;
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
 
 use super::*;
 

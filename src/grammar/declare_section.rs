@@ -11,10 +11,11 @@ use crate::grammar::{
     opt_function_invocation, parse_datatype, parse_expr, parse_function, parse_ident,
     parse_procedure, parse_query,
 };
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoint>) {
     let checkpoint = if let Some(checkpoint) = checkpoint {

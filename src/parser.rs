@@ -10,8 +10,9 @@ use std::ops::Range;
 use rowan::{Checkpoint, GreenNode, GreenNodeBuilder};
 
 use crate::grammar;
-use crate::lexer::{Lexer, Token, TokenKind, T};
-use crate::syntax::{SyntaxKind, SyntaxNode};
+use source_gen::lexer::{Lexer, Token, TokenKind};
+use source_gen::syntax::{SyntaxKind, SyntaxNode};
+use source_gen::T;
 
 /// Error type describing all possible parser failures.
 #[derive(Debug, Eq, thiserror::Error, PartialEq)]

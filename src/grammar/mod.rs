@@ -19,10 +19,11 @@ pub(crate) use query::*;
 pub(crate) use trigger::*;
 pub(crate) use view::*;
 
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 mod block;
 mod call_spec;

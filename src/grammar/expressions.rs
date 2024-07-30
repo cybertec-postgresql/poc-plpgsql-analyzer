@@ -11,10 +11,11 @@
 use rowan::Checkpoint;
 
 use crate::grammar::{parse_ident, parse_ident_or_function_invocation};
-use crate::lexer::{TokenKind, T};
 use crate::parser::{safe_loop, Parser};
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Attempts to parse an expression if applicable
 pub(crate) fn opt_expr(p: &mut Parser) -> bool {
@@ -250,9 +251,9 @@ fn in_cond(p: &mut Parser, min_bp: u8) {
 mod tests {
     use expect_test::expect;
 
-    use crate::lexer::TokenKind::RParen;
     use crate::ParseError;
     use crate::ParseErrorType::{ExpectedToken, Incomplete, UnbalancedParens};
+    use source_gen::lexer::TokenKind::RParen;
 
     use super::super::tests::{check, parse};
     use super::*;

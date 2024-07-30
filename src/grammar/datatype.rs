@@ -6,10 +6,11 @@
 //! See <https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/Data-Types.html#GUID-A3C0D836-BADB-44E5-A5D4-265BA5968483>
 
 use crate::grammar::{parse_expr, parse_ident};
-use crate::lexer::{TokenKind, T};
 use crate::parser::Parser;
-use crate::syntax::SyntaxKind;
 use crate::ParseErrorType;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Parses a complete datatype.
 pub fn parse_datatype(p: &mut Parser) {
