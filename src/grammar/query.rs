@@ -6,9 +6,9 @@
 
 use crate::grammar::{opt_expr, parse_expr, parse_ident};
 use crate::parser::{safe_loop, Parser};
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);

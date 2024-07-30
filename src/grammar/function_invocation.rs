@@ -7,9 +7,9 @@
 
 use crate::grammar::{parse_expr, parse_ident};
 use crate::parser::{safe_loop, Parser};
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Looks ahead and parses a function invocation if applicable
 pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {

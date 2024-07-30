@@ -4,9 +4,9 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::str::from_utf8;
 
+use definitions::data::SYNTAX_NODES;
+use definitions::data::TOKENS;
 use heck::ToUpperCamelCase;
-use inner_definitions::data::SYNTAX_NODES;
-use inner_definitions::data::TOKENS;
 use proc_macro2::{Ident, TokenStream};
 use quote::format_ident;
 use quote::quote;

@@ -8,8 +8,8 @@
 use crate::grammar::{parse_expr, parse_ident};
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::T;
 
 /// Attempts to parse a call_spec if applicable
 pub(crate) fn opt_call_spec(p: &mut Parser) -> bool {

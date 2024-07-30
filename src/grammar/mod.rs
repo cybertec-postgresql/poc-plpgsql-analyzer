@@ -21,9 +21,9 @@ pub(crate) use view::*;
 
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 mod block;
 mod call_spec;

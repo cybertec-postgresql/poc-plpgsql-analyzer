@@ -8,9 +8,9 @@
 use crate::grammar::{parse_expr, parse_ident};
 use crate::parser::Parser;
 use crate::ParseErrorType;
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Parses a complete datatype.
 pub fn parse_datatype(p: &mut Parser) {

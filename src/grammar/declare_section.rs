@@ -13,9 +13,9 @@ use crate::grammar::{
 };
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoint>) {
     let checkpoint = if let Some(checkpoint) = checkpoint {

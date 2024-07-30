@@ -17,7 +17,7 @@ pub use query::*;
 pub use trigger::*;
 pub use view::*;
 
-use inner_source_gen::syntax::{SyntaxKind, SyntaxToken};
+use source_gen::syntax::{SyntaxKind, SyntaxToken};
 
 mod argument_list;
 mod datatype;
@@ -39,8 +39,8 @@ macro_rules! typed_syntax {
         impl $astty for $name {
             $( $( $additional )+ )?
 
-            fn can_cast(kind: inner_source_gen::syntax::SyntaxKind) -> bool {
-                kind == inner_source_gen::syntax::SyntaxKind::$name
+            fn can_cast(kind: source_gen::syntax::SyntaxKind) -> bool {
+                kind == source_gen::syntax::SyntaxKind::$name
             }
 
             fn cast(syntax: $synty) -> Option<Self> {
@@ -63,8 +63,8 @@ macro_rules! typed_syntax {
 macro_rules! typed_syntax_node {
     ($( $name:ident ),+ $(,)?) => {
         $(
-            crate::ast::typed_syntax!(inner_source_gen::syntax::SyntaxNode, crate::ast::AstNode, $name; {
-                type Language = inner_source_gen::syntax::SqlProcedureLang;
+            crate::ast::typed_syntax!(source_gen::syntax::SyntaxNode, crate::ast::AstNode, $name; {
+                type Language = source_gen::syntax::SqlProcedureLang;
             });
         )+
     };
@@ -74,7 +74,7 @@ macro_rules! typed_syntax_node {
 /// trait for [`SyntaxKind`] variants.
 macro_rules! typed_syntax_token {
     ($( $name:ident ),+ $(,)?) => {
-        $( crate::ast::typed_syntax!(inner_source_gen::syntax::SyntaxToken, crate::ast::AstToken, $name); )+
+        $( crate::ast::typed_syntax!(source_gen::syntax::SyntaxToken, crate::ast::AstToken, $name); )+
     };
 }
 

@@ -4,8 +4,8 @@
 
 use crate::grammar::declare_section::parse_declare_section;
 use crate::parser::Parser;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 use super::*;
 

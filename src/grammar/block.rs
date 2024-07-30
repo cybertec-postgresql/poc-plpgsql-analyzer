@@ -10,9 +10,9 @@ use crate::grammar::{
 };
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
-use inner_source_gen::lexer::TokenKind;
-use inner_source_gen::syntax::SyntaxKind;
-use inner_source_gen::T;
+use source_gen::lexer::TokenKind;
+use source_gen::syntax::SyntaxKind;
+use source_gen::T;
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -153,7 +153,7 @@ mod tests {
 
     use crate::ParseError;
     use crate::ParseErrorType::{ExpectedStatement, ExpectedToken};
-    use inner_source_gen::lexer::TokenKind::{IntoKw, UnquotedIdent};
+    use source_gen::lexer::TokenKind::{IntoKw, UnquotedIdent};
 
     use super::super::tests::{check, parse};
     use super::*;

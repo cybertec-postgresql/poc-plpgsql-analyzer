@@ -6,7 +6,7 @@
 
 use std::str::FromStr;
 
-use inner_source_gen::syntax::{SyntaxNode, SyntaxToken};
+use source_gen::syntax::{SyntaxNode, SyntaxToken};
 
 use super::typed_syntax_node;
 
