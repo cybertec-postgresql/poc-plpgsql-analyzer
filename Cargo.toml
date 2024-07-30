@@ -37,7 +37,7 @@ features = ["derive"]
 path = "./crates/source_gen"
 
 [dependencies.definitions]
-path = "../crates/definitions"
+path = "./crates/definitions"
 
 [dev-dependencies]
 datatest-stable = "^0.1.3"
