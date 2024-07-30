@@ -11,7 +11,6 @@ use logos::Logos;
 use rowan::{TextRange, TextSize};
 
 pub use generated::TokenKind;
-pub(crate) use generated::T;
 
 mod generated;
 
@@ -35,6 +34,7 @@ impl<'a> Iterator for Lexer<'a> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let kind = self.inner.next()?;
+        let kind = kind.unwrap();
         let text = self.inner.slice();
 
         let range = {

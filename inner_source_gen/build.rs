@@ -4,6 +4,13 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
 use std::str::from_utf8;
 
+use heck::ToUpperCamelCase;
+use inner_definitions::data::SYNTAX_NODES;
+use inner_definitions::data::TOKENS;
+use proc_macro2::{Ident, TokenStream};
+use quote::format_ident;
+use quote::quote;
+
 /// Adds the license header and a edit warning preamble
 pub fn add_preamble(generator: &str, mut content: String) -> String {
     let preamble = format!(
@@ -36,7 +43,7 @@ pub fn guarantee_file_content(file: &Path, content: &str) {
     }
 
     fs::write(file, content).unwrap();
-    panic!("a file was not up-to-date and has been updated, re-run the tests");
+    println!("cargo:warning=A file was not up-to-date and has been updated!");
 }
 
 /// Formats the specified `content` using the `rustfmt` binary
@@ -61,8 +68,8 @@ pub fn rustfmt_content(content: String) -> String {
 
 /// Returns the path of the project root
 pub fn project_path() -> PathBuf {
-    let path = PathBuf::from(file!());
-    let path = path.parent().unwrap().parent().unwrap().parent().unwrap();
+    let path = std::env::current_dir().unwrap();
+    // let path = path.parent().unwrap().parent().unwrap().parent().unwrap();
 
     assert!(path.join("Cargo.toml").exists());
 
@@ -72,7 +79,7 @@ pub fn project_path() -> PathBuf {
 mod syntax {
     use super::*;
 
-    fn sourcegen_syntax() {
+    pub fn sourcegen_syntax() {
         let file = project_path().join("src/syntax/generated.rs");
         let content = rustfmt_content(add_preamble(file!(), generate_content()));
         guarantee_file_content(&file, content.as_str());
@@ -163,7 +170,6 @@ mod lexer {
             pub enum TokenKind {
                 #tokens
 
-                #[error]
                 Error,
 
                 /// Marker token to indicate end of input, not used by lexer directly.
@@ -211,13 +217,16 @@ mod lexer {
         let rules: TokenStream = TOKENS.iter().map(|t| t.to_macro_variant()).collect();
 
         quote! {
+            #[macro_export]
             macro_rules! T {
                 #rules
                 [EOF] => { TokenKind::Eof };
             }
-            pub(crate) use T;
         }
     }
 }
 
-fn main() -> () {}
+fn main() -> () {
+    lexer::sourcegen_token();
+    syntax::sourcegen_syntax();
+}

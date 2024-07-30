@@ -32,7 +32,7 @@ impl Token<'_> {
         )
     }
 
-    fn to_enum_variant(&self) -> TokenStream {
+    pub fn to_enum_variant(&self) -> TokenStream {
         let priority = if let Some(priority) = self.priority {
             let priority = Literal::u8_unsuffixed(priority);
             quote!(, priority = #priority)
@@ -54,7 +54,7 @@ impl Token<'_> {
         }
     }
 
-    fn to_macro_variant(&self) -> TokenStream {
+    pub fn to_macro_variant(&self) -> TokenStream {
         let rule = {
             if self.shorthand == "$$" {
                 quote! {"$$"}
@@ -76,6 +76,7 @@ impl Token<'_> {
     }
 }
 
+#[macro_export]
 macro_rules! T {
     ($shorthand:literal) => {
         T!($shorthand, $shorthand, None, None, None)
@@ -108,13 +109,13 @@ macro_rules! T {
         }
     };
 }
-pub(crate) use T;
+pub use T;
 
-pub(crate) struct Tokens<'a> {
-    pub(crate) trivia: &'a [Token<'a>],
-    pub(crate) punctuation: &'a [Token<'a>],
-    pub(crate) literals: &'a [Token<'a>],
-    pub(crate) keywords: &'a [Token<'a>],
+pub struct Tokens<'a> {
+    pub trivia: &'a [Token<'a>],
+    pub punctuation: &'a [Token<'a>],
+    pub literals: &'a [Token<'a>],
+    pub keywords: &'a [Token<'a>],
 }
 
 impl Tokens<'static> {

@@ -8,9 +8,6 @@ use heck::ToUpperCamelCase;
 use proc_macro2::{Ident, TokenStream};
 use quote::{format_ident, quote};
 
-use crate::data::SYNTAX_NODES;
-use crate::data::TOKENS;
-
 pub struct SyntaxNode<'a> {
     pub name: &'a str,
     pub explanation: &'a str,
@@ -18,11 +15,11 @@ pub struct SyntaxNode<'a> {
 }
 
 impl SyntaxNode<'_> {
-    fn to_ident(&self) -> Ident {
+    pub fn to_ident(&self) -> Ident {
         format_ident!("{}", self.name.to_upper_camel_case(),)
     }
 
-    fn to_enum_variant(&self) -> TokenStream {
+    pub fn to_enum_variant(&self) -> TokenStream {
         let ident = self.to_ident();
         let doc = self.explanation;
         quote! {

@@ -1,7 +1,9 @@
 /target/
 /pkg/
 **/node_modules/
-*/target/
+inner_source_gen/target/
+
+inner_definitions/target/
 
 Cargo.lock
 
