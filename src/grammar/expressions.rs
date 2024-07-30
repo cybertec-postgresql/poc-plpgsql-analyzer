@@ -251,9 +251,9 @@ fn in_cond(p: &mut Parser, min_bp: u8) {
 mod tests {
     use expect_test::expect;
 
-    use crate::lexer::TokenKind::RParen;
     use crate::ParseError;
     use crate::ParseErrorType::{ExpectedToken, Incomplete, UnbalancedParens};
+    use inner_source_gen::lexer::TokenKind::RParen;
 
     use super::super::tests::{check, parse};
     use super::*;

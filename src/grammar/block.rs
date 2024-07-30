@@ -151,9 +151,9 @@ fn opt_assignment_stmt(p: &mut Parser) -> bool {
 mod tests {
     use expect_test::expect;
 
-    use crate::lexer::TokenKind::{IntoKw, UnquotedIdent};
     use crate::ParseError;
     use crate::ParseErrorType::{ExpectedStatement, ExpectedToken};
+    use inner_source_gen::lexer::TokenKind::{IntoKw, UnquotedIdent};
 
     use super::super::tests::{check, parse};
     use super::*;
