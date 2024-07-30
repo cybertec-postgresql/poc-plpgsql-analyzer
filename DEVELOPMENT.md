@@ -1,6 +1,24 @@
 # Development
 
 ## Repository Structure
+This crate is split into 3 parts. The first one is the repository's root folder, which we'll  be refering to as the "outer"-crate.
+The second and third are the "inner"-crates, which are in the "crates"-directory. 
+
+---
+
+Of these the "definitions"-crate contains all code about tokens, what operators and expressions there are etc. If you need to make 
+changes to these topics please do so in crates/definitions. 
+
+---
+The "source_gen"-crate rarely needs any changes. It contains a build.rs file, which automatically builds new 
+source code needed for the project from the definitions crate. 
+
+:warning: The generated.rs files in the "source_gen"-crate needn't
+be touched (they'll be overwritten by the next build with changes anyways) :warning:. 
+
+---
+All code concerning AST, parsing and such
+topics can be found in the src directory of the "outer"-crate. Please make your changes there. 
 
 ## Contributing
 
