@@ -18,13 +18,23 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.expect(T![from]);
     parse_from_list(p);
 
-    if p.at(T![where]) {
-        parse_where_clause(p);
+    if p.at(T![where]) || p.at(T![connect]) || p.at(T![starts]) {
+        if p.at(T![where]) {
+            parse_where_clause(p);
+        } else if p.at(T![connect]) {
+            parse_connect_by(p);
+        } else {
+            parse_starts_with(p);
+        }
     }
 
     p.eat(T![;]);
     p.finish();
 }
+
+pub(crate) fn parse_connect_by(_p: &mut Parser) {}
+
+pub(crate) fn parse_starts_with(_p: &mut Parser) {}
 
 pub(crate) fn parse_insert(p: &mut Parser) {
     p.start(SyntaxKind::InsertStmt);
