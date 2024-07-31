@@ -18,12 +18,6 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("*", "asterisk", "asterisk"),
         T!(",", "comma", "comma"),
         T!("comparison", "comparison", "comparison_op", "<>|<|>|<=|>="),
-        T!(
-            "connect_by_root",
-            "connect_by_root",
-            "connect_by_root",
-            "CONNECT_BY_ROOT"
-        ),
         T!(".", "dot", "dot"),
         T!("..", "double_dot", "range"),
         T!("||", "double_pipe", "concat"),
@@ -34,7 +28,6 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("(+)", "oracle_join"),
         T!("%", "percentage", "percentage"),
         T!("+", "plus", "arithmetic_op"),
-        T!("prior", "prior", "prior", "(prior|PRIOR)"),
         T!(")", "r_paren", "r_paren"),
         T!(";", "semicolon", "semicolon"),
         T!("/", "slash", "slash"),
@@ -56,6 +49,13 @@ pub const TOKENS: Tokens<'_> = Tokens {
             "'[^']*'"
         ),
         T!("bind_var", "bind_var", "bind_var", r"(?i):[a-z][a-z0-9_]*"),
+        T!("prior", "prior", "prior", "(prior|PRIOR)"),
+        T!(
+            "connect_by_root",
+            "connect_by_root",
+            "connect_by_root",
+            "CONNECT_BY_ROOT"
+        ),
     ],
     keywords: &[
         T!("add"),
