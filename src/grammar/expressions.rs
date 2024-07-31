@@ -62,6 +62,8 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                     T![not],
                     T![or],
                     T![then],
+                    T![prior],
+                    T![connect_by_root]
                 ]
                 .contains(&token) =>
         {
@@ -88,7 +90,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 p.error(ParseErrorType::UnbalancedParens);
             }
         }
-        T![not] | T![+] | T![-] => {
+        T![not] | T![+] | T![-] | T![prior] | T![connect_by_root] => {
             if let Some(operator) = prefix_bp(token) {
                 match operator.mapping {
                     Some(syntax_kind) => p.bump_any_map(syntax_kind),
@@ -108,6 +110,8 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 T![+],
                 T![quoted_literal],
                 T![bind_var],
+                T![prior],
+                T![connect_by_root],
             ]));
         }
     }
@@ -196,6 +200,7 @@ impl Operator {
 fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         T![not] => Operator::new_with_map(5, SyntaxKind::LogicOp),
+        T![prior] | T![connect_by_root] => Operator::new_with_map(17, SyntaxKind::HierarchicalOp),
         T![+] | T![-] => Operator::new_plain(17),
         _ => return None,
     })

@@ -16,130 +16,140 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
-    #[doc = "Left Paren"]
-    LParen,
-    #[doc = "Right Paren"]
-    RParen,
-    #[doc = "Percentage symbol"]
-    Percentage,
-    #[doc = "An exclamation mark `!`"]
-    Exclam,
-    #[doc = "A bind variable, e.g. `:OLD`"]
-    BindVar,
-    #[doc = "A plus `+`"]
-    Plus,
-    #[doc = "A minus `-`"]
-    Minus,
-    #[doc = "An asterisk `*`"]
-    Asterisk,
-    #[doc = "Slash char `/`"]
-    Slash,
     #[doc = "Logical operator AND"]
     And,
-    #[doc = "Logical operator OR"]
-    Or,
-    #[doc = "Unary logical operator NOT"]
-    Not,
-    #[doc = "Inline comment starting with `--`"]
-    Comment,
-    #[doc = "Any whitespace character"]
-    Whitespace,
-    #[doc = "A SQL keyword, e.g. `CREATE`"]
-    Keyword,
-    #[doc = "An identifier group, consisting of multiple idents"]
-    IdentGroup,
-    #[doc = "An identifier, either quoted or unquoted"]
-    Ident,
-    #[doc = "A type name"]
-    TypeName,
-    #[doc = "A single dot"]
-    Dot,
-    #[doc = "Two dots"]
-    Range,
-    #[doc = "A single comma"]
-    Comma,
-    #[doc = "A semi colon"]
-    Semicolon,
-    #[doc = "A colon token"]
-    Colon,
+    #[doc = "A singular argument inside an argument list"]
+    Argument,
+    #[doc = "A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas"]
+    ArgumentList,
+    #[doc = "Represents an arithmetic SQL operator (+, -, *, /)"]
+    ArithmeticOp,
     #[doc = "An Assign operator `:=`"]
     Assign,
-    #[doc = "A concatination operator `||`"]
-    Concat,
-    #[doc = "Any built-in oracle datatype"]
-    Datatype,
-    #[doc = "A `%TYPE` attribute"]
-    TypeAttribute,
-    #[doc = "Any integer, positive and negative"]
-    Integer,
-    #[doc = "Single dollar quote `$$`"]
-    DollarQuote,
-    #[doc = "A single quoted literal"]
-    QuotedLiteral,
-    #[doc = "A single Param node, consisting of name & type"]
-    Param,
-    #[doc = "A node that consists of multiple parameters"]
-    ParamList,
-    #[doc = "A node that marks a full CREATE [..] PROCEDURE block"]
-    Procedure,
-    #[doc = "A node that marks a PROCEDURE header with params"]
-    ProcedureHeader,
-    #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
-    Trigger,
-    #[doc = "A node that marks a TRIGGER header"]
-    TriggerHeader,
-    #[doc = "A node that marks a full CREATE PACKAGE BODY block"]
-    Package,
-    #[doc = "A node that marks a full CREATE VIEW block"]
-    View,
-    #[doc = "A node that marks a full constraint"]
-    Constraint,
+    #[doc = "An asterisk `*`"]
+    Asterisk,
+    #[doc = "A bind variable, e.g. `:OLD`"]
+    BindVar,
     #[doc = "A node that marks a block"]
     Block,
     #[doc = "A node that marks an individual statement inside a block"]
     BlockStatement,
+    #[doc = "A colon token"]
+    Colon,
+    #[doc = "A single column expression, as part of an SELECT clause"]
+    ColumnExpr,
+    #[doc = "A single comma"]
+    Comma,
+    #[doc = "Inline comment starting with `--`"]
+    Comment,
+    #[doc = "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"]
+    ComparisonOp,
+    #[doc = "A concatination operator `||`"]
+    Concat,
+    #[doc = "The CONNECT_BY_ROOT operator"]
+    ConnectByRoot,
+    #[doc = "The CONNECT BY clause in selects"]
+    Connect,
+    #[doc = "A node that marks a full constraint"]
+    Constraint,
+    #[doc = "Any built-in oracle datatype"]
+    Datatype,
     #[doc = "A node that marks the declare section of a block"]
     DeclareSection,
-    #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
-    FunctionInvocation,
-    #[doc = "A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas"]
-    ArgumentList,
-    #[doc = "A singular argument inside an argument list"]
-    Argument,
+    #[doc = "Single dollar quote `$$`"]
+    DollarQuote,
+    #[doc = "A single dot"]
+    Dot,
+    #[doc = "An error token with a cause"]
+    Error,
+    #[doc = "An exclamation mark `!`"]
+    Exclam,
+    #[doc = "Holds a generic SQL logic/arithmetic expression"]
+    Expression,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
     Function,
     #[doc = "A node that marks a FUNCTION header with params and return type"]
     FunctionHeader,
-    #[doc = "A node that marks a full SELECT statement"]
-    SelectStmt,
+    #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
+    FunctionInvocation,
+    #[doc = "An operator in hierarchical queries"]
+    HierarchicalOp,
+    #[doc = "An identifier, either quoted or unquoted"]
+    Ident,
+    #[doc = "An identifier group, consisting of multiple idents"]
+    IdentGroup,
     #[doc = "A node that marks a full INSERT statement"]
     InsertStmt,
-    #[doc = "A single column expression, as part of an SELECT clause"]
-    ColumnExpr,
-    #[doc = "A node that contains the whole SELECT clause of a query"]
-    SelectClause,
+    #[doc = "Any integer, positive and negative"]
+    Integer,
     #[doc = "A node that contains an `INTO` clause of a SELECT statement"]
     IntoClause,
-    #[doc = "Represent a complete `WHERE` clause expression"]
-    WhereClause,
+    #[doc = "A SQL keyword, e.g. `CREATE`"]
+    Keyword,
+    #[doc = "Represents a logical SQL operator (AND, OR, NOT)"]
+    LogicOp,
+    #[doc = "Left Paren"]
+    LParen,
+    #[doc = "A minus `-`"]
+    Minus,
+    #[doc = "Unary logical operator NOT"]
+    Not,
+    #[doc = "Logical operator OR"]
+    Or,
+    #[doc = "A node that marks a full CREATE PACKAGE BODY block"]
+    Package,
+    #[doc = "A single Param node, consisting of name & type"]
+    Param,
+    #[doc = "A node that consists of multiple parameters"]
+    ParamList,
+    #[doc = "Percentage symbol"]
+    Percentage,
+    #[doc = "A plus `+`"]
+    Plus,
+    #[doc = "The PL/SQL unary prior operator"]
+    Prior,
+    #[doc = "A node that marks a full CREATE [..] PROCEDURE block"]
+    Procedure,
+    #[doc = "A node that marks a PROCEDURE header with params"]
+    ProcedureHeader,
+    #[doc = "A single quoted literal"]
+    QuotedLiteral,
+    #[doc = "Two dots"]
+    Range,
+    #[doc = "The root node element"]
+    Root,
+    #[doc = "Right Paren"]
+    RParen,
+    #[doc = "A node that contains the whole SELECT clause of a query"]
+    SelectClause,
+    #[doc = "A node that marks a full SELECT statement"]
+    SelectStmt,
+    #[doc = "A semi colon"]
+    Semicolon,
+    #[doc = "Slash char `/`"]
+    Slash,
+    #[doc = "A STARTS WITH clause in a SELECT statement"]
+    Starts,
+    #[doc = "A text slice node"]
+    Text,
+    #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
+    Trigger,
+    #[doc = "A node that marks a TRIGGER header"]
+    TriggerHeader,
+    #[doc = "A `%TYPE` attribute"]
+    TypeAttribute,
+    #[doc = "A type name"]
+    TypeName,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]
     VariableDeclList,
-    #[doc = "Holds a generic SQL logic/arithmetic expression"]
-    Expression,
-    #[doc = "Represents an arithmetic SQL operator (+, -, *, /)"]
-    ArithmeticOp,
-    #[doc = "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"]
-    ComparisonOp,
-    #[doc = "Represents a logical SQL operator (AND, OR, NOT)"]
-    LogicOp,
-    #[doc = "A text slice node"]
-    Text,
-    #[doc = "An error token with a cause"]
-    Error,
-    #[doc = "The root node element"]
-    Root,
+    #[doc = "A node that marks a full CREATE VIEW block"]
+    View,
+    #[doc = "Represent a complete `WHERE` clause expression"]
+    WhereClause,
+    #[doc = "Any whitespace character"]
+    Whitespace,
 }
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
@@ -149,26 +159,26 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 impl From<TokenKind> for SyntaxKind {
     fn from(kind: TokenKind) -> Self {
         match kind {
-            TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::Comment => SyntaxKind::Comment,
-            TokenKind::Exclam => SyntaxKind::Exclam,
+            TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,
-            TokenKind::Percentage => SyntaxKind::Percentage,
-            TokenKind::LParen => SyntaxKind::LParen,
-            TokenKind::OracleJoin => SyntaxKind::Keyword,
-            TokenKind::RParen => SyntaxKind::RParen,
+            TokenKind::Assign => SyntaxKind::Assign,
             TokenKind::Asterisk => SyntaxKind::Asterisk,
-            TokenKind::Plus => SyntaxKind::ArithmeticOp,
             TokenKind::Comma => SyntaxKind::Comma,
-            TokenKind::Minus => SyntaxKind::ArithmeticOp,
+            TokenKind::Comparison => SyntaxKind::ComparisonOp,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::DoubleDot => SyntaxKind::Range,
-            TokenKind::Slash => SyntaxKind::Slash,
-            TokenKind::Assign => SyntaxKind::Assign,
-            TokenKind::Semicolon => SyntaxKind::Semicolon,
-            TokenKind::Equals => SyntaxKind::ComparisonOp,
-            TokenKind::Comparison => SyntaxKind::ComparisonOp,
             TokenKind::DoublePipe => SyntaxKind::Concat,
+            TokenKind::Equals => SyntaxKind::ComparisonOp,
+            TokenKind::Exclam => SyntaxKind::Exclam,
+            TokenKind::LParen => SyntaxKind::LParen,
+            TokenKind::Minus => SyntaxKind::ArithmeticOp,
+            TokenKind::OracleJoin => SyntaxKind::Keyword,
+            TokenKind::Percentage => SyntaxKind::Percentage,
+            TokenKind::Plus => SyntaxKind::ArithmeticOp,
+            TokenKind::RParen => SyntaxKind::RParen,
+            TokenKind::Semicolon => SyntaxKind::Semicolon,
+            TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::Integer => SyntaxKind::Integer,
             TokenKind::UnquotedIdent => SyntaxKind::Ident,
             TokenKind::QuotedIdent => SyntaxKind::Ident,
@@ -201,9 +211,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BodyKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
-            TokenKind::CKw => SyntaxKind::Keyword,
             TokenKind::CallKw => SyntaxKind::Keyword,
             TokenKind::CascadeKw => SyntaxKind::Keyword,
+            TokenKind::CKw => SyntaxKind::Keyword,
             TokenKind::CharKw => SyntaxKind::Keyword,
             TokenKind::CharacterKw => SyntaxKind::Keyword,
             TokenKind::CharsetformKw => SyntaxKind::Keyword,
@@ -213,6 +223,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CloneKw => SyntaxKind::Keyword,
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
+            TokenKind::ConnectKw => SyntaxKind::Keyword,
+            TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
             TokenKind::ConstantKw => SyntaxKind::Keyword,
             TokenKind::ConstraintKw => SyntaxKind::Keyword,
             TokenKind::ContainerKw => SyntaxKind::Keyword,
@@ -239,8 +251,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeleteKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::DisableKw => SyntaxKind::Keyword,
-            TokenKind::DisassociateKw => SyntaxKind::Keyword,
             TokenKind::DisallowKw => SyntaxKind::Keyword,
+            TokenKind::DisassociateKw => SyntaxKind::Keyword,
             TokenKind::DoubleKw => SyntaxKind::Keyword,
             TokenKind::DropKw => SyntaxKind::Keyword,
             TokenKind::DurationKw => SyntaxKind::Keyword,
@@ -309,6 +321,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::NoKw => SyntaxKind::Keyword,
             TokenKind::NoauditKw => SyntaxKind::Keyword,
             TokenKind::NocopyKw => SyntaxKind::Keyword,
+            TokenKind::NocycleKw => SyntaxKind::Keyword,
             TokenKind::NoneKw => SyntaxKind::Keyword,
             TokenKind::NoneditionableKw => SyntaxKind::Keyword,
             TokenKind::NonschemaKw => SyntaxKind::Keyword,
@@ -340,6 +353,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::PrecedesKw => SyntaxKind::Keyword,
             TokenKind::PrecheckKw => SyntaxKind::Keyword,
             TokenKind::PrecisionKw => SyntaxKind::Keyword,
+            TokenKind::PriorKw => SyntaxKind::Keyword,
             TokenKind::PrimaryKw => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::RangeKw => SyntaxKind::Keyword,
@@ -374,6 +388,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ShutdownKw => SyntaxKind::Keyword,
             TokenKind::SignatureKw => SyntaxKind::Keyword,
             TokenKind::SmallintKw => SyntaxKind::Keyword,
+            TokenKind::StartsKw => SyntaxKind::Keyword,
             TokenKind::StartupKw => SyntaxKind::Keyword,
             TokenKind::StatisticsKw => SyntaxKind::Keyword,
             TokenKind::StoreKw => SyntaxKind::Keyword,

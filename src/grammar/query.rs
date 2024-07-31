@@ -22,8 +22,39 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         parse_where_clause(p);
     }
 
+    match p.current() {
+        T![connect] => parse_connect_by(p),
+        T![starts] => parse_starts_with(p),
+        _ => (), // No-op
+    }
+
     p.eat(T![;]);
     p.finish();
+}
+
+pub(crate) fn parse_connect_by(p: &mut Parser) {
+    p.start(SyntaxKind::Connect);
+    p.expect(T![connect]);
+    p.expect(T![by]);
+    p.eat(T![nocycle]);
+    parse_expr(p);
+    if p.eat(T![starts]) {
+        p.expect(T![with]);
+        parse_expr(p);
+    }
+    p.finish()
+}
+
+pub(crate) fn parse_starts_with(p: &mut Parser) {
+    p.start(SyntaxKind::Starts);
+    p.expect(T![starts]);
+    p.expect(T![with]);
+    parse_expr(p);
+    p.expect(T![connect]);
+    p.expect(T![by]);
+    p.eat(T![nocycle]);
+    parse_expr(p);
+    p.finish()
 }
 
 pub(crate) fn parse_insert(p: &mut Parser) {
@@ -423,6 +454,166 @@ Root@0..148
     IdentGroup@143..147
       Ident@143..147 "name"
     Semicolon@147..148 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_connect_by() {
+        check(
+            parse(
+                r#"SELECT employee_id, last_name, manager_id, LEVEL FROM employees CONNECT BY PRIOR employee_id = manager_id;"#,
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..106
+  SelectStmt@0..106
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..49
+      ColumnExpr@7..18
+        IdentGroup@7..18
+          Ident@7..18 "employee_id"
+      Comma@18..19 ","
+      Whitespace@19..20 " "
+      ColumnExpr@20..29
+        IdentGroup@20..29
+          Ident@20..29 "last_name"
+      Comma@29..30 ","
+      Whitespace@30..31 " "
+      ColumnExpr@31..41
+        IdentGroup@31..41
+          Ident@31..41 "manager_id"
+      Comma@41..42 ","
+      Whitespace@42..43 " "
+      ColumnExpr@43..49
+        IdentGroup@43..48
+          Ident@43..48 "LEVEL"
+        Whitespace@48..49 " "
+    Keyword@49..53 "FROM"
+    Whitespace@53..54 " "
+    IdentGroup@54..63
+      Ident@54..63 "employees"
+    Whitespace@63..64 " "
+    Connect@64..105
+      Keyword@64..71 "CONNECT"
+      Whitespace@71..72 " "
+      Keyword@72..74 "BY"
+      Whitespace@74..75 " "
+      Expression@75..105
+        Expression@75..93
+          HierarchicalOp@75..80 "PRIOR"
+          Whitespace@80..81 " "
+          IdentGroup@81..92
+            Ident@81..92 "employee_id"
+          Whitespace@92..93 " "
+        ComparisonOp@93..94 "="
+        Whitespace@94..95 " "
+        IdentGroup@95..105
+          Ident@95..105 "manager_id"
+    Semicolon@105..106 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_connect_by_root() {
+        check(
+            parse(
+                r#"SELECT last_name, CONNECT_BY_ROOT last_name,
+   LEVEL-1, SYS_CONNECT_BY_PATH(last_name, '/') 
+   FROM employees
+   WHERE LEVEL > 1 and department_id = 110
+   CONNECT BY PRIOR employee_id = manager_id;"#,
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..200
+  SelectStmt@0..200
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..97
+      ColumnExpr@7..16
+        IdentGroup@7..16
+          Ident@7..16 "last_name"
+      Comma@16..17 ","
+      Whitespace@17..18 " "
+      ColumnExpr@18..43
+        Expression@18..43
+          HierarchicalOp@18..33 "CONNECT_BY_ROOT"
+          Whitespace@33..34 " "
+          IdentGroup@34..43
+            Ident@34..43 "last_name"
+      Comma@43..44 ","
+      Whitespace@44..48 "\n   "
+      ColumnExpr@48..53
+        IdentGroup@48..53
+          Ident@48..53 "LEVEL"
+      ColumnExpr@53..55
+        Integer@53..55 "-1"
+      Comma@55..56 ","
+      Whitespace@56..57 " "
+      ColumnExpr@57..97
+        FunctionInvocation@57..92
+          IdentGroup@57..76
+            Ident@57..76 "SYS_CONNECT_BY_PATH"
+          LParen@76..77 "("
+          ArgumentList@77..91
+            Argument@77..86
+              IdentGroup@77..86
+                Ident@77..86 "last_name"
+            Comma@86..87 ","
+            Whitespace@87..88 " "
+            Argument@88..91
+              QuotedLiteral@88..91 "'/'"
+          RParen@91..92 ")"
+        Whitespace@92..97 " \n   "
+    Keyword@97..101 "FROM"
+    Whitespace@101..102 " "
+    IdentGroup@102..111
+      Ident@102..111 "employees"
+    Whitespace@111..115 "\n   "
+    WhereClause@115..158
+      Keyword@115..120 "WHERE"
+      Whitespace@120..121 " "
+      Expression@121..158
+        Expression@121..131
+          IdentGroup@121..126
+            Ident@121..126 "LEVEL"
+          Whitespace@126..127 " "
+          ComparisonOp@127..128 ">"
+          Whitespace@128..129 " "
+          Integer@129..130 "1"
+          Whitespace@130..131 " "
+        LogicOp@131..134 "and"
+        Whitespace@134..135 " "
+        Expression@135..158
+          IdentGroup@135..148
+            Ident@135..148 "department_id"
+          Whitespace@148..149 " "
+          ComparisonOp@149..150 "="
+          Whitespace@150..151 " "
+          Integer@151..154 "110"
+          Whitespace@154..158 "\n   "
+    Connect@158..199
+      Keyword@158..165 "CONNECT"
+      Whitespace@165..166 " "
+      Keyword@166..168 "BY"
+      Whitespace@168..169 " "
+      Expression@169..199
+        Expression@169..187
+          HierarchicalOp@169..174 "PRIOR"
+          Whitespace@174..175 " "
+          IdentGroup@175..186
+            Ident@175..186 "employee_id"
+          Whitespace@186..187 " "
+        ComparisonOp@187..188 "="
+        Whitespace@188..189 " "
+        IdentGroup@189..199
+          Ident@189..199 "manager_id"
+    Semicolon@199..200 ";"
 "#]],
             vec![],
         );
