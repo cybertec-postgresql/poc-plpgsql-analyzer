@@ -90,7 +90,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 p.error(ParseErrorType::UnbalancedParens);
             }
         }
-        T![not] | T![+] | T![-] | T![prior] => {
+        T![not] | T![+] | T![-] | T![prior] | T![connect_by_root] => {
             if let Some(operator) = prefix_bp(token) {
                 match operator.mapping {
                     Some(syntax_kind) => p.bump_any_map(syntax_kind),

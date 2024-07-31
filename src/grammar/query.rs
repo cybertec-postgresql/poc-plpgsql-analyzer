@@ -18,7 +18,7 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.expect(T![from]);
     parse_from_list(p);
 
-    if p.at(T![where]) || p.at(T![connect]) || p.at(T![starts]) {
+    while p.at(T![where]) || p.at(T![connect]) || p.at(T![starts]) {
         if p.at(T![where]) {
             parse_where_clause(p);
         } else if p.at(T![connect]) {
@@ -513,6 +513,83 @@ Root@0..106
         IdentGroup@95..105
           Ident@95..105 "manager_id"
     Semicolon@105..106 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_connect_by_root() {
+        check(
+            parse(
+                r#"SELECT last_name, CONNECT_BY_ROOT last_name
+   FROM employees
+   WHERE LEVEL > 1 and department_id = 110
+   CONNECT BY PRIOR employee_id = manager_id;"#,
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..150
+  SelectStmt@0..150
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..47
+      ColumnExpr@7..16
+        IdentGroup@7..16
+          Ident@7..16 "last_name"
+      Comma@16..17 ","
+      Whitespace@17..18 " "
+      ColumnExpr@18..47
+        Expression@18..47
+          LogicOp@18..33 "CONNECT_BY_ROOT"
+          Whitespace@33..34 " "
+          IdentGroup@34..43
+            Ident@34..43 "last_name"
+          Whitespace@43..47 "\n   "
+    Keyword@47..51 "FROM"
+    Whitespace@51..52 " "
+    IdentGroup@52..61
+      Ident@52..61 "employees"
+    Whitespace@61..65 "\n   "
+    WhereClause@65..108
+      Keyword@65..70 "WHERE"
+      Whitespace@70..71 " "
+      Expression@71..108
+        Expression@71..81
+          IdentGroup@71..76
+            Ident@71..76 "LEVEL"
+          Whitespace@76..77 " "
+          ComparisonOp@77..78 ">"
+          Whitespace@78..79 " "
+          Integer@79..80 "1"
+          Whitespace@80..81 " "
+        LogicOp@81..84 "and"
+        Whitespace@84..85 " "
+        Expression@85..108
+          IdentGroup@85..98
+            Ident@85..98 "department_id"
+          Whitespace@98..99 " "
+          ComparisonOp@99..100 "="
+          Whitespace@100..101 " "
+          Integer@101..104 "110"
+          Whitespace@104..108 "\n   "
+    Connect@108..149
+      Keyword@108..115 "CONNECT"
+      Whitespace@115..116 " "
+      Keyword@116..118 "BY"
+      Whitespace@118..119 " "
+      Expression@119..149
+        Expression@119..137
+          LogicOp@119..124 "PRIOR"
+          Whitespace@124..125 " "
+          IdentGroup@125..136
+            Ident@125..136 "employee_id"
+          Whitespace@136..137 " "
+        ComparisonOp@137..138 "="
+        Whitespace@138..139 " "
+        IdentGroup@139..149
+          Ident@139..149 "manager_id"
+    Semicolon@149..150 ";"
 "#]],
             vec![],
         );
