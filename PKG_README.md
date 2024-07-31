@@ -40,3 +40,4 @@ See [LICENSE](./LICENSE).
 
 -   [Christoph Heiss](https://github.com/christoph-heiss)
 -   [Kieran Kaelin](https://github.com/KieranKaelin)
+-   [Jeremy Sztavinovszki](https://github.com/if-loop69420)
