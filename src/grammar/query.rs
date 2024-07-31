@@ -522,74 +522,98 @@ Root@0..106
     fn test_connect_by_root() {
         check(
             parse(
-                r#"SELECT last_name, CONNECT_BY_ROOT last_name
+                r#"SELECT last_name, CONNECT_BY_ROOT last_name,
+   LEVEL-1, SYS_CONNECT_BY_PATH(last_name, '/') 
    FROM employees
    WHERE LEVEL > 1 and department_id = 110
    CONNECT BY PRIOR employee_id = manager_id;"#,
                 |p| parse_query(p, false),
             ),
             expect![[r#"
-Root@0..150
-  SelectStmt@0..150
+Root@0..200
+  SelectStmt@0..200
     Keyword@0..6 "SELECT"
     Whitespace@6..7 " "
-    SelectClause@7..47
+    SelectClause@7..97
       ColumnExpr@7..16
         IdentGroup@7..16
           Ident@7..16 "last_name"
       Comma@16..17 ","
       Whitespace@17..18 " "
-      ColumnExpr@18..47
-        Expression@18..47
+      ColumnExpr@18..43
+        Expression@18..43
           LogicOp@18..33 "CONNECT_BY_ROOT"
           Whitespace@33..34 " "
           IdentGroup@34..43
             Ident@34..43 "last_name"
-          Whitespace@43..47 "\n   "
-    Keyword@47..51 "FROM"
-    Whitespace@51..52 " "
-    IdentGroup@52..61
-      Ident@52..61 "employees"
-    Whitespace@61..65 "\n   "
-    WhereClause@65..108
-      Keyword@65..70 "WHERE"
-      Whitespace@70..71 " "
-      Expression@71..108
-        Expression@71..81
-          IdentGroup@71..76
-            Ident@71..76 "LEVEL"
-          Whitespace@76..77 " "
-          ComparisonOp@77..78 ">"
-          Whitespace@78..79 " "
-          Integer@79..80 "1"
-          Whitespace@80..81 " "
-        LogicOp@81..84 "and"
-        Whitespace@84..85 " "
-        Expression@85..108
-          IdentGroup@85..98
-            Ident@85..98 "department_id"
-          Whitespace@98..99 " "
-          ComparisonOp@99..100 "="
-          Whitespace@100..101 " "
-          Integer@101..104 "110"
-          Whitespace@104..108 "\n   "
-    Connect@108..149
-      Keyword@108..115 "CONNECT"
-      Whitespace@115..116 " "
-      Keyword@116..118 "BY"
-      Whitespace@118..119 " "
-      Expression@119..149
-        Expression@119..137
-          LogicOp@119..124 "PRIOR"
-          Whitespace@124..125 " "
-          IdentGroup@125..136
-            Ident@125..136 "employee_id"
-          Whitespace@136..137 " "
-        ComparisonOp@137..138 "="
-        Whitespace@138..139 " "
-        IdentGroup@139..149
-          Ident@139..149 "manager_id"
-    Semicolon@149..150 ";"
+      Comma@43..44 ","
+      Whitespace@44..48 "\n   "
+      ColumnExpr@48..53
+        IdentGroup@48..53
+          Ident@48..53 "LEVEL"
+      ColumnExpr@53..55
+        Integer@53..55 "-1"
+      Comma@55..56 ","
+      Whitespace@56..57 " "
+      ColumnExpr@57..97
+        FunctionInvocation@57..92
+          IdentGroup@57..76
+            Ident@57..76 "SYS_CONNECT_BY_PATH"
+          LParen@76..77 "("
+          ArgumentList@77..91
+            Argument@77..86
+              IdentGroup@77..86
+                Ident@77..86 "last_name"
+            Comma@86..87 ","
+            Whitespace@87..88 " "
+            Argument@88..91
+              QuotedLiteral@88..91 "'/'"
+          RParen@91..92 ")"
+        Whitespace@92..97 " \n   "
+    Keyword@97..101 "FROM"
+    Whitespace@101..102 " "
+    IdentGroup@102..111
+      Ident@102..111 "employees"
+    Whitespace@111..115 "\n   "
+    WhereClause@115..158
+      Keyword@115..120 "WHERE"
+      Whitespace@120..121 " "
+      Expression@121..158
+        Expression@121..131
+          IdentGroup@121..126
+            Ident@121..126 "LEVEL"
+          Whitespace@126..127 " "
+          ComparisonOp@127..128 ">"
+          Whitespace@128..129 " "
+          Integer@129..130 "1"
+          Whitespace@130..131 " "
+        LogicOp@131..134 "and"
+        Whitespace@134..135 " "
+        Expression@135..158
+          IdentGroup@135..148
+            Ident@135..148 "department_id"
+          Whitespace@148..149 " "
+          ComparisonOp@149..150 "="
+          Whitespace@150..151 " "
+          Integer@151..154 "110"
+          Whitespace@154..158 "\n   "
+    Connect@158..199
+      Keyword@158..165 "CONNECT"
+      Whitespace@165..166 " "
+      Keyword@166..168 "BY"
+      Whitespace@168..169 " "
+      Expression@169..199
+        Expression@169..187
+          LogicOp@169..174 "PRIOR"
+          Whitespace@174..175 " "
+          IdentGroup@175..186
+            Ident@175..186 "employee_id"
+          Whitespace@186..187 " "
+        ComparisonOp@187..188 "="
+        Whitespace@188..189 " "
+        IdentGroup@189..199
+          Ident@189..199 "manager_id"
+    Semicolon@199..200 ";"
 "#]],
             vec![],
         );
