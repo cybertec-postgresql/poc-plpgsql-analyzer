@@ -18,14 +18,15 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.expect(T![from]);
     parse_from_list(p);
 
-    while p.at(T![where]) || p.at(T![connect]) || p.at(T![starts]) {
-        if p.at(T![where]) {
-            parse_where_clause(p);
-        } else if p.at(T![connect]) {
-            parse_connect_by(p);
-        } else {
-            parse_starts_with(p);
-        }
+    if p.at(T![where]) {
+        parse_where_clause(p);
+    }
+
+    if p.at(T![connect]) {
+        parse_connect_by(p);
+    }
+    if p.at(T![starts]) {
+        parse_starts_with(p);
     }
 
     p.eat(T![;]);
