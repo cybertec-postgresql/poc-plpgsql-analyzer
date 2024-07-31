@@ -22,11 +22,10 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         parse_where_clause(p);
     }
 
-    if p.at(T![connect]) {
-        parse_connect_by(p);
-    }
-    if p.at(T![starts]) {
-        parse_starts_with(p);
+    match p.current() {
+        T![connect] => parse_connect_by(p),
+        T![starts] => parse_starts_with(p),
+        _ => (), // No-op
     }
 
     p.eat(T![;]);
