@@ -332,6 +332,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("function", "A node that marks a full CREATE [..] FUNCTION block"),
     S!("function_header", "A node that marks a FUNCTION header with params and return type"),
     S!("function_invocation", "An invocation of a function, from the identifier and the opening bracket to the closing bracket"),
+    S!("hierarchical_op", "An operation in hierarchical queries"),
     S!("ident", "An identifier, either quoted or unquoted"),
     S!("ident_group", "An identifier group, consisting of multiple idents"),
     S!("insert_stmt", "A node that marks a full INSERT statement"),

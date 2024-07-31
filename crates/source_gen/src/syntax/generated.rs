@@ -72,6 +72,8 @@ pub enum SyntaxKind {
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "An operation in hierarchical queries"]
+    HierarchicalOp,
     #[doc = "An identifier, either quoted or unquoted"]
     Ident,
     #[doc = "An identifier group, consisting of multiple idents"]

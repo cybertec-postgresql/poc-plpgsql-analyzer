@@ -504,7 +504,7 @@ Root@0..106
       Whitespace@74..75 " "
       Expression@75..105
         Expression@75..93
-          LogicOp@75..80 "PRIOR"
+          HierarchicalOp@75..80 "PRIOR"
           Whitespace@80..81 " "
           IdentGroup@81..92
             Ident@81..92 "employee_id"
@@ -543,7 +543,7 @@ Root@0..200
       Whitespace@17..18 " "
       ColumnExpr@18..43
         Expression@18..43
-          LogicOp@18..33 "CONNECT_BY_ROOT"
+          HierarchicalOp@18..33 "CONNECT_BY_ROOT"
           Whitespace@33..34 " "
           IdentGroup@34..43
             Ident@34..43 "last_name"
@@ -605,7 +605,7 @@ Root@0..200
       Whitespace@168..169 " "
       Expression@169..199
         Expression@169..187
-          LogicOp@169..174 "PRIOR"
+          HierarchicalOp@169..174 "PRIOR"
           Whitespace@174..175 " "
           IdentGroup@175..186
             Ident@175..186 "employee_id"

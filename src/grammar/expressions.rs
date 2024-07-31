@@ -200,7 +200,7 @@ impl Operator {
 fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         T![not] => Operator::new_with_map(5, SyntaxKind::LogicOp),
-        T![prior] | T![connect_by_root] => Operator::new_with_map(17, SyntaxKind::LogicOp),
+        T![prior] | T![connect_by_root] => Operator::new_with_map(17, SyntaxKind::HierarchicalOp),
         T![+] | T![-] => Operator::new_plain(17),
         _ => return None,
     })
