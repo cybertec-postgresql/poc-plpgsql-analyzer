@@ -49,13 +49,6 @@ pub const TOKENS: Tokens<'_> = Tokens {
             "'[^']*'"
         ),
         T!("bind_var", "bind_var", "bind_var", r"(?i):[a-z][a-z0-9_]*"),
-        T!("prior", "prior", "prior", "(prior|PRIOR)"),
-        T!(
-            "connect_by_root",
-            "connect_by_root",
-            "connect_by_root",
-            "CONNECT_BY_ROOT"
-        ),
     ],
     keywords: &[
         T!("add"),
@@ -98,6 +91,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("collation"),
         T!("comment"),
         T!("connect"),
+        T!("connect_by_root"),
         T!("constant"),
         T!("constraint"),
         T!("container"),
@@ -226,6 +220,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("precedes"),
         T!("precheck"),
         T!("precision"),
+        T!("prior"),
         T!("primary"),
         T!("procedure"),
         T!("range"),
