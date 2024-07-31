@@ -34,6 +34,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
     ],
     literals: &[
         T!("int_literal", "integer", "integer", r"-?\d+", 2),
+        T!("decimal_literal", "decimal", "decimal", r"-?\d+\.\d+", 2),
         T!(
             "unquoted_ident",
             "unquoted_ident",
@@ -319,6 +320,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("connect", "The CONNECT BY clause in selects"),
     S!("constraint", "A node that marks a full constraint"),
     S!("datatype", "Any built-in oracle datatype"),
+    S!("decimal", "A decimal, positive, or negative"),
     S!("declare_section", "A node that marks the declare section of a block"),
     S!("dollar_quote", "Single dollar quote `$$`"),
     S!("dot", "A single dot"),

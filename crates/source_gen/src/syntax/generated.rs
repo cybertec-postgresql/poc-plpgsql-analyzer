@@ -56,6 +56,8 @@ pub enum SyntaxKind {
     Constraint,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
+    #[doc = "A decimal, positive, or negative"]
+    Decimal,
     #[doc = "A node that marks the declare section of a block"]
     DeclareSection,
     #[doc = "Single dollar quote `$$`"]
@@ -182,6 +184,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Semicolon => SyntaxKind::Semicolon,
             TokenKind::Slash => SyntaxKind::Slash,
             TokenKind::Integer => SyntaxKind::Integer,
+            TokenKind::Decimal => SyntaxKind::Decimal,
             TokenKind::UnquotedIdent => SyntaxKind::Ident,
             TokenKind::QuotedIdent => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
