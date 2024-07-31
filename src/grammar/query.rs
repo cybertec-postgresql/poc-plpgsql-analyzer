@@ -119,10 +119,10 @@ fn parse_column_expr(p: &mut Parser) {
 
         parse_expr(p);
 
-        if p.at(T![quoted_ident]) {
-            p.start(SyntaxKind::Alias);
-            p.eat(T![quoted_ident]);
-            p.finish();
+        match p.current() {
+            T![as] => parse_as_alias(p),
+            T![quoted_ident] => parse_alias(p),
+            _ => (),
         }
 
         p.finish();
@@ -135,6 +135,19 @@ fn parse_column_expr(p: &mut Parser) {
     });
 
     p.finish();
+}
+
+fn parse_as_alias(p: &mut Parser) {
+    p.start(SyntaxKind::Alias);
+    p.expect(T![as]);
+    p.expect(T![quoted_ident]);
+    p.finish();
+}
+
+fn parse_alias(p: &mut Parser) {
+    p.start(SyntaxKind::Alias);
+    p.expect(T![quoted_ident]);
+    p.finish()
 }
 
 fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
@@ -199,6 +212,64 @@ Root@0..19
     Whitespace@13..14 " "
     IdentGroup@14..19
       Ident@14..19 "table"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_parse_select_with_alias() {
+        check(
+            parse(r#"SELECT name "Name" FROM table"#, |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..29
+  SelectStmt@0..29
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..19
+      ColumnExpr@7..19
+        IdentGroup@7..11
+          Ident@7..11 "name"
+        Whitespace@11..12 " "
+        Alias@12..18
+          Ident@12..18 "\"Name\""
+        Whitespace@18..19 " "
+    Keyword@19..23 "FROM"
+    Whitespace@23..24 " "
+    IdentGroup@24..29
+      Ident@24..29 "table"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_parse_select_with_as_alias() {
+        check(
+            parse(r#"SELECT name as "Name" FROM table"#, |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..32
+  SelectStmt@0..32
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..22
+      ColumnExpr@7..22
+        IdentGroup@7..11
+          Ident@7..11 "name"
+        Whitespace@11..12 " "
+        Alias@12..21
+          Keyword@12..14 "as"
+          Whitespace@14..15 " "
+          Ident@15..21 "\"Name\""
+        Whitespace@21..22 " "
+    Keyword@22..26 "FROM"
+    Whitespace@26..27 " "
+    IdentGroup@27..32
+      Ident@27..32 "table"
 "#]],
             vec![],
         );
