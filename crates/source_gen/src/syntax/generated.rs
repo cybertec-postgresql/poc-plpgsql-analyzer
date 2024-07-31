@@ -46,6 +46,8 @@ pub enum SyntaxKind {
     ComparisonOp,
     #[doc = "A concatination operator `||`"]
     Concat,
+    #[doc = "The CONNECT_BY_ROOT operator"]
+    ConnectByRoot,
     #[doc = "The CONNECT BY clause in selects"]
     Connect,
     #[doc = "A node that marks a full constraint"]
@@ -162,6 +164,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Asterisk => SyntaxKind::Asterisk,
             TokenKind::Comma => SyntaxKind::Comma,
             TokenKind::Comparison => SyntaxKind::ComparisonOp,
+            TokenKind::ConnectByRoot => SyntaxKind::ConnectByRoot,
             TokenKind::Dot => SyntaxKind::Dot,
             TokenKind::DoubleDot => SyntaxKind::Range,
             TokenKind::DoublePipe => SyntaxKind::Concat,

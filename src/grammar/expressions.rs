@@ -63,6 +63,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                     T![or],
                     T![then],
                     T![prior],
+                    T![connect_by_root]
                 ]
                 .contains(&token) =>
         {
@@ -110,6 +111,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 T![quoted_literal],
                 T![bind_var],
                 T![prior],
+                T![connect_by_root],
             ]));
         }
     }
@@ -199,6 +201,7 @@ fn prefix_bp(op: TokenKind) -> Option<Operator> {
     Some(match op {
         T![not] => Operator::new_with_map(5, SyntaxKind::LogicOp),
         T![prior] => Operator::new_with_map(17, SyntaxKind::LogicOp),
+        T![connect_by_root] => Operator::new_with_map(17, SyntaxKind::LogicOp),
         T![+] | T![-] => Operator::new_plain(17),
         _ => return None,
     })

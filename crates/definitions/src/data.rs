@@ -18,6 +18,12 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("*", "asterisk", "asterisk"),
         T!(",", "comma", "comma"),
         T!("comparison", "comparison", "comparison_op", "<>|<|>|<=|>="),
+        T!(
+            "connect_by_root",
+            "connect_by_root",
+            "connect_by_root",
+            "CONNECT_BY_ROOT"
+        ),
         T!(".", "dot", "dot"),
         T!("..", "double_dot", "range"),
         T!("||", "double_pipe", "concat"),
@@ -313,6 +319,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("comment", "Inline comment starting with `--`"),
     S!("comparison_op", "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"),
     S!("concat", "A concatination operator `||`"),
+    S!("connect_by_root", "The CONNECT_BY_ROOT operator"),
     S!("connect", "The CONNECT BY clause in selects"),
     S!("constraint", "A node that marks a full constraint"),
     S!("datatype", "Any built-in oracle datatype"),
