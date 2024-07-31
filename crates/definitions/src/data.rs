@@ -299,6 +299,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
 };
 
 pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
+    S!("alias", "An Alias for columns"),
     S!("and", "Logical operator AND"),
     S!("argument", "A singular argument inside an argument list"),
     S!("argument_list", "A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas"),

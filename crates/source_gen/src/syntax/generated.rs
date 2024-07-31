@@ -16,6 +16,8 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
+    #[doc = "An Alias for columns"]
+    Alias,
     #[doc = "Logical operator AND"]
     And,
     #[doc = "A singular argument inside an argument list"]
