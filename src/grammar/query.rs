@@ -119,6 +119,12 @@ fn parse_column_expr(p: &mut Parser) {
 
         parse_expr(p);
 
+        if p.at(T![quoted_ident]) {
+            p.start(SyntaxKind::Alias);
+            p.eat(T![quoted_ident]);
+            p.finish();
+        }
+
         p.finish();
 
         p.eat(T![,]);
