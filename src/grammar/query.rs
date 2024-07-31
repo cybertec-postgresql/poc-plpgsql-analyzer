@@ -118,7 +118,7 @@ fn parse_column_expr(p: &mut Parser) {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
-        if p.at(T![as]) || p.at(T![quoted_ident]) || p.at(T![unquoted_ident]) {
+        if [T![as], T![quoted_ident], T![unquoted_ident]].contains(&p.current()) {
             parse_alias(p);
         }
 
@@ -137,9 +137,7 @@ fn parse_column_expr(p: &mut Parser) {
 fn parse_alias(p: &mut Parser) {
     p.start(SyntaxKind::Alias);
     p.eat(T![as]);
-    if !p.eat(T![quoted_ident]) {
-        p.expect(T![unquoted_ident]);
-    }
+    p.expect_one_of(&[T![quoted_ident], T![unquoted_ident]]);
     p.finish()
 }
 
