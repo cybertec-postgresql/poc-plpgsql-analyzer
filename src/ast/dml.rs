@@ -1,11 +1,21 @@
 use super::typed_syntax_node;
 use crate::{ast::AstNode, WhereClause};
 
-typed_syntax_node!(DeleteStmt);
+typed_syntax_node!(DeleteStmt, UpdateStmt, SetClause);
 
 impl DeleteStmt {
     pub fn where_clause(&self) -> Option<WhereClause> {
         self.syntax.children().find_map(WhereClause::cast)
+    }
+}
+
+impl UpdateStmt {
+    pub fn where_clause(&self) -> Option<WhereClause> {
+        self.syntax.children().find_map(WhereClause::cast)
+    }
+
+    pub fn set_clause(&self) -> Option<SetClause> {
+        self.syntax.children().find_map(SetClause::cast)
     }
 }
 

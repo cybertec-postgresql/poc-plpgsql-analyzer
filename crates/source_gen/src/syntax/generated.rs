@@ -132,6 +132,8 @@ pub enum SyntaxKind {
     SelectStmt,
     #[doc = "A semi colon"]
     Semicolon,
+    #[doc = "A node containing a SET clause in an UPDATE statement"]
+    SetClause,
     #[doc = "Slash char `/`"]
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
@@ -146,6 +148,8 @@ pub enum SyntaxKind {
     TypeAttribute,
     #[doc = "A type name"]
     TypeName,
+    #[doc = "A node that marks a full UPDATE statement"]
+    UpdateStmt,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]
