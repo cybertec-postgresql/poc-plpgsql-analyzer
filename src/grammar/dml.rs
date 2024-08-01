@@ -6,7 +6,6 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-#[allow(unused)]
 pub(crate) fn parse_dml(p: &mut Parser) {
     if p.at(T![delete]) {
         parse_delete(p);
