@@ -28,7 +28,8 @@ pub(crate) fn parse_delete(p: &mut Parser) {
 
 pub(crate) fn parse_update(p: &mut Parser) {
     p.start(SyntaxKind::UpdateStmt);
-    p.expect(T![unquoted_ident]);
+    p.expect(T![update]);
+    p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]);
     parse_set_clause(p);
     parse_where_clause(p);
     p.eat(T![;]);
@@ -94,15 +95,12 @@ Root@0..34
             expect![[r#"
 Root@0..60
   UpdateStmt@0..60
-    SetClause@0..33
-      IdentGroup@0..6
-        Ident@0..6 "UPDATE"
-      Whitespace@6..7 " "
-      IdentGroup@7..10
-        Ident@7..10 "emp"
-      Whitespace@10..11 " "
-      IdentGroup@11..14
-        Ident@11..14 "SET"
+    Keyword@0..6 "UPDATE"
+    Whitespace@6..7 " "
+    Ident@7..10 "emp"
+    Whitespace@10..11 " "
+    SetClause@11..33
+      Keyword@11..14 "SET"
       Whitespace@14..15 " "
       Expression@15..33
         IdentGroup@15..21
