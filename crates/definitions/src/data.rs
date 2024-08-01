@@ -312,6 +312,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("argument_list", "A list of arguments inside a `FunctionInvocation`. Made of multiple `Arguments`, separated by commas"),
     S!("arithmetic_op", "Represents an arithmetic SQL operator (+, -, *, /)"),
     S!("assign", "An Assign operator `:=`"),
+    S!("assignment_expr", "An assignment like a=b"),
     S!("asterisk", "An asterisk `*`"),
     S!("bind_var", "A bind variable, e.g. `:OLD`"),
     S!("block", "A node that marks a block"),

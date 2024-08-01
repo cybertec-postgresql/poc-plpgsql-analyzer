@@ -1,5 +1,4 @@
-use super::{parse_ident, parse_where_clause};
-use crate::grammar::parse_expr;
+use super::{parse_expr, parse_ident, parse_where_clause};
 use crate::parser::Parser;
 use crate::safe_loop;
 use source_gen::lexer::TokenKind;
@@ -27,7 +26,10 @@ pub(crate) fn parse_delete(p: &mut Parser) {
 pub(crate) fn parse_update(p: &mut Parser) {
     p.start(SyntaxKind::UpdateStmt);
     p.expect(T![update]);
-    p.expect_one_of(&[T![unquoted_ident], T![quoted_ident]]);
+    parse_ident(p, 1..1);
+    if p.eat(T![.]) {
+        parse_ident(p, 1..1);
+    }
     parse_set_clause(p);
     parse_where_clause(p);
     p.eat(T![;]);
@@ -38,12 +40,20 @@ pub(crate) fn parse_set_clause(p: &mut Parser) {
     p.start(SyntaxKind::SetClause);
     p.expect(T![set]);
     safe_loop!(p, {
-        parse_expr(p);
+        parse_assignment(p);
         if p.at(T![where]) {
             break;
         }
         p.eat(T![,]);
     });
+    p.finish()
+}
+
+fn parse_assignment(p: &mut Parser) {
+    p.start(SyntaxKind::AssignmentExpr);
+    parse_ident(p, 1..1);
+    p.expect(T![=]);
+    parse_expr(p);
     p.finish()
 }
 
@@ -95,12 +105,13 @@ Root@0..60
   UpdateStmt@0..60
     Keyword@0..6 "UPDATE"
     Whitespace@6..7 " "
-    Ident@7..10 "emp"
+    IdentGroup@7..10
+      Ident@7..10 "emp"
     Whitespace@10..11 " "
     SetClause@11..33
       Keyword@11..14 "SET"
       Whitespace@14..15 " "
-      Expression@15..33
+      AssignmentExpr@15..33
         IdentGroup@15..21
           Ident@15..21 "salary"
         Whitespace@21..22 " "

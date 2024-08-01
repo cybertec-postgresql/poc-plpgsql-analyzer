@@ -28,6 +28,8 @@ pub enum SyntaxKind {
     ArithmeticOp,
     #[doc = "An Assign operator `:=`"]
     Assign,
+    #[doc = "An assignment like a=b"]
+    AssignmentExpr,
     #[doc = "An asterisk `*`"]
     Asterisk,
     #[doc = "A bind variable, e.g. `:OLD`"]
