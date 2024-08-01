@@ -12,19 +12,11 @@ pub(crate) fn parse_dml(p: &mut Parser) {
 pub(crate) fn parse_delete(p: &mut Parser) {
     p.start(SyntaxKind::DeleteStmt);
     p.expect(T![delete]);
-    parse_column_expr(p);
     p.expect(T![from]);
     p.expect_one_of(&[T![quoted_ident], T![unquoted_ident]]);
     parse_where_clause(p);
 
     p.eat(T![;]);
-    p.finish();
-}
-
-#[allow(unused)]
-fn parse_column_expr(p: &mut Parser) {
-    p.start(SyntaxKind::DeleteClause);
-    // Leaving this possibility for pl/sql "hint"
     p.finish();
 }
 
@@ -43,7 +35,6 @@ Root@0..34
   DeleteStmt@0..34
     Keyword@0..6 "DELETE"
     Whitespace@6..7 " "
-    DeleteClause@7..7
     Keyword@7..11 "FROM"
     Whitespace@11..12 " "
     Ident@12..15 "emp"
