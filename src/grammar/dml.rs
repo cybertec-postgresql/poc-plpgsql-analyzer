@@ -29,7 +29,7 @@ mod tests {
     #[test]
     fn test_parse_simple_delete() {
         check(
-            parse("DELETE FROM emp WHERE emp_id = 69;", |p| parse_dml(p)),
+            parse("DELETE FROM emp WHERE emp_id = 69;", parse_dml(p)),
             expect![[r#"
 Root@0..34
   DeleteStmt@0..34
