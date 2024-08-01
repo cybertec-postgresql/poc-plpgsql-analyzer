@@ -37,7 +37,8 @@ Root@0..34
     Whitespace@6..7 " "
     Keyword@7..11 "FROM"
     Whitespace@11..12 " "
-    Ident@12..15 "emp"
+    IdentGroup@12..15
+      Ident@12..15 "emp"
     Whitespace@15..16 " "
     WhereClause@16..33
       Keyword@16..21 "WHERE"
