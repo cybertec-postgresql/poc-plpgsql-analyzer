@@ -90,7 +90,7 @@ Root@0..34
         check(
             parse(
                 "UPDATE emp SET salary = salary*2 WHERE emp_firstname=Jeremy;",
-                |p| parse_dml(p),
+                parse_dml(p),
             ),
             expect![[r#"
 Root@0..60
