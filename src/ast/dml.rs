@@ -13,8 +13,6 @@ impl DeleteStmt {
 mod tests {
     use crate::ast::{AstNode, Root};
 
-    // use super::*;
-
     #[test]
     fn check_ast_node_to_delete_stmt() {
         const TEST_STRING: &str = r#"DELETE FROM emp WHERE emp_id = 69;"#;
