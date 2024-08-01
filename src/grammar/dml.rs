@@ -1,4 +1,4 @@
-use super::parse_where_clause;
+use super::{parse_ident, parse_where_clause};
 use crate::parser::Parser;
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -13,7 +13,7 @@ pub(crate) fn parse_delete(p: &mut Parser) {
     p.start(SyntaxKind::DeleteStmt);
     p.expect(T![delete]);
     p.expect(T![from]);
-    p.expect_one_of(&[T![quoted_ident], T![unquoted_ident]]);
+    parse_ident(p, 1..1);
     parse_where_clause(p);
 
     p.eat(T![;]);
