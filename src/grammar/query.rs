@@ -172,7 +172,7 @@ fn parse_from_list(p: &mut Parser) {
     });
 }
 
-fn parse_where_clause(p: &mut Parser) {
+pub(crate) fn parse_where_clause(p: &mut Parser) {
     p.start(SyntaxKind::WhereClause);
     p.expect(T![where]);
 

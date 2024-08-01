@@ -30,6 +30,7 @@ mod call_spec;
 mod constraint;
 mod datatype;
 mod declare_section;
+mod dml;
 mod expressions;
 mod function;
 mod function_invocation;
