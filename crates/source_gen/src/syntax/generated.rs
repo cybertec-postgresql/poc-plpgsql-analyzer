@@ -60,6 +60,8 @@ pub enum SyntaxKind {
     Decimal,
     #[doc = "A node that marks the declare section of a block"]
     DeclareSection,
+    #[doc = "A node that marks a full DELETE statement"]
+    DeleteStmt,
     #[doc = "Single dollar quote `$$`"]
     DollarQuote,
     #[doc = "A single dot"]

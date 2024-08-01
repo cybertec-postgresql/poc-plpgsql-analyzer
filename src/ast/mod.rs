@@ -9,6 +9,7 @@ pub use rowan::ast::AstNode;
 
 pub use argument_list::*;
 pub use datatype::*;
+pub use dml::*;
 pub use expressions::*;
 pub use function::*;
 pub use function_invocation::*;
@@ -21,6 +22,7 @@ use source_gen::syntax::{SyntaxKind, SyntaxToken};
 
 mod argument_list;
 mod datatype;
+mod dml;
 mod expressions;
 mod function;
 mod function_invocation;
@@ -111,6 +113,10 @@ typed_syntax_node!(Root, IdentGroup, ParamList, Param, Block);
 typed_syntax_token!(ComparisonOp, Ident);
 
 impl Root {
+    pub fn dml(&self) -> Option<DeleteStmt> {
+        self.syntax.children().find_map(DeleteStmt::cast)
+    }
+
     /// Finds the (next) function in this root node.
     pub fn function(&self) -> Option<Function> {
         self.syntax.children().find_map(Function::cast)

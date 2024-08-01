@@ -92,6 +92,14 @@ pub fn parse_any(input: &str) -> Result<Parse, ParseError> {
     Ok(parser.build())
 }
 
+/// Tries to parse a DML statement from a string.
+pub fn parse_dml(input: &str) -> Result<Parse, ParseError> {
+    let mut parser = Parser::new(input);
+    grammar::parse_dml(&mut parser);
+
+    Ok(parser.build())
+}
+
 /// Tries to parse a function from a string.
 pub fn parse_function(input: &str) -> Result<Parse, ParseError> {
     let mut parser = Parser::new(input);

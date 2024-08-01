@@ -14,6 +14,8 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+use super::parse_delete;
+
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
     p.start(SyntaxKind::Block);
@@ -49,6 +51,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![null] => parse_null_stmt(p),
         T![return] => parse_return_stmt(p),
         T![select] => parse_query(p, true),
+        T![delete] => parse_delete(p),
         current_token => {
             if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
                 p.error(ParseErrorType::ExpectedStatement(current_token));
