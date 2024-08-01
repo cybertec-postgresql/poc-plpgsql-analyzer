@@ -48,7 +48,7 @@ pub enum TokenKind {
     Slash,
     #[regex("-?\\d+", priority = 2)]
     Integer,
-    #[regex("-?\\d+\\.\\d+", priority = 2)]
+    #[regex("-?(\\d+\\.\\d*|\\d*\\.\\d+)", priority = 2)]
     Decimal,
     #[regex("(?i)[a-z_][a-z0-9_$#]*", priority = 1)]
     UnquotedIdent,

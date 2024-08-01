@@ -34,7 +34,13 @@ pub const TOKENS: Tokens<'_> = Tokens {
     ],
     literals: &[
         T!("int_literal", "integer", "integer", r"-?\d+", 2),
-        T!("decimal_literal", "decimal", "decimal", r"-?\d+\.\d+", 2),
+        T!(
+            "decimal_literal",
+            "decimal",
+            "decimal",
+            r"-?(\d+\.\d*|\d*\.\d+)",
+            2
+        ),
         T!(
             "unquoted_ident",
             "unquoted_ident",
