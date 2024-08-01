@@ -328,6 +328,8 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("datatype", "Any built-in oracle datatype"),
     S!("decimal", "A decimal, positive, or negative"),
     S!("declare_section", "A node that marks the declare section of a block"),
+    S!("delete_stmt", "A node that marks a full DELETE statement"),
+    S!("delete_clause", "A node, that contains the whole DELETE clause of a query"),
     S!("dollar_quote", "Single dollar quote `$$`"),
     S!("dot", "A single dot"),
     S!("error", "An error token with a cause"),
