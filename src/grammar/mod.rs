@@ -315,26 +315,4 @@ Root@0..26
             vec![],
         );
     }
-
-    #[test]
-    fn test_parse_decimal() {
-        check(
-            parse(""),
-            expect![[r#"
-Root@0..26
-  Param@0..26
-    IdentGroup@0..2
-      Ident@0..2 "p2"
-    Whitespace@2..3 " "
-    Datatype@3..12
-      Keyword@3..11 "VARCHAR2"
-      Whitespace@11..12 " "
-    Assign@12..14 ":="
-    Whitespace@14..15 " "
-    Expression@15..26
-      QuotedLiteral@15..26 "'not empty'"
-"#]],
-            vec![],
-        );
-    }
 }

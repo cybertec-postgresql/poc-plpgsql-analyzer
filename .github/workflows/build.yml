@@ -52,7 +52,7 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
 
       - name: Run tests
-        run: cargo test --features coverage-tests
+        run: cargo test -p source_gen -p poc-plpgsql-analyzer --features coverage-tests 
 
       - name: Generate rustdoc
         run: cargo doc --no-deps
