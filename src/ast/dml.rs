@@ -11,12 +11,9 @@ impl DeleteStmt {
 
 #[cfg(test)]
 mod tests {
-    // use pretty_assertions::assert_eq;
+    use crate::ast::{AstNode, Root};
 
-    use crate::ast::Root;
-    // use source_gen::syntax::SyntaxKind;
-
-    use super::*;
+    // use super::*;
 
     #[test]
     fn check_ast_node_to_delete_stmt() {
