@@ -95,4 +95,14 @@ mod tests {
     fn test_decimal() {
         check(r#"420.69"#, T![decimal_literal]);
     }
+
+    #[test]
+    fn test_decimal_dot_first() {
+        check(r#".69"#, T![decimal_literal]);
+    }
+
+    #[test]
+    fn test_decimal_dot_last() {
+        check(r#"420."#, T![decimal_literal]);
+    }
 }
