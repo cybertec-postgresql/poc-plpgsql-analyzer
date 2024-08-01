@@ -1,5 +1,4 @@
 use super::{parse_ident, parse_where_clause};
-use super::parse_where_clause;
 use crate::grammar::parse_expr;
 use crate::parser::Parser;
 use crate::safe_loop;
@@ -90,7 +89,7 @@ Root@0..34
         check(
             parse(
                 "UPDATE emp SET salary = salary*2 WHERE emp_firstname=Jeremy;",
-                parse_dml(p),
+                parse_dml,
             ),
             expect![[r#"
 Root@0..60
