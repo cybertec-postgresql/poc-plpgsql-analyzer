@@ -59,8 +59,8 @@ pub struct Token<'a> {
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::generated::T;
     use crate::lexer::Lexer;
+    use crate::T;
 
     use super::*;
 
@@ -84,5 +84,25 @@ mod tests {
     #[test]
     fn lex_quoted_ident() {
         check(r#""读文👩🏼‍🔬""#, T![quoted_ident]);
+    }
+
+    #[test]
+    fn test_integer() {
+        check(r#"69"#, T![int_literal]);
+    }
+
+    #[test]
+    fn test_decimal() {
+        check(r#"420.69"#, T![decimal_literal]);
+    }
+
+    #[test]
+    fn test_decimal_dot_first() {
+        check(r#".69"#, T![decimal_literal]);
+    }
+
+    #[test]
+    fn test_decimal_dot_last() {
+        check(r#"420."#, T![decimal_literal]);
     }
 }
