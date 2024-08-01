@@ -14,6 +14,9 @@ pub(crate) fn parse_delete(p: &mut Parser) {
     p.expect(T![delete]);
     p.expect(T![from]);
     parse_ident(p, 1..1);
+    if p.eat(T![.]) {
+        parse_ident(p, 1..1);
+    }
     parse_where_clause(p);
 
     p.eat(T![;]);
