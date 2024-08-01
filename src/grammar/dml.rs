@@ -26,10 +26,7 @@ pub(crate) fn parse_delete(p: &mut Parser) {
 pub(crate) fn parse_update(p: &mut Parser) {
     p.start(SyntaxKind::UpdateStmt);
     p.expect(T![update]);
-    parse_ident(p, 1..1);
-    if p.eat(T![.]) {
-        parse_ident(p, 1..1);
-    }
+    parse_ident(p, 1..2);
     parse_set_clause(p);
     parse_where_clause(p);
     p.eat(T![;]);
