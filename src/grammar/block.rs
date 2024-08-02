@@ -92,14 +92,8 @@ fn parse_using_clause(p: &mut Parser) {
     p.start(SyntaxKind::UsingClause);
     p.expect(T![using]);
     safe_loop!(p, {
-        if [T![in], T![out]].contains(&p.current()) {
-            if p.at(T![in]) {
-                p.eat(T![in]);
-                p.eat(T![out]);
-            } else {
-                p.eat(T![out]);
-            }
-        }
+        p.eat(T![in]);
+        p.eat(T![out]);
         p.expect(T![unquoted_ident]);
         if [T![return], T![returning], T![;]].contains(&p.current()) {
             break;
