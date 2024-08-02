@@ -11,19 +11,16 @@ pub(crate) fn parse_execute_immediate(p: &mut Parser) {
     p.expect(T![execute]);
     p.expect(T![immediate]);
     // Parse String
-    if !p.eat(T![unquoted_ident]) {
-        p.expect(T![quoted_literal]);
+    if !p.eat(T![quoted_literal]) {
+        parse_ident(p, 1..1);
     }
-    // handle INTO, USING and RETURN/RETURNING clauses
     if p.at(T![into]) {
         parse_into_clause(p, true);
     }
     if p.at(T![using]) {
-        // parse using clause
         parse_using_clause(p);
     }
     if [T![return], T![returning]].contains(&p.current()) {
-        // parse return into stuff
         parse_return_into_clause(p);
     }
     p.eat(T![;]);
@@ -35,12 +32,8 @@ fn parse_using_clause(p: &mut Parser) {
     p.expect(T![using]);
     safe_loop!(p, {
         if [T![in], T![out]].contains(&p.current()) {
-            if p.at(T![in]) {
-                p.eat(T![in]);
-                p.eat(T![out]);
-            } else {
-                p.eat(T![out]);
-            }
+            p.eat(T![in]);
+            p.eat(T![out]);
         }
         parse_ident(p, 1..1);
         if [T![return], T![returning], T![;]].contains(&p.current()) {
@@ -98,12 +91,14 @@ ExecuteImmediateStmt@0..62
   Whitespace@7..8 " "
   Keyword@8..17 "IMMEDIATE"
   Whitespace@17..18 " "
-  Ident@18..26 "sql_stmt"
+  IdentGroup@18..26
+    Ident@18..26 "sql_stmt"
   Whitespace@26..27 " "
   UsingClause@27..40
     Keyword@27..32 "USING"
     Whitespace@32..33 " "
-    Ident@33..39 "emp_id"
+    IdentGroup@33..39
+      Ident@33..39 "emp_id"
     Whitespace@39..40 " "
   ReturnIntoClause@40..62
     Keyword@40..49 "RETURNING"
