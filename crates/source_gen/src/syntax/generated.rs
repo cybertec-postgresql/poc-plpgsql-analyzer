@@ -38,6 +38,8 @@ pub enum SyntaxKind {
     Block,
     #[doc = "A node that marks an individual statement inside a block"]
     BlockStatement,
+    #[doc = "A node containing a BULK COLLECT INTO clause"]
+    BulkIntoClause,
     #[doc = "A colon token"]
     Colon,
     #[doc = "A single column expression, as part of an SELECT clause"]
@@ -228,6 +230,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BinaryIntegerKw => SyntaxKind::Keyword,
             TokenKind::BlobKw => SyntaxKind::Keyword,
             TokenKind::BodyKw => SyntaxKind::Keyword,
+            TokenKind::BulkKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
             TokenKind::CallKw => SyntaxKind::Keyword,
@@ -241,6 +244,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ClobKw => SyntaxKind::Keyword,
             TokenKind::CloneKw => SyntaxKind::Keyword,
             TokenKind::CollationKw => SyntaxKind::Keyword,
+            TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
