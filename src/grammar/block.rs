@@ -499,4 +499,32 @@ Root@0..124
             vec![],
         );
     }
+
+    #[test]
+    fn test_parse_simple_execute_immediate() {
+        check(
+            parse(
+                r#"BEGIN EXECUTE IMMEDIATE 'SELECT * FROM emp;'; END;"#,
+                parse_block,
+            ),
+            expect![[r#"
+Root@0..50
+  Block@0..50
+    Keyword@0..5 "BEGIN"
+    Whitespace@5..6 " "
+    BlockStatement@6..46
+      ExecuteImmediateStmt@6..45
+        Keyword@6..13 "EXECUTE"
+        Whitespace@13..14 " "
+        Keyword@14..23 "IMMEDIATE"
+        Whitespace@23..24 " "
+        QuotedLiteral@24..44 "'SELECT * FROM emp;'"
+        Semicolon@44..45 ";"
+      Whitespace@45..46 " "
+    Keyword@46..49 "END"
+    Semicolon@49..50 ";"
+"#]],
+            vec![],
+        );
+    }
 }
