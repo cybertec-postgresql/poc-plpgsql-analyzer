@@ -1,3 +1,4 @@
+use crate::grammar::parse_ident;
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -41,7 +42,7 @@ fn parse_using_clause(p: &mut Parser) {
                 p.eat(T![out]);
             }
         }
-        p.expect(T![unquoted_ident]);
+        parse_ident(p, 1..1);
         if [T![return], T![returning], T![;]].contains(&p.current()) {
             break;
         }
