@@ -1,4 +1,4 @@
-use crate::grammar::parse_ident;
+use crate::grammar::{parse_expr, parse_ident};
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -38,11 +38,11 @@ fn parse_using_clause(p: &mut Parser) {
             p.eat(T![in]);
             p.eat(T![out]);
         }
-        parse_ident(p, 1..1);
+        parse_expr(p);
         if [T![return], T![returning], T![;]].contains(&p.current()) {
             break;
         }
-        p.eat(T![,]);
+        p.expect(T![,]);
     });
     p.finish();
 }
@@ -71,7 +71,7 @@ fn parse_bulk_into_clause(p: &mut Parser) {
         if [T![using], T![;]].contains(&p.current()) {
             break;
         }
-        p.eat(T![,]);
+        p.expect(T![,]);
     });
     p.finish();
 }
@@ -286,8 +286,9 @@ Root@0..992
             Ident@448..457 "dept_name"
           Comma@457..458 ","
           Whitespace@458..459 " "
-          IdentGroup@459..467
-            Ident@459..467 "location"
+          Expression@459..467
+            IdentGroup@459..467
+              Ident@459..467 "location"
         Semicolon@467..468 ";"
       Whitespace@468..472 "\n   "
     BlockStatement@472..522
@@ -318,8 +319,9 @@ Root@0..992
         UsingClause@566..578
           Keyword@566..571 "USING"
           Whitespace@571..572 " "
-          IdentGroup@572..578
-            Ident@572..578 "emp_id"
+          Expression@572..578
+            IdentGroup@572..578
+              Ident@572..578 "emp_id"
         Semicolon@578..579 ";"
       Whitespace@579..583 "\n   "
     BlockStatement@583..644
@@ -332,8 +334,8 @@ Root@0..992
         QuotedLiteral@598..643 "'BEGIN emp_pkg.raise_ ..."
       Semicolon@643..644 ";"
     Whitespace@644..648 "\n   "
-    BlockStatement@648..684
-      ExecuteImmediateStmt@648..684
+    BlockStatement@648..698
+      ExecuteImmediateStmt@648..694
         Keyword@648..655 "EXECUTE"
         Whitespace@655..656 " "
         Keyword@656..665 "IMMEDIATE"
@@ -341,21 +343,16 @@ Root@0..992
         IdentGroup@666..677
           Ident@666..677 "plsql_block"
         Whitespace@677..678 " "
-        UsingClause@678..684
+        UsingClause@678..693
           Keyword@678..683 "USING"
           Whitespace@683..684 " "
-          IdentGroup@684..684
-          IdentGroup@684..684
-    BlockStatement@684..688
-      Integer@684..688 "7788"
-    BlockStatement@688..689
-      Comma@688..689 ","
-    Whitespace@689..690 " "
-    BlockStatement@690..693
-      Integer@690..693 "500"
-    BlockStatement@693..694
-      Semicolon@693..694 ";"
-    Whitespace@694..698 "\n   "
+          Integer@684..688 "7788"
+          Comma@688..689 ","
+          Whitespace@689..690 " "
+          Expression@690..693
+            Integer@690..693 "500"
+        Semicolon@693..694 ";"
+      Whitespace@694..698 "\n   "
     BlockStatement@698..783
       IdentGroup@698..706
         Ident@698..706 "sql_stmt"
@@ -402,8 +399,9 @@ Root@0..992
         UsingClause@916..929
           Keyword@916..921 "USING"
           Whitespace@921..922 " "
-          IdentGroup@922..929
-            Ident@922..929 "dept_id"
+          Expression@922..929
+            IdentGroup@922..929
+              Ident@922..929 "dept_id"
         Semicolon@929..930 ";"
       Whitespace@930..934 "\n   "
     BlockStatement@934..988
