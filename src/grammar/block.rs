@@ -93,7 +93,8 @@ fn parse_using_clause(p: &mut Parser) {
     p.expect(T![using]);
     safe_loop!(p, {
         if [T![in], T![out]].contains(&p.current()) {
-            if p.eat(T![in]) {
+            if p.at(T![in]) {
+                p.eat(T![in]);
                 p.eat(T![out]);
             } else {
                 p.eat(T![out]);
