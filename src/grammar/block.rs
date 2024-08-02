@@ -46,6 +46,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
 
     match p.current() {
         T![declare] | T![begin] => parse_block(p),
+        T![execute] => parse_execute_immediate_stmt(p),
         T![if] => parse_if_stmt(p),
         T![insert] => parse_insert(p),
         T![null] => parse_null_stmt(p),
@@ -60,6 +61,19 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         }
     }
 
+    p.finish();
+}
+
+fn parse_execute_immediate_stmt(p: &mut Parser) {
+    p.start(SyntaxKind::ExecuteImmediateStmt);
+    p.expect(T![execute]);
+    p.expect(T![immediate]);
+    // Parse String
+    if !p.eat(T![unquoted_ident]) {
+        p.expect(T![quoted_literal]);
+    }
+    // handle INTO, USING and RETURN/RETURNING clauses
+    p.eat(T![;]);
     p.finish();
 }
 

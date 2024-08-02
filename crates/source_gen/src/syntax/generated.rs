@@ -72,6 +72,8 @@ pub enum SyntaxKind {
     Error,
     #[doc = "An exclamation mark `!`"]
     Exclam,
+    #[doc = "A node that contains a full EXECUTE IMMEDIATE statement"]
+    ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
@@ -280,6 +282,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::EnvKw => SyntaxKind::Keyword,
             TokenKind::ExceptionKw => SyntaxKind::Keyword,
             TokenKind::ExceptionsKw => SyntaxKind::Keyword,
+            TokenKind::ExecuteKw => SyntaxKind::Keyword,
             TokenKind::ExistsKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
