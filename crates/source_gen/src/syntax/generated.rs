@@ -134,6 +134,8 @@ pub enum SyntaxKind {
     RaiseStmt,
     #[doc = "A node containing a return into clause"]
     ReturnIntoClause,
+    #[doc = "A node that contains the whole RAISE statement for exceptions"]
+    RaiseStmt,
     #[doc = "The root node element"]
     Root,
     #[doc = "Right Paren"]
