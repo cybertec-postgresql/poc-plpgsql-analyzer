@@ -14,7 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-use super::parse_dml;
+use super::{parse_dml, parse_into_clause};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -74,16 +74,44 @@ fn parse_execute_immediate_stmt(p: &mut Parser) {
     }
     // handle INTO, USING and RETURN/RETURNING clauses
     if p.at(T![into]) {
-        // parse_into_clause(p)
+        parse_into_clause(p, true);
     }
     if p.at(T![using]) {
         // parse using clause
+        parse_using_clause(p);
     }
     if [T![return], T![returning]].contains(&p.current()) {
         // parse return into stuff
+        parse_return_into_clause(p);
     }
     p.eat(T![;]);
     p.finish();
+}
+
+fn parse_using_clause(p: &mut Parser) {
+    p.start(SyntaxKind::UsingClause);
+    p.expect(T![using]);
+    safe_loop!(p, {
+        if [T![in], T![out]].contains(&p.current()) {
+            if p.eat(T![in]) {
+                p.eat(T![out]);
+            } else {
+                p.eat(T![out]);
+            }
+        }
+        p.expect(T![unquoted_ident]);
+        if [T![return], T![returning], T![;]].contains(&p.current()) {
+            break;
+        }
+        p.eat(T![,]);
+    });
+    p.finish();
+}
+
+fn parse_return_into_clause(p: &mut Parser) {
+    p.start(SyntaxKind::ReturnIntoClause);
+    p.expect_one_of(&[T![return], T![returning]]);
+    parse_into_clause(p, false);
 }
 
 fn parse_if_stmt(p: &mut Parser) {
