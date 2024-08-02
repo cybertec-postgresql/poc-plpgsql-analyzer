@@ -14,7 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-use super::{parse_dml, parse_into_clause};
+use super::{parse_dml, parse_execute_immediate};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -46,7 +46,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
 
     match p.current() {
         T![declare] | T![begin] => parse_block(p),
-        T![execute] => parse_execute_immediate_stmt(p),
+        T![execute] => parse_execute_immediate(p),
         T![if] => parse_if_stmt(p),
         T![insert] => parse_insert(p),
         T![null] => parse_null_stmt(p),
@@ -62,51 +62,6 @@ pub(super) fn parse_stmt(p: &mut Parser) {
     }
 
     p.finish();
-}
-
-fn parse_execute_immediate_stmt(p: &mut Parser) {
-    p.start(SyntaxKind::ExecuteImmediateStmt);
-    p.expect(T![execute]);
-    p.expect(T![immediate]);
-    // Parse String
-    if !p.eat(T![unquoted_ident]) {
-        p.expect(T![quoted_literal]);
-    }
-    // handle INTO, USING and RETURN/RETURNING clauses
-    if p.at(T![into]) {
-        parse_into_clause(p, true);
-    }
-    if p.at(T![using]) {
-        // parse using clause
-        parse_using_clause(p);
-    }
-    if [T![return], T![returning]].contains(&p.current()) {
-        // parse return into stuff
-        parse_return_into_clause(p);
-    }
-    p.eat(T![;]);
-    p.finish();
-}
-
-fn parse_using_clause(p: &mut Parser) {
-    p.start(SyntaxKind::UsingClause);
-    p.expect(T![using]);
-    safe_loop!(p, {
-        p.eat(T![in]);
-        p.eat(T![out]);
-        p.expect(T![unquoted_ident]);
-        if [T![return], T![returning], T![;]].contains(&p.current()) {
-            break;
-        }
-        p.eat(T![,]);
-    });
-    p.finish();
-}
-
-fn parse_return_into_clause(p: &mut Parser) {
-    p.start(SyntaxKind::ReturnIntoClause);
-    p.expect_one_of(&[T![return], T![returning]]);
-    parse_into_clause(p, false);
 }
 
 fn parse_if_stmt(p: &mut Parser) {
@@ -527,77 +482,6 @@ Root@0..124
     Whitespace@107..120 "\n            "
     Keyword@120..123 "END"
     Semicolon@123..124 ";"
-"#]],
-            vec![],
-        );
-    }
-
-    #[test]
-    fn test_parse_simple_execute_immediate() {
-        check(
-            parse(
-                r#"BEGIN EXECUTE IMMEDIATE 'SELECT * FROM emp;'; END;"#,
-                parse_block,
-            ),
-            expect![[r#"
-Root@0..50
-  Block@0..50
-    Keyword@0..5 "BEGIN"
-    Whitespace@5..6 " "
-    BlockStatement@6..46
-      ExecuteImmediateStmt@6..45
-        Keyword@6..13 "EXECUTE"
-        Whitespace@13..14 " "
-        Keyword@14..23 "IMMEDIATE"
-        Whitespace@23..24 " "
-        QuotedLiteral@24..44 "'SELECT * FROM emp;'"
-        Semicolon@44..45 ";"
-      Whitespace@45..46 " "
-    Keyword@46..49 "END"
-    Semicolon@49..50 ";"
-"#]],
-            vec![],
-        );
-    }
-
-    #[test]
-    fn parse_complex_execute_immediate() {
-        check(
-            parse(
-                r#"BEGIN
-   EXECUTE IMMEDIATE sql_stmt USING emp_id RETURNING INTO salary;
-END;"#,
-                parse_block,
-            ),
-            expect![[r#"
-Block@0..76
-  Keyword@0..5 "BEGIN"
-  Whitespace@5..9 "\n   "
-  BlockStatement@9..76
-    ExecuteImmediateStmt@9..72
-      Keyword@9..16 "EXECUTE"
-      Whitespace@16..17 " "
-      Keyword@17..26 "IMMEDIATE"
-      Whitespace@26..27 " "
-      Ident@27..35 "sql_stmt"
-      Whitespace@35..36 " "
-      UsingClause@36..49
-        Keyword@36..41 "USING"
-        Whitespace@41..42 " "
-        Ident@42..48 "emp_id"
-        Whitespace@48..49 " "
-      ReturnIntoClause@49..71
-        Keyword@49..58 "RETURNING"
-        Whitespace@58..59 " "
-        IntoClause@59..70
-          Keyword@59..63 "INTO"
-          Whitespace@63..64 " "
-          IdentGroup@64..70
-            Ident@64..70 "salary"
-        Semicolon@70..71 ";"
-      Whitespace@71..72 "\n"
-    Keyword@72..75 "END"
-    Semicolon@75..76 ";"
 "#]],
             vec![],
         );
