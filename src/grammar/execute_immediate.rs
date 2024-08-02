@@ -419,4 +419,35 @@ Root@0..992
             vec![],
         );
     }
+
+    #[test]
+    fn test_bulk_insert_execute_immediate() {
+        check(
+            parse(
+                r#"EXECUTE IMMEDIATE 'SELECT * FROM emp;' BULK COLLECT INTO rubbish_bin;"#,
+                parse_execute_immediate,
+            ),
+            expect![[r#"
+  Root@0..69
+    ExecuteImmediateStmt@0..69
+      Keyword@0..7 "EXECUTE"
+      Whitespace@7..8 " "
+      Keyword@8..17 "IMMEDIATE"
+      Whitespace@17..18 " "
+      QuotedLiteral@18..38 "'SELECT * FROM emp;'"
+      Whitespace@38..39 " "
+      BulkIntoClause@39..68
+        Keyword@39..43 "BULK"
+        Whitespace@43..44 " "
+        Keyword@44..51 "COLLECT"
+        Whitespace@51..52 " "
+        Keyword@52..56 "INTO"
+        Whitespace@56..57 " "
+        IdentGroup@57..68
+          Ident@57..68 "rubbish_bin"
+      Semicolon@68..69 ";"
+"#]],
+            vec![],
+        );
+    }
 }
