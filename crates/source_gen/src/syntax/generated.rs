@@ -126,6 +126,8 @@ pub enum SyntaxKind {
     QuotedLiteral,
     #[doc = "Two dots"]
     Range,
+    #[doc = "A node containing a return into clause"]
+    ReturnIntoClause,
     #[doc = "The root node element"]
     Root,
     #[doc = "Right Paren"]
@@ -154,6 +156,8 @@ pub enum SyntaxKind {
     TypeName,
     #[doc = "A node that marks a full UPDATE statement"]
     UpdateStmt,
+    #[doc = "A node containing a using clause"]
+    UsingClause,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]

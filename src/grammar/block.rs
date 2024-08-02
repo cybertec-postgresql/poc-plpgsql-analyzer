@@ -73,6 +73,15 @@ fn parse_execute_immediate_stmt(p: &mut Parser) {
         p.expect(T![quoted_literal]);
     }
     // handle INTO, USING and RETURN/RETURNING clauses
+    if p.at(T![into]) {
+        // parse_into_clause(p)
+    }
+    if p.at(T![using]) {
+        // parse using clause
+    }
+    if [T![return], T![returning]].contains(&p.current()) {
+        // parse return into stuff
+    }
     p.eat(T![;]);
     p.finish();
 }
