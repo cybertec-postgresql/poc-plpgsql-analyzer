@@ -564,4 +564,47 @@ Root@0..50
             vec![],
         );
     }
+
+    #[test]
+    fn parse_complex_execute_immediate() {
+        check(
+            parse(
+                r#"BEGIN
+   EXECUTE IMMEDIATE sql_stmt USING emp_id RETURNING INTO salary;
+END;"#,
+                parse_block,
+            ),
+            expect![[r#"
+Block@0..76
+  Keyword@0..5 "BEGIN"
+  Whitespace@5..9 "\n   "
+  BlockStatement@9..76
+    ExecuteImmediateStmt@9..72
+      Keyword@9..16 "EXECUTE"
+      Whitespace@16..17 " "
+      Keyword@17..26 "IMMEDIATE"
+      Whitespace@26..27 " "
+      Ident@27..35 "sql_stmt"
+      Whitespace@35..36 " "
+      UsingClause@36..49
+        Keyword@36..41 "USING"
+        Whitespace@41..42 " "
+        Ident@42..48 "emp_id"
+        Whitespace@48..49 " "
+      ReturnIntoClause@49..71
+        Keyword@49..58 "RETURNING"
+        Whitespace@58..59 " "
+        IntoClause@59..70
+          Keyword@59..63 "INTO"
+          Whitespace@63..64 " "
+          IdentGroup@64..70
+            Ident@64..70 "salary"
+        Semicolon@70..71 ";"
+      Whitespace@71..72 "\n"
+    Keyword@72..75 "END"
+    Semicolon@75..76 ";"
+"#]],
+            vec![],
+        );
+    }
 }
