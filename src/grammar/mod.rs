@@ -18,6 +18,7 @@ pub(crate) use function_invocation::*;
 pub(crate) use package::*;
 pub(crate) use procedure::*;
 pub(crate) use query::*;
+pub(crate) use raise::*;
 pub(crate) use trigger::*;
 pub(crate) use view::*;
 
@@ -40,6 +41,7 @@ mod function_invocation;
 mod package;
 mod procedure;
 mod query;
+mod raise;
 mod trigger;
 mod view;
 
