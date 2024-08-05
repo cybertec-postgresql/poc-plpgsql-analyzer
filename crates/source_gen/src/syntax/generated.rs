@@ -108,6 +108,8 @@ pub enum SyntaxKind {
     Not,
     #[doc = "Logical operator OR"]
     Or,
+    #[doc = "A node containing a full order by clause"]
+    OrderByClause,
     #[doc = "A node that marks a full CREATE PACKAGE BODY block"]
     Package,
     #[doc = "A single Param node, consisting of name & type"]
@@ -364,6 +366,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::OnlyKw => SyntaxKind::Keyword,
             TokenKind::OptionKw => SyntaxKind::Keyword,
             TokenKind::OrKw => SyntaxKind::Keyword,
+            TokenKind::OrderKw => SyntaxKind::Keyword,
             TokenKind::OthersKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
             TokenKind::PackageKw => SyntaxKind::Keyword,
