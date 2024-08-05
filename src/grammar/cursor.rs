@@ -67,6 +67,8 @@ mod tests {
         tests::{check, parse},
     };
 
+    use super::parse_cursor;
+
     #[test]
     fn test_explicit_cursor_declaration_and_definition() {
         check(
@@ -261,6 +263,108 @@ Root@0..605
     Whitespace@600..601 "\n"
     Keyword@601..604 "END"
     Semicolon@604..605 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_parse_cursor_parameters() {
+        check(
+            parse(
+                "CURSOR c (job VARCHAR2, max_sal NUMBER) IS
+    SELECT last_name, first_name, (salary - max_sal) overpayment
+    FROM employees
+    WHERE job_id = job
+    AND salary > max_sal;",
+                parse_cursor,
+            ),
+            expect![[r#"
+Root@0..175
+  CursorStmt@0..175
+    Keyword@0..6 "CURSOR"
+    Whitespace@6..7 " "
+    IdentGroup@7..8
+      Ident@7..8 "c"
+    Whitespace@8..9 " "
+    CursorParameterDeclarations@9..39
+      LParen@9..10 "("
+      CursorParameterDeclaration@10..22
+        IdentGroup@10..13
+          Ident@10..13 "job"
+        Whitespace@13..14 " "
+        Datatype@14..22
+          Keyword@14..22 "VARCHAR2"
+      Comma@22..23 ","
+      Whitespace@23..24 " "
+      CursorParameterDeclaration@24..38
+        IdentGroup@24..31
+          Ident@24..31 "max_sal"
+        Whitespace@31..32 " "
+        Datatype@32..38
+          Keyword@32..38 "NUMBER"
+      RParen@38..39 ")"
+    Whitespace@39..40 " "
+    Keyword@40..42 "IS"
+    Whitespace@42..47 "\n    "
+    SelectStmt@47..175
+      Keyword@47..53 "SELECT"
+      Whitespace@53..54 " "
+      SelectClause@54..112
+        ColumnExpr@54..63
+          IdentGroup@54..63
+            Ident@54..63 "last_name"
+        Comma@63..64 ","
+        Whitespace@64..65 " "
+        ColumnExpr@65..75
+          IdentGroup@65..75
+            Ident@65..75 "first_name"
+        Comma@75..76 ","
+        Whitespace@76..77 " "
+        ColumnExpr@77..112
+          LParen@77..78 "("
+          Expression@78..94
+            IdentGroup@78..84
+              Ident@78..84 "salary"
+            Whitespace@84..85 " "
+            ArithmeticOp@85..86 "-"
+            Whitespace@86..87 " "
+            IdentGroup@87..94
+              Ident@87..94 "max_sal"
+          RParen@94..95 ")"
+          Whitespace@95..96 " "
+          Alias@96..107
+            Ident@96..107 "overpayment"
+          Whitespace@107..112 "\n    "
+      Keyword@112..116 "FROM"
+      Whitespace@116..117 " "
+      IdentGroup@117..126
+        Ident@117..126 "employees"
+      Whitespace@126..131 "\n    "
+      WhereClause@131..174
+        Keyword@131..136 "WHERE"
+        Whitespace@136..137 " "
+        Expression@137..174
+          Expression@137..154
+            IdentGroup@137..143
+              Ident@137..143 "job_id"
+            Whitespace@143..144 " "
+            ComparisonOp@144..145 "="
+            Whitespace@145..146 " "
+            IdentGroup@146..149
+              Ident@146..149 "job"
+            Whitespace@149..154 "\n    "
+          LogicOp@154..157 "AND"
+          Whitespace@157..158 " "
+          Expression@158..174
+            IdentGroup@158..164
+              Ident@158..164 "salary"
+            Whitespace@164..165 " "
+            ComparisonOp@165..166 ">"
+            Whitespace@166..167 " "
+            IdentGroup@167..174
+              Ident@167..174 "max_sal"
+      Semicolon@174..175 ";"
 "#]],
             vec![],
         );
