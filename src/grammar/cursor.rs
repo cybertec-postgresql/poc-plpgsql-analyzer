@@ -49,10 +49,8 @@ fn parse_cursor_param_declaration(p: &mut Parser) {
 fn parse_rowtype_clause(p: &mut Parser) {
     p.start(SyntaxKind::RowtypeClause);
     parse_ident(p, 1..2);
-    if p.eat(T![%]) {
-        if !p.eat(T![rowtype]) {
-            parse_datatype(p);
-        }
+    if p.eat(T![%]) && !p.eat(T![rowtype]) {
+        parse_datatype(p);
     }
 
     p.finish();
