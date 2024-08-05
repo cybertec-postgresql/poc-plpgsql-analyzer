@@ -38,6 +38,8 @@ pub enum SyntaxKind {
     Block,
     #[doc = "A node that marks an individual statement inside a block"]
     BlockStatement,
+    #[doc = "A node containing a BULK COLLECT INTO clause"]
+    BulkIntoClause,
     #[doc = "A colon token"]
     Colon,
     #[doc = "A single column expression, as part of an SELECT clause"]
@@ -72,6 +74,8 @@ pub enum SyntaxKind {
     Error,
     #[doc = "An exclamation mark `!`"]
     Exclam,
+    #[doc = "A node that contains a full EXECUTE IMMEDIATE statement"]
+    ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
@@ -124,6 +128,8 @@ pub enum SyntaxKind {
     QuotedLiteral,
     #[doc = "Two dots"]
     Range,
+    #[doc = "A node containing a return into clause"]
+    ReturnIntoClause,
     #[doc = "The root node element"]
     Root,
     #[doc = "Right Paren"]
@@ -152,6 +158,8 @@ pub enum SyntaxKind {
     TypeName,
     #[doc = "A node that marks a full UPDATE statement"]
     UpdateStmt,
+    #[doc = "A node containing a using clause"]
+    UsingClause,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]
@@ -222,6 +230,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BinaryIntegerKw => SyntaxKind::Keyword,
             TokenKind::BlobKw => SyntaxKind::Keyword,
             TokenKind::BodyKw => SyntaxKind::Keyword,
+            TokenKind::BulkKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
             TokenKind::CallKw => SyntaxKind::Keyword,
@@ -235,6 +244,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ClobKw => SyntaxKind::Keyword,
             TokenKind::CloneKw => SyntaxKind::Keyword,
             TokenKind::CollationKw => SyntaxKind::Keyword,
+            TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
@@ -280,6 +290,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::EnvKw => SyntaxKind::Keyword,
             TokenKind::ExceptionKw => SyntaxKind::Keyword,
             TokenKind::ExceptionsKw => SyntaxKind::Keyword,
+            TokenKind::ExecuteKw => SyntaxKind::Keyword,
             TokenKind::ExistsKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,

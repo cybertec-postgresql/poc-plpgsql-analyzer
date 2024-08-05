@@ -141,7 +141,7 @@ fn parse_alias(p: &mut Parser) {
     p.finish()
 }
 
-fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
+pub(crate) fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
     let checkpoint = p.checkpoint();
 
     if expect_into_clause {

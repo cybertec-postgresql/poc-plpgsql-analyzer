@@ -14,7 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-use super::parse_dml;
+use super::{parse_dml, parse_execute_immediate};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -46,6 +46,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
 
     match p.current() {
         T![declare] | T![begin] => parse_block(p),
+        T![execute] => parse_execute_immediate(p),
         T![if] => parse_if_stmt(p),
         T![insert] => parse_insert(p),
         T![null] => parse_null_stmt(p),
