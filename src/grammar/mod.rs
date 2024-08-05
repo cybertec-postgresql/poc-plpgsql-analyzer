@@ -9,6 +9,7 @@ use std::ops::Range;
 
 pub(crate) use block::*;
 pub(crate) use constraint::*;
+pub(crate) use cursor::*;
 pub(crate) use datatype::*;
 pub(crate) use dml::*;
 pub(crate) use execute_immediate::*;
@@ -30,6 +31,7 @@ use source_gen::T;
 mod block;
 mod call_spec;
 mod constraint;
+mod cursor;
 mod datatype;
 mod declare_section;
 mod dml;

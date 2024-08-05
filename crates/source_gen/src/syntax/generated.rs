@@ -58,10 +58,12 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
-    #[doc = "A node that marks a full cursor declaration statement"]
-    CursorDeclarationStmt,
-    #[doc = "A node that marks a full cursor definition statement"]
-    CursorDefinitionStmt,
+    #[doc = "A node containing a cursor parameter declaration"]
+    CursorParameterDeclaration,
+    #[doc = "A node containing cursor parameter declarations"]
+    CursorParameterDeclarations,
+    #[doc = "A node that marks a full cursor statement"]
+    CursorStmt,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
     #[doc = "A decimal, positive, or negative"]
@@ -136,6 +138,8 @@ pub enum SyntaxKind {
     ReturnIntoClause,
     #[doc = "The root node element"]
     Root,
+    #[doc = "A node containing a rowtype definition for cursors"]
+    RowtypeClause,
     #[doc = "Right Paren"]
     RParen,
     #[doc = "A node that contains the whole SELECT clause of a query"]
