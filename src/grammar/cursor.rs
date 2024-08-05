@@ -369,4 +369,117 @@ Root@0..175
             vec![],
         );
     }
+
+    #[test]
+    fn test_cursor_param_default_value() {
+        check(
+            parse(
+                "CURSOR c (location NUMBER DEFAULT 1700) IS
+    SELECT department_name,
+           last_name manager,
+           city
+    FROM departments, employees, locations
+    WHERE location_id = location
+      AND location_id = location_id
+      AND department_id = department_id;",
+                parse_cursor,
+            ),
+            expect![[r#"
+Root@0..269
+  CursorStmt@0..269
+    Keyword@0..6 "CURSOR"
+    Whitespace@6..7 " "
+    IdentGroup@7..8
+      Ident@7..8 "c"
+    Whitespace@8..9 " "
+    CursorParameterDeclarations@9..39
+      LParen@9..10 "("
+      CursorParameterDeclaration@10..38
+        IdentGroup@10..18
+          Ident@10..18 "location"
+        Whitespace@18..19 " "
+        Datatype@19..26
+          Keyword@19..25 "NUMBER"
+          Whitespace@25..26 " "
+        Keyword@26..33 "DEFAULT"
+        Whitespace@33..34 " "
+        Integer@34..38 "1700"
+      RParen@38..39 ")"
+    Whitespace@39..40 " "
+    Keyword@40..42 "IS"
+    Whitespace@42..47 "\n    "
+    SelectStmt@47..269
+      Keyword@47..53 "SELECT"
+      Whitespace@53..54 " "
+      SelectClause@54..121
+        ColumnExpr@54..69
+          IdentGroup@54..69
+            Ident@54..69 "department_name"
+        Comma@69..70 ","
+        Whitespace@70..82 "\n           "
+        ColumnExpr@82..99
+          IdentGroup@82..91
+            Ident@82..91 "last_name"
+          Whitespace@91..92 " "
+          Alias@92..99
+            Ident@92..99 "manager"
+        Comma@99..100 ","
+        Whitespace@100..112 "\n           "
+        ColumnExpr@112..121
+          IdentGroup@112..116
+            Ident@112..116 "city"
+          Whitespace@116..121 "\n    "
+      Keyword@121..125 "FROM"
+      Whitespace@125..126 " "
+      IdentGroup@126..137
+        Ident@126..137 "departments"
+      Comma@137..138 ","
+      Whitespace@138..139 " "
+      IdentGroup@139..148
+        Ident@139..148 "employees"
+      Comma@148..149 ","
+      Whitespace@149..150 " "
+      IdentGroup@150..159
+        Ident@150..159 "locations"
+      Whitespace@159..164 "\n    "
+      WhereClause@164..268
+        Keyword@164..169 "WHERE"
+        Whitespace@169..170 " "
+        Expression@170..268
+          Expression@170..235
+            Expression@170..199
+              IdentGroup@170..181
+                Ident@170..181 "location_id"
+              Whitespace@181..182 " "
+              ComparisonOp@182..183 "="
+              Whitespace@183..184 " "
+              IdentGroup@184..192
+                Ident@184..192 "location"
+              Whitespace@192..199 "\n      "
+            LogicOp@199..202 "AND"
+            Whitespace@202..203 " "
+            Expression@203..235
+              IdentGroup@203..214
+                Ident@203..214 "location_id"
+              Whitespace@214..215 " "
+              ComparisonOp@215..216 "="
+              Whitespace@216..217 " "
+              IdentGroup@217..228
+                Ident@217..228 "location_id"
+              Whitespace@228..235 "\n      "
+          LogicOp@235..238 "AND"
+          Whitespace@238..239 " "
+          Expression@239..268
+            IdentGroup@239..252
+              Ident@239..252 "department_id"
+            Whitespace@252..253 " "
+            ComparisonOp@253..254 "="
+            Whitespace@254..255 " "
+            IdentGroup@255..268
+              Ident@255..268 "department_id"
+      Semicolon@268..269 ";"
+"#]],
+            vec![],
+        );
+    }
 }
