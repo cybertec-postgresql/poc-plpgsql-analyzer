@@ -58,6 +58,10 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node that marks a full cursor declaration statement"]
+    CursorDeclarationStmt,
+    #[doc = "A node that marks a full cursor definition statement"]
+    CursorDefinitionStmt,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
     #[doc = "A decimal, positive, or negative"]

@@ -21,6 +21,7 @@ pub use view::*;
 use source_gen::syntax::{SyntaxKind, SyntaxToken};
 
 mod argument_list;
+mod cursor;
 mod datatype;
 mod dml;
 mod expressions;
