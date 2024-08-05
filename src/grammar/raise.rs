@@ -8,7 +8,7 @@ use super::parse_ident;
 pub fn parse_raise_stmt(p: &mut Parser) {
     p.start(SyntaxKind::RaiseStmt);
     p.expect(T![raise]);
-    parse_ident(p, 1..2);
+    parse_ident(p, 1..1);
     p.eat(T![;]);
     p.finish();
 }
