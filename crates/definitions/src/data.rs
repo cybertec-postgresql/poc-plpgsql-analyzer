@@ -368,6 +368,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("range", "Two dots"),
     S!("return_into_clause", "A node containing a return into clause"),
     S!("raise_stmt", "A node that contains the whole RAISE statement for exceptions"),
+    S!("return_into_clause", "A node containing a return into clause"),
     S!("root", "The root node element"),
     S!("r_paren", "Right Paren"),
     S!("select_clause", "A node that contains the whole SELECT clause of a query"),
