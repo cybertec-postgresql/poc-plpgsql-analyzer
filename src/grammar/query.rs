@@ -196,7 +196,6 @@ pub(crate) fn parse_order_by_clause(p: &mut Parser) {
         } else {
             parse_expr(p);
         }
-        // Leaving c_alias out for now
         if [T![asc], T![desc]].contains(&p.current()) {
             p.expect_one_of(&[T![asc], T![desc]]);
         }
