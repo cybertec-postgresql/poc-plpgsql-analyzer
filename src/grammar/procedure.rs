@@ -328,8 +328,9 @@ Root@0..304
               LParen@55..56 "("
               ArgumentList@56..74
                 Argument@56..63
-                  IdentGroup@56..63
-                    Ident@56..63 "SYSDATE"
+                  Expression@56..63
+                    IdentGroup@56..63
+                      Ident@56..63 "SYSDATE"
                 Comma@63..64 ","
                 Whitespace@64..65 " "
                 Argument@65..74
@@ -356,8 +357,9 @@ Root@0..304
               LParen@127..128 "("
               ArgumentList@128..141
                 Argument@128..135
-                  IdentGroup@128..135
-                    Ident@128..135 "SYSDATE"
+                  Expression@128..135
+                    IdentGroup@128..135
+                      Ident@128..135 "SYSDATE"
                 Comma@135..136 ","
                 Whitespace@136..137 " "
                 Argument@137..141
@@ -383,7 +385,8 @@ Root@0..304
             LParen@194..195 "("
             ArgumentList@195..265
               Argument@195..201
-                Integer@195..201 "-20205"
+                Expression@195..201
+                  Integer@195..201 "-20205"
               Comma@201..202 ","
               Whitespace@202..211 "\n        "
               Argument@211..265

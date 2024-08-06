@@ -78,7 +78,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                     p.bump_any();
                 }
             }
-            if min_bp == 0 && (p.at(T![;]) || p.at(T![EOF])) {
+            if min_bp == 0 && (p.at(T![;]) || p.at(T![EOF]) || p.at(T![,])) {
                 add_expr_node(p, checkpoint, None);
             }
             p.eat(T![(+)]);
@@ -499,8 +499,9 @@ Root@0..113
         LParen@8..9 "("
         ArgumentList@9..27
           Argument@9..16
-            IdentGroup@9..16
-              Ident@9..16 "SYSDATE"
+            Expression@9..16
+              IdentGroup@9..16
+                Ident@9..16 "SYSDATE"
           Comma@16..17 ","
           Whitespace@17..18 " "
           Argument@18..27
@@ -527,8 +528,9 @@ Root@0..113
         LParen@80..81 "("
         ArgumentList@81..94
           Argument@81..88
-            IdentGroup@81..88
-              Ident@81..88 "SYSDATE"
+            Expression@81..88
+              IdentGroup@81..88
+                Ident@81..88 "SYSDATE"
           Comma@88..89 ","
           Whitespace@89..90 " "
           Argument@90..94
@@ -787,8 +789,9 @@ Root@0..28
       LParen@8..9 "("
       ArgumentList@9..27
         Argument@9..19
-          IdentGroup@9..19
-            Ident@9..19 "first_name"
+          Expression@9..19
+            IdentGroup@9..19
+              Ident@9..19 "first_name"
         Comma@19..20 ","
         Whitespace@20..21 " "
         Argument@21..27

@@ -129,13 +129,15 @@ Root@0..395
           Whitespace@145..146 " "
           SelectClause@146..174
             ColumnExpr@146..157
-              IdentGroup@146..157
-                Ident@146..157 "employee_id"
+              Expression@146..157
+                IdentGroup@146..157
+                  Ident@146..157 "employee_id"
             Comma@157..158 ","
             Whitespace@158..159 " "
             ColumnExpr@159..165
-              IdentGroup@159..165
-                Ident@159..165 "job_id"
+              Expression@159..165
+                IdentGroup@159..165
+                  Ident@159..165 "job_id"
             Comma@165..166 ","
             Whitespace@166..167 " "
             ColumnExpr@167..174
@@ -258,13 +260,15 @@ Root@0..175
       Whitespace@53..54 " "
       SelectClause@54..112
         ColumnExpr@54..63
-          IdentGroup@54..63
-            Ident@54..63 "last_name"
+          Expression@54..63
+            IdentGroup@54..63
+              Ident@54..63 "last_name"
         Comma@63..64 ","
         Whitespace@64..65 " "
         ColumnExpr@65..75
-          IdentGroup@65..75
-            Ident@65..75 "first_name"
+          Expression@65..75
+            IdentGroup@65..75
+              Ident@65..75 "first_name"
         Comma@75..76 ","
         Whitespace@76..77 " "
         ColumnExpr@77..112
@@ -359,8 +363,9 @@ Root@0..269
       Whitespace@53..54 " "
       SelectClause@54..121
         ColumnExpr@54..69
-          IdentGroup@54..69
-            Ident@54..69 "department_name"
+          Expression@54..69
+            IdentGroup@54..69
+              Ident@54..69 "department_name"
         Comma@69..70 ","
         Whitespace@70..82 "\n           "
         ColumnExpr@82..99

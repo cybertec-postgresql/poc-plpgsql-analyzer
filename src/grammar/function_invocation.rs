@@ -111,8 +111,9 @@ Root@0..28
     LParen@4..5 "("
     ArgumentList@5..27
       Argument@5..12
-        IdentGroup@5..12
-          Ident@5..12 "SYSDATE"
+        Expression@5..12
+          IdentGroup@5..12
+            Ident@5..12 "SYSDATE"
       Comma@12..13 ","
       Whitespace@13..14 " "
       Argument@14..19

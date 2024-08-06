@@ -338,8 +338,9 @@ Root@0..38
           LParen@12..13 "("
           ArgumentList@13..26
             Argument@13..20
-              IdentGroup@13..20
-                Ident@13..20 "SYSDATE"
+              Expression@13..20
+                IdentGroup@13..20
+                  Ident@13..20 "SYSDATE"
             Comma@20..21 ","
             Whitespace@21..22 " "
             Argument@22..26
@@ -517,8 +518,9 @@ Root@0..148
     Keyword@57..63 "VALUES"
     Whitespace@63..64 " "
     LParen@64..65 "("
-    IdentGroup@65..73
-      Ident@65..73 "p_emp_id"
+    Expression@65..73
+      IdentGroup@65..73
+        Ident@65..73 "p_emp_id"
     Comma@73..74 ","
     Whitespace@74..75 " "
     IdentGroup@75..82
@@ -566,18 +568,21 @@ Root@0..106
     Whitespace@6..7 " "
     SelectClause@7..49
       ColumnExpr@7..18
-        IdentGroup@7..18
-          Ident@7..18 "employee_id"
+        Expression@7..18
+          IdentGroup@7..18
+            Ident@7..18 "employee_id"
       Comma@18..19 ","
       Whitespace@19..20 " "
       ColumnExpr@20..29
-        IdentGroup@20..29
-          Ident@20..29 "last_name"
+        Expression@20..29
+          IdentGroup@20..29
+            Ident@20..29 "last_name"
       Comma@29..30 ","
       Whitespace@30..31 " "
       ColumnExpr@31..41
-        IdentGroup@31..41
-          Ident@31..41 "manager_id"
+        Expression@31..41
+          IdentGroup@31..41
+            Ident@31..41 "manager_id"
       Comma@41..42 ","
       Whitespace@42..43 " "
       ColumnExpr@43..49
@@ -651,7 +656,8 @@ Root@0..221
         IdentGroup@69..74
           Ident@69..74 "LEVEL"
       ColumnExpr@74..76
-        Integer@74..76 "-1"
+        Expression@74..76
+          Integer@74..76 "-1"
       Comma@76..77 ","
       Whitespace@77..78 " "
       ColumnExpr@78..118
@@ -661,8 +667,9 @@ Root@0..221
           LParen@97..98 "("
           ArgumentList@98..112
             Argument@98..107
-              IdentGroup@98..107
-                Ident@98..107 "last_name"
+              Expression@98..107
+                IdentGroup@98..107
+                  Ident@98..107 "last_name"
             Comma@107..108 ","
             Whitespace@108..109 " "
             Argument@109..112
@@ -774,8 +781,9 @@ Root@0..45
       Whitespace@23..24 " "
       Keyword@24..26 "BY"
       Whitespace@26..27 " "
-      IdentGroup@27..33
-        Ident@27..33 "salary"
+      Expression@27..33
+        IdentGroup@27..33
+          Ident@27..33 "salary"
       Comma@33..34 ","
       Whitespace@34..35 " "
       IdentGroup@35..39
