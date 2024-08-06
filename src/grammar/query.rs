@@ -261,12 +261,24 @@ pub(crate) fn parse_grouping_sets_clause(p: &mut Parser) {
 
 pub(crate) fn parse_group_expression_list(p: &mut Parser) {
     p.start(SyntaxKind::GroupingExpressionList);
-    safe_loop!(p, {
-        parse_expr(p);
-        if !p.eat(T![,]) {
-            break;
-        }
-    });
+
+    if p.eat(T!["("]) {
+        safe_loop!(p, {
+            opt_expr(p);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+        p.expect(T![")"]);
+    } else {
+        safe_loop!(p, {
+            parse_expr(p);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+    }
+
     p.finish();
 }
 
@@ -1091,6 +1103,89 @@ Root@0..73
                 |p| parse_query(p, false),
             ),
             expect![[r#"
+Root@0..174
+  SelectStmt@0..174
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..45
+      ColumnExpr@7..15
+        IdentGroup@7..15
+          Ident@7..15 "customer"
+      Comma@15..16 ","
+      Whitespace@16..17 " "
+      ColumnExpr@17..25
+        IdentGroup@17..25
+          Ident@17..25 "category"
+      Comma@25..26 ","
+      Whitespace@26..27 " "
+      ColumnExpr@27..45
+        FunctionInvocation@27..44
+          IdentGroup@27..30
+            Ident@27..30 "SUM"
+          LParen@30..31 "("
+          ArgumentList@31..43
+            Argument@31..43
+              IdentGroup@31..43
+                Ident@31..43 "sales_amount"
+          RParen@43..44 ")"
+        Whitespace@44..45 " "
+    Keyword@45..49 "FROM"
+    Whitespace@49..50 " "
+    IdentGroup@50..73
+      Ident@50..73 "customer_category_sales"
+    Whitespace@73..74 " "
+    GroupByClause@74..146
+      Keyword@74..79 "GROUP"
+      Whitespace@79..80 " "
+      Keyword@80..82 "BY"
+      Whitespace@82..83 " "
+      GroupingSetsClause@83..145
+        Keyword@83..91 "GROUPING"
+        Whitespace@91..92 " "
+        Keyword@92..96 "SETS"
+        LParen@96..97 "("
+        GroupingExpressionList@97..116
+          LParen@97..98 "("
+          IdentGroup@98..106
+            Ident@98..106 "customer"
+          Comma@106..107 ","
+          IdentGroup@107..115
+            Ident@107..115 "category"
+          RParen@115..116 ")"
+        Comma@116..117 ","
+        Whitespace@117..118 " "
+        GroupingExpressionList@118..128
+          LParen@118..119 "("
+          IdentGroup@119..127
+            Ident@119..127 "customer"
+          RParen@127..128 ")"
+        Comma@128..129 ","
+        Whitespace@129..130 " "
+        GroupingExpressionList@130..140
+          LParen@130..131 "("
+          IdentGroup@131..139
+            Ident@131..139 "category"
+          RParen@139..140 ")"
+        Comma@140..141 ","
+        Whitespace@141..142 " "
+        GroupingExpressionList@142..144
+          LParen@142..143 "("
+          RParen@143..144 ")"
+        RParen@144..145 ")"
+      Whitespace@145..146 " "
+    OrderByClause@146..173
+      Keyword@146..151 "ORDER"
+      Whitespace@151..152 " "
+      Keyword@152..154 "BY"
+      Whitespace@154..155 " "
+      IdentGroup@155..163
+        Ident@155..163 "customer"
+      Comma@163..164 ","
+      Whitespace@164..165 " "
+      Expression@165..173
+        IdentGroup@165..173
+          Ident@165..173 "category"
+    Semicolon@173..174 ";"
 "#]],
             vec![],
         );
