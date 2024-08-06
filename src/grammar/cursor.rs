@@ -428,4 +428,98 @@ Root@0..269
             vec![],
         );
     }
+
+    #[test]
+    fn cursor_with_default() {
+        check(
+            parse(
+                "CURSOR abc (def IN int DEFAULT 25+44) RETURN abc%ROWTYPE;",
+                parse_cursor,
+            ),
+            expect![[r#"
+Root@0..57
+  CursorStmt@0..57
+    Keyword@0..6 "CURSOR"
+    Whitespace@6..7 " "
+    IdentGroup@7..10
+      Ident@7..10 "abc"
+    Whitespace@10..11 " "
+    CursorParameterDeclarations@11..37
+      LParen@11..12 "("
+      CursorParameterDeclaration@12..36
+        IdentGroup@12..15
+          Ident@12..15 "def"
+        Whitespace@15..16 " "
+        Keyword@16..18 "IN"
+        Whitespace@18..19 " "
+        Datatype@19..23
+          Keyword@19..22 "int"
+          Whitespace@22..23 " "
+        Keyword@23..30 "DEFAULT"
+        Whitespace@30..31 " "
+        Expression@31..36
+          Integer@31..33 "25"
+          ArithmeticOp@33..34 "+"
+          Integer@34..36 "44"
+      RParen@36..37 ")"
+    Whitespace@37..38 " "
+    Keyword@38..44 "RETURN"
+    Whitespace@44..45 " "
+    RowtypeClause@45..56
+      IdentGroup@45..48
+        Ident@45..48 "abc"
+      Percentage@48..49 "%"
+      Keyword@49..56 "ROWTYPE"
+    Semicolon@56..57 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn cursor_with_assign() {
+        check(
+            parse(
+                "CURSOR abc (def IN int := 25+44) RETURN abc%ROWTYPE;",
+                parse_cursor,
+            ),
+            expect![[r#"
+Root@0..52
+  CursorStmt@0..52
+    Keyword@0..6 "CURSOR"
+    Whitespace@6..7 " "
+    IdentGroup@7..10
+      Ident@7..10 "abc"
+    Whitespace@10..11 " "
+    CursorParameterDeclarations@11..32
+      LParen@11..12 "("
+      CursorParameterDeclaration@12..31
+        IdentGroup@12..15
+          Ident@12..15 "def"
+        Whitespace@15..16 " "
+        Keyword@16..18 "IN"
+        Whitespace@18..19 " "
+        Datatype@19..23
+          Keyword@19..22 "int"
+          Whitespace@22..23 " "
+        Assign@23..25 ":="
+        Whitespace@25..26 " "
+        Expression@26..31
+          Integer@26..28 "25"
+          ArithmeticOp@28..29 "+"
+          Integer@29..31 "44"
+      RParen@31..32 ")"
+    Whitespace@32..33 " "
+    Keyword@33..39 "RETURN"
+    Whitespace@39..40 " "
+    RowtypeClause@40..51
+      IdentGroup@40..43
+        Ident@40..43 "abc"
+      Percentage@43..44 "%"
+      Keyword@44..51 "ROWTYPE"
+    Semicolon@51..52 ";"
+"#]],
+            vec![],
+        );
+    }
 }
