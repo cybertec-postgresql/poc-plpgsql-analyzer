@@ -237,7 +237,6 @@ pub(crate) fn parse_rollup_cube_clause(p: &mut Parser) {
     p.start(SyntaxKind::RollupCubeClause);
     p.expect_one_of(&[T![rollup], T![cube]]);
     p.expect(T!["("]);
-    // Parse grouping expression list
     parse_group_expression_list(p);
     p.expect(T![")"]);
     p.finish();
