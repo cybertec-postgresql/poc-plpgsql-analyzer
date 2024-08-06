@@ -933,11 +933,13 @@ Root@0..44
       Whitespace@31..32 " "
       Keyword@32..34 "BY"
       Whitespace@34..35 " "
-      IdentGroup@35..37
-        Ident@35..37 "c1"
+      Expression@35..37
+        IdentGroup@35..37
+          Ident@35..37 "c1"
       Comma@37..38 ","
-      IdentGroup@38..40
-        Ident@38..40 "c2"
+      Expression@38..40
+        IdentGroup@38..40
+          Ident@38..40 "c2"
       Comma@40..41 ","
       Expression@41..43
         IdentGroup@41..43
@@ -1020,11 +1022,13 @@ Root@0..52
         Keyword@35..41 "ROLLUP"
         LParen@41..42 "("
         GroupingExpressionList@42..50
-          IdentGroup@42..44
-            Ident@42..44 "c1"
+          Expression@42..44
+            IdentGroup@42..44
+              Ident@42..44 "c1"
           Comma@44..45 ","
-          IdentGroup@45..47
-            Ident@45..47 "c2"
+          Expression@45..47
+            IdentGroup@45..47
+              Ident@45..47 "c2"
           Comma@47..48 ","
           IdentGroup@48..50
             Ident@48..50 "c3"
@@ -1049,18 +1053,21 @@ Root@0..73
     Whitespace@6..7 " "
     SelectClause@7..33
       ColumnExpr@7..9
-        IdentGroup@7..9
-          Ident@7..9 "c1"
+        Expression@7..9
+          IdentGroup@7..9
+            Ident@7..9 "c1"
       Comma@9..10 ","
       Whitespace@10..11 " "
       ColumnExpr@11..13
-        IdentGroup@11..13
-          Ident@11..13 "c2"
+        Expression@11..13
+          IdentGroup@11..13
+            Ident@11..13 "c2"
       Comma@13..14 ","
       Whitespace@14..15 " "
       ColumnExpr@15..17
-        IdentGroup@15..17
-          Ident@15..17 "c3"
+        Expression@15..17
+          IdentGroup@15..17
+            Ident@15..17 "c3"
       Comma@17..18 ","
       Whitespace@18..19 " "
       ColumnExpr@19..33
@@ -1088,11 +1095,13 @@ Root@0..73
         Keyword@58..62 "CUBE"
         LParen@62..63 "("
         GroupingExpressionList@63..71
-          IdentGroup@63..65
-            Ident@63..65 "c1"
+          Expression@63..65
+            IdentGroup@63..65
+              Ident@63..65 "c1"
           Comma@65..66 ","
-          IdentGroup@66..68
-            Ident@66..68 "c2"
+          Expression@66..68
+            IdentGroup@66..68
+              Ident@66..68 "c2"
           Comma@68..69 ","
           IdentGroup@69..71
             Ident@69..71 "c3"
@@ -1117,13 +1126,15 @@ Root@0..174
     Whitespace@6..7 " "
     SelectClause@7..45
       ColumnExpr@7..15
-        IdentGroup@7..15
-          Ident@7..15 "customer"
+        Expression@7..15
+          IdentGroup@7..15
+            Ident@7..15 "customer"
       Comma@15..16 ","
       Whitespace@16..17 " "
       ColumnExpr@17..25
-        IdentGroup@17..25
-          Ident@17..25 "category"
+        Expression@17..25
+          IdentGroup@17..25
+            Ident@17..25 "category"
       Comma@25..26 ","
       Whitespace@26..27 " "
       ColumnExpr@27..45
@@ -1154,8 +1165,9 @@ Root@0..174
         LParen@96..97 "("
         GroupingExpressionList@97..116
           LParen@97..98 "("
-          IdentGroup@98..106
-            Ident@98..106 "customer"
+          Expression@98..106
+            IdentGroup@98..106
+              Ident@98..106 "customer"
           Comma@106..107 ","
           IdentGroup@107..115
             Ident@107..115 "category"
@@ -1186,8 +1198,9 @@ Root@0..174
       Whitespace@151..152 " "
       Keyword@152..154 "BY"
       Whitespace@154..155 " "
-      IdentGroup@155..163
-        Ident@155..163 "customer"
+      Expression@155..163
+        IdentGroup@155..163
+          Ident@155..163 "customer"
       Comma@163..164 ","
       Whitespace@164..165 " "
       Expression@165..173
