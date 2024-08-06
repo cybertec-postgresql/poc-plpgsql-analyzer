@@ -3,6 +3,7 @@ use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
 use super::{parse_datatype, parse_expr, parse_ident, parse_query};
 
+/// Railroad diagram 🚆 https://docs.oracle.com/en/database/oracle/oracle-database/19/lnpls/explicit-cursor-declaration-and-definition.html
 pub fn parse_cursor(p: &mut Parser) {
     p.start(SyntaxKind::CursorStmt);
     p.expect(T![cursor]);
