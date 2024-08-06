@@ -28,6 +28,10 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         _ => (), // No-op
     }
 
+    if p.current() == T![order] {
+        parse_order_by_clause(p);
+    }
+
     p.eat(T![;]);
     p.finish();
 }
@@ -178,6 +182,32 @@ pub(crate) fn parse_where_clause(p: &mut Parser) {
 
     parse_expr(p);
 
+    p.finish();
+}
+
+pub(crate) fn parse_order_by_clause(p: &mut Parser) {
+    p.start(SyntaxKind::OrderByClause);
+    p.expect(T![order]);
+    p.eat(T![siblings]);
+    p.expect(T![by]);
+    safe_loop!(p, {
+        if p.at(T![int_literal]) {
+            p.eat(T![int_literal]);
+        } else {
+            parse_expr(p);
+        }
+        // Leaving c_alias out for now
+        if [T![asc], T![desc]].contains(&p.current()) {
+            p.expect_one_of(&[T![asc], T![desc]]);
+        }
+
+        if p.eat(T![nulls]) {
+            p.expect_one_of(&[T![first], T![last]]);
+        }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.finish();
 }
 
