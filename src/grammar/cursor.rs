@@ -39,11 +39,10 @@ fn parse_cursor_param_declaration(p: &mut Parser) {
     parse_ident(p, 1..1);
     p.eat(T![in]);
     parse_datatype(p);
-    if [T![:=], T![default]].contains(&p.current()) {
-        p.eat(T![:=]);
-        p.eat(T![default]);
+    if p.eat_one_of(&[T![:=], T![default]]) {
         parse_expr(p);
     }
+
     p.finish();
 }
 
