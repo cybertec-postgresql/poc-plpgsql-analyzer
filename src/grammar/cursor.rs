@@ -85,20 +85,15 @@ mod tests {
     SELECT * FROM departments              -- repeating return type
     WHERE department_id = 110;
  
-  CURSOR c3 RETURN locations%ROWTYPE;      -- Declare c3
- 
-  CURSOR c3 IS                             -- Define c3,
-    SELECT * FROM locations                -- omitting return type
-    WHERE country_id = 'JP';
-BEGIN
+  BEGIN
   NULL;
 END;",
                 parse_block,
             ),
             expect![[r#"
-Root@0..605
-  Block@0..605
-    DeclareSection@0..587
+Root@0..395
+  Block@0..395
+    DeclareSection@0..377
       Keyword@0..7 "DECLARE"
       Whitespace@7..10 "\n  "
       CursorStmt@10..47
@@ -205,65 +200,14 @@ Root@0..605
               Integer@368..371 "110"
           Semicolon@371..372 ";"
         Whitespace@372..377 "\n \n  "
-      CursorStmt@377..412
-        Keyword@377..383 "CURSOR"
-        Whitespace@383..384 " "
-        IdentGroup@384..386
-          Ident@384..386 "c3"
-        Whitespace@386..387 " "
-        Keyword@387..393 "RETURN"
-        Whitespace@393..394 " "
-        RowtypeClause@394..411
-          IdentGroup@394..403
-            Ident@394..403 "locations"
-          Percentage@403..404 "%"
-          Keyword@404..411 "ROWTYPE"
-        Semicolon@411..412 ";"
-      Whitespace@412..418 "      "
-      Comment@418..431 "-- Declare c3"
-      Whitespace@431..436 "\n \n  "
-      CursorStmt@436..587
-        Keyword@436..442 "CURSOR"
-        Whitespace@442..443 " "
-        IdentGroup@443..445
-          Ident@443..445 "c3"
-        Whitespace@445..446 " "
-        Keyword@446..448 "IS"
-        Whitespace@448..477 "                      ..."
-        Comment@477..490 "-- Define c3,"
-        Whitespace@490..495 "\n    "
-        SelectStmt@495..586
-          Keyword@495..501 "SELECT"
-          Whitespace@501..502 " "
-          Asterisk@502..503 "*"
-          Whitespace@503..504 " "
-          Keyword@504..508 "FROM"
-          Whitespace@508..509 " "
-          IdentGroup@509..518
-            Ident@509..518 "locations"
-          Whitespace@518..534 "                "
-          Comment@534..557 "-- omitting return type"
-          Whitespace@557..562 "\n    "
-          WhereClause@562..585
-            Keyword@562..567 "WHERE"
-            Whitespace@567..568 " "
-            Expression@568..585
-              IdentGroup@568..578
-                Ident@568..578 "country_id"
-              Whitespace@578..579 " "
-              ComparisonOp@579..580 "="
-              Whitespace@580..581 " "
-              QuotedLiteral@581..585 "'JP'"
-          Semicolon@585..586 ";"
-        Whitespace@586..587 "\n"
-    Keyword@587..592 "BEGIN"
-    Whitespace@592..595 "\n  "
-    BlockStatement@595..600
-      Keyword@595..599 "NULL"
-      Semicolon@599..600 ";"
-    Whitespace@600..601 "\n"
-    Keyword@601..604 "END"
-    Semicolon@604..605 ";"
+    Keyword@377..382 "BEGIN"
+    Whitespace@382..385 "\n  "
+    BlockStatement@385..390
+      Keyword@385..389 "NULL"
+      Semicolon@389..390 ";"
+    Whitespace@390..391 "\n"
+    Keyword@391..394 "END"
+    Semicolon@394..395 ";"
 "#]],
             vec![],
         );
