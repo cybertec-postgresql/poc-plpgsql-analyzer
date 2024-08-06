@@ -28,12 +28,12 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         _ => (), // No-op
     }
 
-    if p.at(T![order]) {
-        parse_order_by_clause(p);
-    }
-
     if p.at(T![group]) {
         parse_group_by_clause(p);
+    }
+
+    if p.at(T![order]) {
+        parse_order_by_clause(p);
     }
 
     p.eat(T![;]);
