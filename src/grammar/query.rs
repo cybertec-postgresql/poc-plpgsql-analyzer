@@ -215,7 +215,13 @@ pub(crate) fn parse_group_by_clause(p: &mut Parser) {
     p.expect(T![group]);
     p.expect(T![by]);
     safe_loop!(p, {
-        parse_expr(p);
+        if [T![rollup], T![cube]].contains(&p.current()) {
+            parse_rollup_cube_clause(p);
+        } else if p.at(T![grouping]) {
+            parse_grouping_sets_clause(p);
+        } else {
+            parse_expr(p);
+        }
         if !p.eat(T![,]) {
             break;
         }
@@ -224,6 +230,40 @@ pub(crate) fn parse_group_by_clause(p: &mut Parser) {
     if p.eat(T![having]) {
         parse_expr(p);
     }
+    p.finish();
+}
+
+pub(crate) fn parse_rollup_cube_clause(p: &mut Parser) {
+    p.start(SyntaxKind::RollupCubeClause);
+    p.expect_one_of(&[T![rollup], T![cube]]);
+    p.expect(T!["("]);
+    // Parse grouping expression list
+    parse_group_expression_list(p);
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_grouping_sets_clause(p: &mut Parser) {
+    p.start(SyntaxKind::GroupingSetsClause);
+    p.expect(T!["("]);
+    // Parse rollup or grouping expression list
+    if [T![rollup], T![cube]].contains(&p.current()) {
+        parse_rollup_cube_clause(p);
+    } else {
+        parse_group_expression_list(p);
+    }
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_group_expression_list(p: &mut Parser) {
+    p.start(SyntaxKind::GroupingExpressionList);
+    safe_loop!(p, {
+        parse_expr(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.finish();
 }
 
