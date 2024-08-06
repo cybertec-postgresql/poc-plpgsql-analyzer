@@ -52,8 +52,9 @@ fn parse_rowtype_clause(p: &mut Parser) {
     if p.at(T![%]) && p.nth(1) == Some(T![rowtype]) {
         p.expect(T![%]);
         p.expect(T![rowtype]);
-    } else {
-        parse_datatype(p);
+    } else if p.at(T![%]) && p.nth(1) == Some(T![type]) {
+        p.expect(T![%]);
+        p.expect(T![type]);
     }
 
     p.finish();
