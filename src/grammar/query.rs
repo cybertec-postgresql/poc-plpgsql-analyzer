@@ -787,4 +787,39 @@ Root@0..45
             vec![],
         );
     }
+
+    #[test]
+    fn test_query_order_by_nulls_first() {
+        check(
+            parse("SELECT * FROM emp ORDER BY salary NULLS FIRST;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..46
+  SelectStmt@0..46
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "emp"
+    Whitespace@17..18 " "
+    OrderByClause@18..45
+      Keyword@18..23 "ORDER"
+      Whitespace@23..24 " "
+      Keyword@24..26 "BY"
+      Whitespace@26..27 " "
+      IdentGroup@27..33
+        Ident@27..33 "salary"
+      Whitespace@33..34 " "
+      Keyword@34..39 "NULLS"
+      Whitespace@39..40 " "
+      Keyword@40..45 "FIRST"
+    Semicolon@45..46 ";"
+"#]],
+            vec![],
+        );
+    }
 }
