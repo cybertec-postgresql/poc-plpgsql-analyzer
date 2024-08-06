@@ -28,6 +28,10 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         _ => (), // No-op
     }
 
+    if p.at(T![order]) {
+        parse_order_by_clause(p);
+    }
+
     p.eat(T![;]);
     p.finish();
 }
@@ -178,6 +182,27 @@ pub(crate) fn parse_where_clause(p: &mut Parser) {
 
     parse_expr(p);
 
+    p.finish();
+}
+
+pub(crate) fn parse_order_by_clause(p: &mut Parser) {
+    p.start(SyntaxKind::OrderByClause);
+    p.expect(T![order]);
+    p.eat(T![siblings]);
+    p.expect(T![by]);
+    safe_loop!(p, {
+        if !p.eat(T![int_literal]) {
+            parse_expr(p);
+        }
+        p.eat_one_of(&[T![asc], T![desc]]);
+
+        if p.eat(T![nulls]) {
+            p.expect_one_of(&[T![first], T![last]]);
+        }
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.finish();
 }
 
@@ -688,6 +713,111 @@ Root@0..221
         IdentGroup@210..220
           Ident@210..220 "manager_id"
     Semicolon@220..221 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_query_with_order_by() {
+        check(
+            parse("SELECT * FROM emp ORDER BY salary ASC;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..38
+  SelectStmt@0..38
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "emp"
+    Whitespace@17..18 " "
+    OrderByClause@18..37
+      Keyword@18..23 "ORDER"
+      Whitespace@23..24 " "
+      Keyword@24..26 "BY"
+      Whitespace@26..27 " "
+      IdentGroup@27..33
+        Ident@27..33 "salary"
+      Whitespace@33..34 " "
+      Keyword@34..37 "ASC"
+    Semicolon@37..38 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_query_order_by_multiple() {
+        check(
+            parse("SELECT * FROM emp ORDER BY salary, name DESC;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..45
+  SelectStmt@0..45
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "emp"
+    Whitespace@17..18 " "
+    OrderByClause@18..44
+      Keyword@18..23 "ORDER"
+      Whitespace@23..24 " "
+      Keyword@24..26 "BY"
+      Whitespace@26..27 " "
+      IdentGroup@27..33
+        Ident@27..33 "salary"
+      Comma@33..34 ","
+      Whitespace@34..35 " "
+      IdentGroup@35..39
+        Ident@35..39 "name"
+      Whitespace@39..40 " "
+      Keyword@40..44 "DESC"
+    Semicolon@44..45 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_query_order_by_nulls_first() {
+        check(
+            parse("SELECT * FROM emp ORDER BY salary NULLS FIRST;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..46
+  SelectStmt@0..46
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "emp"
+    Whitespace@17..18 " "
+    OrderByClause@18..45
+      Keyword@18..23 "ORDER"
+      Whitespace@23..24 " "
+      Keyword@24..26 "BY"
+      Whitespace@26..27 " "
+      IdentGroup@27..33
+        Ident@27..33 "salary"
+      Whitespace@33..34 " "
+      Keyword@34..39 "NULLS"
+      Whitespace@39..40 " "
+      Keyword@40..45 "FIRST"
+    Semicolon@45..46 ";"
 "#]],
             vec![],
         );
