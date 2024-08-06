@@ -722,4 +722,37 @@ Root@0..221
             vec![],
         );
     }
+
+    #[test]
+    fn test_query_with_order_by() {
+        check(
+            parse("SELECT * FROM emp ORDER BY salary ASC;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..38
+  SelectStmt@0..38
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "emp"
+    Whitespace@17..18 " "
+    OrderByClause@18..37
+      Keyword@18..23 "ORDER"
+      Whitespace@23..24 " "
+      Keyword@24..26 "BY"
+      Whitespace@26..27 " "
+      IdentGroup@27..33
+        Ident@27..33 "salary"
+      Whitespace@33..34 " "
+      Keyword@34..37 "ASC"
+    Semicolon@37..38 ";"
+"#]],
+            vec![],
+        );
+    }
 }
