@@ -247,11 +247,17 @@ pub(crate) fn parse_grouping_sets_clause(p: &mut Parser) {
     p.start(SyntaxKind::GroupingSetsClause);
     p.expect(T!["("]);
     // Parse rollup or grouping expression list
-    if [T![rollup], T![cube]].contains(&p.current()) {
-        parse_rollup_cube_clause(p);
-    } else {
-        parse_group_expression_list(p);
-    }
+    safe_loop!(p, {
+        if [T![rollup], T![cube]].contains(&p.current()) {
+            parse_rollup_cube_clause(p);
+        } else {
+            parse_group_expression_list(p);
+        }
+
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
     p.expect(T![")"]);
     p.finish();
 }
@@ -879,6 +885,202 @@ Root@0..46
       Whitespace@39..40 " "
       Keyword@40..45 "FIRST"
     Semicolon@45..46 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_group_by() {
+        check(
+            parse("SELECT column_list FROM T GROUP BY c1,c2,c3;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..44
+  SelectStmt@0..44
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..19
+      ColumnExpr@7..19
+        IdentGroup@7..18
+          Ident@7..18 "column_list"
+        Whitespace@18..19 " "
+    Keyword@19..23 "FROM"
+    Whitespace@23..24 " "
+    IdentGroup@24..25
+      Ident@24..25 "T"
+    Whitespace@25..26 " "
+    GroupByClause@26..43
+      Keyword@26..31 "GROUP"
+      Whitespace@31..32 " "
+      Keyword@32..34 "BY"
+      Whitespace@34..35 " "
+      IdentGroup@35..37
+        Ident@35..37 "c1"
+      Comma@37..38 ","
+      IdentGroup@38..40
+        Ident@38..40 "c2"
+      Comma@40..41 ","
+      Expression@41..43
+        IdentGroup@41..43
+          Ident@41..43 "c3"
+    Semicolon@43..44 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_group_by_having() {
+        check(
+            parse(
+                "SELECT column_list FROM T GROUP BY c1 HAVING group_condition;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..61
+  SelectStmt@0..61
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..19
+      ColumnExpr@7..19
+        IdentGroup@7..18
+          Ident@7..18 "column_list"
+        Whitespace@18..19 " "
+    Keyword@19..23 "FROM"
+    Whitespace@23..24 " "
+    IdentGroup@24..25
+      Ident@24..25 "T"
+    Whitespace@25..26 " "
+    GroupByClause@26..60
+      Keyword@26..31 "GROUP"
+      Whitespace@31..32 " "
+      Keyword@32..34 "BY"
+      Whitespace@34..35 " "
+      IdentGroup@35..37
+        Ident@35..37 "c1"
+      Whitespace@37..38 " "
+      Keyword@38..44 "HAVING"
+      Whitespace@44..45 " "
+      Expression@45..60
+        IdentGroup@45..60
+          Ident@45..60 "group_condition"
+    Semicolon@60..61 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_group_by_rollup() {
+        check(
+            parse(
+                "SELECT column_list FROM T GROUP BY ROLLUP(c1,c2,c3);",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..52
+  SelectStmt@0..52
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..19
+      ColumnExpr@7..19
+        IdentGroup@7..18
+          Ident@7..18 "column_list"
+        Whitespace@18..19 " "
+    Keyword@19..23 "FROM"
+    Whitespace@23..24 " "
+    IdentGroup@24..25
+      Ident@24..25 "T"
+    Whitespace@25..26 " "
+    GroupByClause@26..51
+      Keyword@26..31 "GROUP"
+      Whitespace@31..32 " "
+      Keyword@32..34 "BY"
+      Whitespace@34..35 " "
+      RollupCubeClause@35..51
+        Keyword@35..41 "ROLLUP"
+        LParen@41..42 "("
+        GroupingExpressionList@42..50
+          IdentGroup@42..44
+            Ident@42..44 "c1"
+          Comma@44..45 ","
+          IdentGroup@45..47
+            Ident@45..47 "c2"
+          Comma@47..48 ","
+          IdentGroup@48..50
+            Ident@48..50 "c3"
+        RParen@50..51 ")"
+    Semicolon@51..52 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_group_by_cube() {
+        check(
+            parse(
+                "SELECT c1, c2, c3, aggregate(c4) FROM table_name GROUP BY CUBE(c1,c2,c3);",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..73
+  SelectStmt@0..73
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..33
+      ColumnExpr@7..9
+        IdentGroup@7..9
+          Ident@7..9 "c1"
+      Comma@9..10 ","
+      Whitespace@10..11 " "
+      ColumnExpr@11..13
+        IdentGroup@11..13
+          Ident@11..13 "c2"
+      Comma@13..14 ","
+      Whitespace@14..15 " "
+      ColumnExpr@15..17
+        IdentGroup@15..17
+          Ident@15..17 "c3"
+      Comma@17..18 ","
+      Whitespace@18..19 " "
+      ColumnExpr@19..33
+        FunctionInvocation@19..32
+          IdentGroup@19..28
+            Ident@19..28 "aggregate"
+          LParen@28..29 "("
+          ArgumentList@29..31
+            Argument@29..31
+              IdentGroup@29..31
+                Ident@29..31 "c4"
+          RParen@31..32 ")"
+        Whitespace@32..33 " "
+    Keyword@33..37 "FROM"
+    Whitespace@37..38 " "
+    IdentGroup@38..48
+      Ident@38..48 "table_name"
+    Whitespace@48..49 " "
+    GroupByClause@49..72
+      Keyword@49..54 "GROUP"
+      Whitespace@54..55 " "
+      Keyword@55..57 "BY"
+      Whitespace@57..58 " "
+      RollupCubeClause@58..72
+        Keyword@58..62 "CUBE"
+        LParen@62..63 "("
+        GroupingExpressionList@63..71
+          IdentGroup@63..65
+            Ident@63..65 "c1"
+          Comma@65..66 ","
+          IdentGroup@66..68
+            Ident@66..68 "c2"
+          Comma@68..69 ","
+          IdentGroup@69..71
+            Ident@69..71 "c3"
+        RParen@71..72 ")"
+    Semicolon@72..73 ";"
 "#]],
             vec![],
         );
