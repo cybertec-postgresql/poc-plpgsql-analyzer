@@ -132,6 +132,8 @@ pub enum SyntaxKind {
     Range,
     #[doc = "A node containing a return into clause"]
     ReturnIntoClause,
+    #[doc = "A node that contains the whole RAISE statement for exceptions"]
+    RaiseStmt,
     #[doc = "The root node element"]
     Root,
     #[doc = "Right Paren"]
@@ -389,6 +391,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::PrimaryKw => SyntaxKind::Keyword,
             TokenKind::ProcedureKw => SyntaxKind::Keyword,
             TokenKind::RangeKw => SyntaxKind::Keyword,
+            TokenKind::RaiseKw => SyntaxKind::Keyword,
             TokenKind::RawKw => SyntaxKind::Keyword,
             TokenKind::ReadKw => SyntaxKind::Keyword,
             TokenKind::RealKw => SyntaxKind::Keyword,
