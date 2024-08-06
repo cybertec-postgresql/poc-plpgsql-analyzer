@@ -215,12 +215,10 @@ pub(crate) fn parse_group_by_clause(p: &mut Parser) {
     p.expect(T![group]);
     p.expect(T![by]);
     safe_loop!(p, {
-        if [T![rollup], T![cube]].contains(&p.current()) {
-            parse_rollup_cube_clause(p);
-        } else if p.at(T![grouping]) {
-            parse_grouping_sets_clause(p);
-        } else {
-            parse_expr(p);
+        match p.current() {
+            T![rollup] | T![cube] => parse_rollup_cube_clause(p),
+            T![grouping] => parse_grouping_sets_clause(p),
+            _ => parse_expr(p),
         }
         if !p.eat(T![,]) {
             break;
@@ -244,13 +242,13 @@ pub(crate) fn parse_rollup_cube_clause(p: &mut Parser) {
 
 pub(crate) fn parse_grouping_sets_clause(p: &mut Parser) {
     p.start(SyntaxKind::GroupingSetsClause);
+    p.expect(T![grouping]);
+    p.expect(T![sets]);
     p.expect(T!["("]);
-    // Parse rollup or grouping expression list
     safe_loop!(p, {
-        if [T![rollup], T![cube]].contains(&p.current()) {
-            parse_rollup_cube_clause(p);
-        } else {
-            parse_group_expression_list(p);
+        match p.current() {
+            T![rollup] | T![cube] => parse_rollup_cube_clause(p),
+            _ => parse_group_expression_list(p),
         }
 
         if !p.eat(T![,]) {
@@ -1080,6 +1078,19 @@ Root@0..73
             Ident@69..71 "c3"
         RParen@71..72 ")"
     Semicolon@72..73 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_group_by_grouping_sets() {
+        check(
+            parse(
+                "SELECT customer, category, SUM(sales_amount) FROM customer_category_sales GROUP BY GROUPING SETS((customer,category), (customer), (category), ()) ORDER BY customer, category;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
 "#]],
             vec![],
         );
