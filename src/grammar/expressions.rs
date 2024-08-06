@@ -78,7 +78,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                     p.bump_any();
                 }
             }
-            if min_bp == 0 && (p.at(T![;]) || p.at(T![EOF])) {
+            if min_bp == 0 && (p.at(T![;]) || p.at(T![EOF]) || p.at(T![,])) {
                 add_expr_node(p, checkpoint, None);
             }
             p.eat(T![(+)]);
