@@ -28,7 +28,7 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         _ => (), // No-op
     }
 
-    if p.current() == T![order] {
+    if p.at(T![order]) {
         parse_order_by_clause(p);
     }
 
@@ -191,14 +191,10 @@ pub(crate) fn parse_order_by_clause(p: &mut Parser) {
     p.eat(T![siblings]);
     p.expect(T![by]);
     safe_loop!(p, {
-        if p.at(T![int_literal]) {
-            p.eat(T![int_literal]);
-        } else {
+        if !p.eat(T![int_literal]) {
             parse_expr(p);
         }
-        if [T![asc], T![desc]].contains(&p.current()) {
-            p.expect_one_of(&[T![asc], T![desc]]);
-        }
+        p.eat_one_of(&[T![asc], T![desc]]);
 
         if p.eat(T![nulls]) {
             p.expect_one_of(&[T![first], T![last]]);
