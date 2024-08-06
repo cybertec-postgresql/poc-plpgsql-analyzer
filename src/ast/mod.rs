@@ -5,6 +5,7 @@
 
 //! Implements a typed AST for PL/SQL.
 
+use cursor::CursorStmt;
 pub use rowan::ast::AstNode;
 
 pub use argument_list::*;
@@ -21,6 +22,7 @@ pub use view::*;
 use source_gen::syntax::{SyntaxKind, SyntaxToken};
 
 mod argument_list;
+mod cursor;
 mod datatype;
 mod dml;
 mod expressions;
@@ -115,6 +117,10 @@ typed_syntax_token!(ComparisonOp, Ident);
 impl Root {
     pub fn dml(&self) -> Option<DeleteStmt> {
         self.syntax.children().find_map(DeleteStmt::cast)
+    }
+
+    pub fn cursor(&self) -> Option<CursorStmt> {
+        self.syntax.children().find_map(CursorStmt::cast)
     }
 
     /// Finds the (next) function in this root node.

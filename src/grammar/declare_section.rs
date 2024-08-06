@@ -8,8 +8,8 @@
 use rowan::Checkpoint;
 
 use crate::grammar::{
-    opt_function_invocation, parse_datatype, parse_expr, parse_function, parse_ident,
-    parse_procedure, parse_query,
+    opt_function_invocation, parse_cursor, parse_datatype, parse_expr, parse_function, parse_ident,
+    parse_procedure,
 };
 use crate::parser::{safe_loop, Parser};
 use crate::ParseErrorType;
@@ -45,47 +45,6 @@ pub(super) fn parse_declare_section(p: &mut Parser, checkpoint: Option<Checkpoin
     });
 
     p.finish();
-}
-
-fn parse_cursor(p: &mut Parser) {
-    p.expect(T![cursor]);
-    parse_ident(p, 1..1);
-
-    if p.eat(T!["("]) {
-        safe_loop!(p, {
-            parse_ident(p, 1..1);
-            p.eat(T![in]);
-            parse_datatype(p);
-
-            if p.eat_one_of(&[T![:=], T![default]]) {
-                parse_expr(p);
-            }
-
-            if !p.eat(T![,]) {
-                break;
-            }
-        });
-
-        p.expect(T![")"]);
-    }
-
-    if p.eat(T![return]) {
-        parse_rowtype(p);
-    }
-
-    if p.eat(T![is]) {
-        parse_query(p, false);
-    } else {
-        // the [`parse_query`] function already expects a trailing semi-colon
-        p.expect(T![;]);
-    }
-}
-
-fn parse_rowtype(p: &mut Parser) {
-    parse_ident(p, 1..3);
-    if p.eat(T![%]) {
-        p.expect_one_of(&[T![type], T![rowtype]]);
-    }
 }
 
 fn parse_type_definition(p: &mut Parser) {
@@ -163,6 +122,13 @@ fn parse_varray_type_def(p: &mut Parser) {
 
     if p.eat(T![not]) {
         p.expect(T![null]);
+    }
+}
+
+fn parse_rowtype(p: &mut Parser) {
+    parse_ident(p, 1..3);
+    if p.eat(T![%]) {
+        p.expect_one_of(&[T![type], T![rowtype]]);
     }
 }
 
@@ -284,45 +250,49 @@ mod tests {
             parse(INPUT, parse_cursor),
             expect![[r#"
 Root@0..97
-  Keyword@0..6 "CURSOR"
-  Whitespace@6..7 " "
-  IdentGroup@7..8
-    Ident@7..8 "c"
-  Whitespace@8..9 " "
-  LParen@9..10 "("
-  IdentGroup@10..16
-    Ident@10..16 "p_name"
-  Whitespace@16..17 " "
-  Datatype@17..25
-    Keyword@17..25 "varchar2"
-  Comma@25..26 ","
-  Whitespace@26..27 " "
-  IdentGroup@27..30
-    Ident@27..30 "age"
-  Whitespace@30..31 " "
-  Datatype@31..38
-    Keyword@31..37 "number"
-    Whitespace@37..38 " "
-  Keyword@38..45 "DEFAULT"
-  Whitespace@45..46 " "
-  Integer@46..48 "18"
-  RParen@48..49 ")"
-  Whitespace@49..50 " "
-  Keyword@50..52 "IS"
-  Whitespace@52..65 "\n            "
-  SelectStmt@65..97
-    Keyword@65..71 "SELECT"
-    Whitespace@71..72 " "
-    SelectClause@72..83
-      ColumnExpr@72..83
-        IdentGroup@72..82
-          Ident@72..82 "first_name"
-        Whitespace@82..83 " "
-    Keyword@83..87 "FROM"
-    Whitespace@87..88 " "
-    IdentGroup@88..96
-      Ident@88..96 "employee"
-    Semicolon@96..97 ";"
+  CursorStmt@0..97
+    Keyword@0..6 "CURSOR"
+    Whitespace@6..7 " "
+    IdentGroup@7..8
+      Ident@7..8 "c"
+    Whitespace@8..9 " "
+    CursorParameterDeclarations@9..49
+      LParen@9..10 "("
+      CursorParameterDeclaration@10..25
+        IdentGroup@10..16
+          Ident@10..16 "p_name"
+        Whitespace@16..17 " "
+        Datatype@17..25
+          Keyword@17..25 "varchar2"
+      Comma@25..26 ","
+      Whitespace@26..27 " "
+      CursorParameterDeclaration@27..48
+        IdentGroup@27..30
+          Ident@27..30 "age"
+        Whitespace@30..31 " "
+        Datatype@31..38
+          Keyword@31..37 "number"
+          Whitespace@37..38 " "
+        Keyword@38..45 "DEFAULT"
+        Whitespace@45..46 " "
+        Integer@46..48 "18"
+      RParen@48..49 ")"
+    Whitespace@49..50 " "
+    Keyword@50..52 "IS"
+    Whitespace@52..65 "\n            "
+    SelectStmt@65..97
+      Keyword@65..71 "SELECT"
+      Whitespace@71..72 " "
+      SelectClause@72..83
+        ColumnExpr@72..83
+          IdentGroup@72..82
+            Ident@72..82 "first_name"
+          Whitespace@82..83 " "
+      Keyword@83..87 "FROM"
+      Whitespace@87..88 " "
+      IdentGroup@88..96
+        Ident@88..96 "employee"
+      Semicolon@96..97 ";"
 "#]],
             vec![],
         );
