@@ -50,7 +50,10 @@ fn parse_cursor_param_declaration(p: &mut Parser) {
 fn parse_rowtype_clause(p: &mut Parser) {
     p.start(SyntaxKind::RowtypeClause);
     parse_ident(p, 1..2);
-    if p.eat(T![%]) && !p.eat(T![rowtype]) {
+    if p.at(T![%]) && p.nth(1) == Some(T![rowtype]) {
+        p.expect(T![%]);
+        p.expect(T![rowtype]);
+    } else {
         parse_datatype(p);
     }
 
