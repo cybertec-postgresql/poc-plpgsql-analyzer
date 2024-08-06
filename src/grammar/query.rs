@@ -32,6 +32,10 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
         parse_order_by_clause(p);
     }
 
+    if p.at(T![group]) {
+        parse_group_by_clause(p);
+    }
+
     p.eat(T![;]);
     p.finish();
 }
@@ -203,6 +207,23 @@ pub(crate) fn parse_order_by_clause(p: &mut Parser) {
             break;
         }
     });
+    p.finish();
+}
+
+pub(crate) fn parse_group_by_clause(p: &mut Parser) {
+    p.start(SyntaxKind::GroupByClause);
+    p.expect(T![group]);
+    p.expect(T![by]);
+    safe_loop!(p, {
+        parse_expr(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+
+    if p.eat(T![having]) {
+        parse_expr(p);
+    }
     p.finish();
 }
 

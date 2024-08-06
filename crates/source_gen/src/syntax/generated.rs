@@ -90,6 +90,8 @@ pub enum SyntaxKind {
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "A node containing a group by clause"]
+    GroupByClause,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
     #[doc = "An identifier, either quoted or unquoted"]
@@ -318,6 +320,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::GrantKw => SyntaxKind::Keyword,
+            TokenKind::GroupKw => SyntaxKind::Keyword,
+            TokenKind::HavingKw => SyntaxKind::Keyword,
             TokenKind::IdKw => SyntaxKind::Keyword,
             TokenKind::IdentifierKw => SyntaxKind::Keyword,
             TokenKind::IfKw => SyntaxKind::Keyword,
