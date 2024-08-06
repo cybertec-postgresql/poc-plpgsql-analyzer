@@ -276,12 +276,14 @@ Root@0..992
         UsingClause@433..467
           Keyword@433..438 "USING"
           Whitespace@438..439 " "
-          IdentGroup@439..446
-            Ident@439..446 "dept_id"
+          Expression@439..446
+            IdentGroup@439..446
+              Ident@439..446 "dept_id"
           Comma@446..447 ","
           Whitespace@447..448 " "
-          IdentGroup@448..457
-            Ident@448..457 "dept_name"
+          Expression@448..457
+            IdentGroup@448..457
+              Ident@448..457 "dept_name"
           Comma@457..458 ","
           Whitespace@458..459 " "
           Expression@459..467
@@ -344,7 +346,8 @@ Root@0..992
         UsingClause@678..693
           Keyword@678..683 "USING"
           Whitespace@683..684 " "
-          Integer@684..688 "7788"
+          Expression@684..688
+            Integer@684..688 "7788"
           Comma@688..689 ","
           Whitespace@689..690 " "
           Expression@690..693

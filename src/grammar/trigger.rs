@@ -396,29 +396,33 @@ Root@0..237
           LParen@142..143 "("
           ArgumentList@143..229
             Argument@143..159
-              IdentGroup@143..159
-                BindVar@143..147 ":old"
-                Dot@147..148 "."
-                Ident@148..159 "customer_id"
+              Expression@143..159
+                IdentGroup@143..159
+                  BindVar@143..147 ":old"
+                  Dot@147..148 "."
+                  Ident@148..159 "customer_id"
             Comma@159..160 ","
             Whitespace@160..161 " "
             Argument@161..176
-              IdentGroup@161..176
-                BindVar@161..165 ":old"
-                Dot@165..166 "."
-                Ident@166..176 "created_at"
+              Expression@161..176
+                IdentGroup@161..176
+                  BindVar@161..165 ":old"
+                  Dot@165..166 "."
+                  Ident@166..176 "created_at"
             Comma@176..177 ","
             Whitespace@177..178 " "
             Argument@178..185
-              IdentGroup@178..185
-                Ident@178..185 "sysdate"
+              Expression@178..185
+                IdentGroup@178..185
+                  Ident@178..185 "sysdate"
             Comma@185..186 ","
             Whitespace@186..201 "\n              "
             Argument@201..214
-              IdentGroup@201..214
-                BindVar@201..205 ":old"
-                Dot@205..206 "."
-                Ident@206..214 "order_id"
+              Expression@201..214
+                IdentGroup@201..214
+                  BindVar@201..205 ":old"
+                  Dot@205..206 "."
+                  Ident@206..214 "order_id"
             Comma@214..215 ","
             Whitespace@215..216 " "
             Argument@216..229
@@ -520,22 +524,25 @@ Root@0..518
           Whitespace@232..237 "\n    "
           Keyword@237..243 "VALUES"
           LParen@243..244 "("
-          IdentGroup@244..253
-            BindVar@244..248 ":NEW"
-            Dot@248..249 "."
-            Ident@249..253 "NAME"
+          Expression@244..253
+            IdentGroup@244..253
+              BindVar@244..248 ":NEW"
+              Dot@248..249 "."
+              Ident@249..253 "NAME"
           Comma@253..254 ","
           Whitespace@254..255 " "
-          IdentGroup@255..267
-            BindVar@255..259 ":NEW"
-            Dot@259..260 "."
-            Ident@260..267 "address"
+          Expression@255..267
+            IdentGroup@255..267
+              BindVar@255..259 ":NEW"
+              Dot@259..260 "."
+              Ident@260..267 "address"
           Comma@267..268 ","
           Whitespace@268..269 " "
-          IdentGroup@269..281
-            BindVar@269..273 ":NEW"
-            Dot@273..274 "."
-            Ident@274..281 "website"
+          Expression@269..281
+            IdentGroup@269..281
+              BindVar@269..273 ":NEW"
+              Dot@273..274 "."
+              Ident@274..281 "website"
           Comma@281..282 ","
           Whitespace@282..283 " "
           IdentGroup@283..300
@@ -588,28 +595,32 @@ Root@0..518
           Whitespace@438..443 "\n    "
           Keyword@443..449 "VALUES"
           LParen@449..450 "("
-          IdentGroup@450..465
-            BindVar@450..454 ":NEW"
-            Dot@454..455 "."
-            Ident@455..465 "first_name"
+          Expression@450..465
+            IdentGroup@450..465
+              BindVar@450..454 ":NEW"
+              Dot@454..455 "."
+              Ident@455..465 "first_name"
           Comma@465..466 ","
           Whitespace@466..467 " "
-          IdentGroup@467..481
-            BindVar@467..471 ":NEW"
-            Dot@471..472 "."
-            Ident@472..481 "last_name"
+          Expression@467..481
+            IdentGroup@467..481
+              BindVar@467..471 ":NEW"
+              Dot@471..472 "."
+              Ident@472..481 "last_name"
           Comma@481..482 ","
           Whitespace@482..483 " "
-          IdentGroup@483..493
-            BindVar@483..487 ":NEW"
-            Dot@487..488 "."
-            Ident@488..493 "email"
+          Expression@483..493
+            IdentGroup@483..493
+              BindVar@483..487 ":NEW"
+              Dot@487..488 "."
+              Ident@488..493 "email"
           Comma@493..494 ","
           Whitespace@494..495 " "
-          IdentGroup@495..505
-            BindVar@495..499 ":NEW"
-            Dot@499..500 "."
-            Ident@500..505 "phone"
+          Expression@495..505
+            IdentGroup@495..505
+              BindVar@495..499 ":NEW"
+              Dot@499..500 "."
+              Ident@500..505 "phone"
           Comma@505..506 ","
           Whitespace@506..507 " "
           IdentGroup@507..509
