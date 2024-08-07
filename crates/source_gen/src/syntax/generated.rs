@@ -42,6 +42,8 @@ pub enum SyntaxKind {
     BlockStatement,
     #[doc = "A node containing a BULK COLLECT INTO clause"]
     BulkIntoClause,
+    #[doc = "A node containing a calc meas clause"]
+    CalcMeasClause,
     #[doc = "A colon token"]
     Colon,
     #[doc = "A single column expression, as part of an SELECT clause"]
@@ -333,6 +335,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
             TokenKind::FactKw => SyntaxKind::Keyword,
+            TokenKind::FilterKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
             TokenKind::FloatKw => SyntaxKind::Keyword,
             TokenKind::FollowsKw => SyntaxKind::Keyword,

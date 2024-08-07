@@ -78,28 +78,76 @@ pub(crate) fn parse_subav_clause(p: &mut Parser) {
     if p.at(T![hierarchies]) {
         parse_hierarchies_clause(p);
     }
-    // filters clause
-    parse_filters_clause(p);
-    // add calcs clause
-    parse_add_calcs_clause(p);
+    if p.at(T![filter]) {
+        parse_filter_clauses(p);
+    }
+    if p.at(T![add]) {
+        parse_add_calcs_clause(p);
+    }
     p.finish();
 }
 
 pub(crate) fn parse_hierarchies_clause(p: &mut Parser) {
     p.start(SyntaxKind::HierarchiesClause);
-
+    p.expect(T![hierarchies]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_ident(p, 1..2);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
     p.finish();
 }
 
-pub(crate) fn parse_filters_clause(p: &mut Parser) {
+pub(crate) fn parse_filter_clauses(p: &mut Parser) {
     p.start(SyntaxKind::FilterClauses);
+    p.expect(T![filter]);
+    p.expect(T![fact]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_filter_clause(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
 
+pub(crate) fn parse_filter_clause(p: &mut Parser) {
+    p.start(SyntaxKind::FilterClause);
+    if !p.eat(T![measures]) {
+        parse_ident(p, 1..2);
+    }
+    p.expect(T![to]);
+    parse_expr(p);
     p.finish();
 }
 
 pub(crate) fn parse_add_calcs_clause(p: &mut Parser) {
     p.start(SyntaxKind::AddCalcsClause);
+    p.expect(T![add]);
+    p.expect(T![measures]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_calc_meas_clause(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
 
+pub(crate) fn parse_calc_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CalcMeasClause);
+    parse_ident(p, 1..1);
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    parse_expr(p);
+    p.expect(T![")"]);
     p.finish();
 }
 
