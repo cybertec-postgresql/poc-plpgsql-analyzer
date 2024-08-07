@@ -64,6 +64,8 @@ pub enum SyntaxKind {
     CursorParameterDeclarations,
     #[doc = "A node that marks a full cursor statement"]
     CursorStmt,
+    #[doc = "A node that contains a full cycle clause"]
+    CycleClause,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
     #[doc = "A decimal, positive, or negative"]
@@ -146,6 +148,8 @@ pub enum SyntaxKind {
     RowtypeClause,
     #[doc = "Right Paren"]
     RParen,
+    #[doc = "A node containing a search clause"]
+    SearchClause,
     #[doc = "A node that contains the whole SELECT clause of a query"]
     SelectClause,
     #[doc = "A node that marks a full SELECT statement"]
@@ -158,6 +162,8 @@ pub enum SyntaxKind {
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
     Starts,
+    #[doc = "A node containing a full subquery factoring clause"]
+    SubqueryFactoringClause,
     #[doc = "A text slice node"]
     Text,
     #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
@@ -182,6 +188,8 @@ pub enum SyntaxKind {
     WhereClause,
     #[doc = "Any whitespace character"]
     Whitespace,
+    #[doc = "A node containing a with clause"]
+    WithClause,
 }
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
@@ -243,6 +251,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BinaryIntegerKw => SyntaxKind::Keyword,
             TokenKind::BlobKw => SyntaxKind::Keyword,
             TokenKind::BodyKw => SyntaxKind::Keyword,
+            TokenKind::BreadthKw => SyntaxKind::Keyword,
             TokenKind::BulkKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
@@ -285,6 +294,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeferredKw => SyntaxKind::Keyword,
             TokenKind::DefinerKw => SyntaxKind::Keyword,
             TokenKind::DeleteKw => SyntaxKind::Keyword,
+            TokenKind::DepthKw => SyntaxKind::Keyword,
             TokenKind::DescKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::DisableKw => SyntaxKind::Keyword,
@@ -422,6 +432,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RowtypeKw => SyntaxKind::Keyword,
             TokenKind::SchemaKw => SyntaxKind::Keyword,
             TokenKind::ScopeKw => SyntaxKind::Keyword,
+            TokenKind::SearchKw => SyntaxKind::Keyword,
             TokenKind::SecondKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::SelfKw => SyntaxKind::Keyword,
