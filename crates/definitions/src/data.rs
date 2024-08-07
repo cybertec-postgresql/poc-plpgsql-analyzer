@@ -395,6 +395,8 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("set_clause", "A node containing a SET clause in an UPDATE statement"),
     S!("slash", "Slash char `/`"),
     S!("starts", "A STARTS WITH clause in a SELECT statement"),
+    S!("subav_clause", "A node containing a full subav clause"),
+    S!("subav_factoring_clause", "A node containing a full subav factoring clause"),
     S!("subquery_factoring_clause", "A node containing a full subquery factoring clause"),
     S!("text", "A text slice node"),
     S!("trigger","A node that marks a full CREATE [..] TRIGGER block"),

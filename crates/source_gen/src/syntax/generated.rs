@@ -162,6 +162,10 @@ pub enum SyntaxKind {
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
     Starts,
+    #[doc = "A node containing a full subav clause"]
+    SubavClause,
+    #[doc = "A node containing a full subav factoring clause"]
+    SubavFactoringClause,
     #[doc = "A node containing a full subquery factoring clause"]
     SubqueryFactoringClause,
     #[doc = "A text slice node"]

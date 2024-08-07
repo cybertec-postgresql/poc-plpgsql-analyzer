@@ -44,7 +44,7 @@ pub(crate) fn parse_cte(p: &mut Parser) {
     }
     safe_loop!(p, {
         if p.nth(1) == Some(T![analytic]) {
-            // parse_subav_factoring_clause(p);
+            parse_subav_factoring_clause(p);
         } else if p.at(T![select]) {
             break;
         } else {
@@ -56,6 +56,28 @@ pub(crate) fn parse_cte(p: &mut Parser) {
         }
     });
 
+    p.finish();
+}
+
+pub(crate) fn parse_subav_factoring_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubavFactoringClause);
+    parse_ident(p, 1..1);
+    p.expect(T![analytic]);
+    p.expect(T![view]);
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    parse_subav_clause(p);
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_subav_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubavClause);
+    p.expect(T![using]);
+    parse_ident(p, 1..2);
+    // hierarchical clause
+    // filter clause
+    // add calcs clause
     p.finish();
 }
 
