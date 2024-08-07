@@ -189,10 +189,11 @@ fn parse_join_clause(p: &mut Parser) {
     p.start(SyntaxKind::JoinClause);
     match p.current() {
         T![join] | T![inner] => parse_inner_join_clause(p),
-        T![cross] | T![outer] => match p.nth(1) {
+        T![cross] => match p.nth(1) {
             Some(T![apply]) => parse_cross_outer_apply_clause(p),
             _ => parse_cross_join_clause(p),
         },
+        T![outer] => parse_cross_join_clause(p),
         T![natural] | T![full] | T![left] | T![right] => match p.nth(1) {
             Some(T![full]) | Some(T![left]) | Some(T![right]) => parse_outer_join_clause(p),
             Some(T![inner]) | Some(T![join]) => parse_natural_join_clause(p),
@@ -209,7 +210,10 @@ fn parse_inner_join_clause(p: &mut Parser) {
     p.expect(T![join]);
     parse_ident(p, 1..2);
     match p.current() {
-        T![on] => parse_expr(p),
+        T![on] => {
+            p.expect(T![on]);
+            parse_expr(p);
+        }
         T![using] => {
             p.expect(T![using]);
             p.expect(T!["("]);
@@ -1071,6 +1075,146 @@ Root@0..44
     }
 
     #[test]
+    fn test_simple_join() {
+        check(
+            parse(
+                "SELECT name, license_plate FROM employee JOIN car on employee.id=car.owner_id;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..78
+  SelectStmt@0..78
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..27
+      ColumnExpr@7..11
+        Expression@7..11
+          IdentGroup@7..11
+            Ident@7..11 "name"
+      Comma@11..12 ","
+      Whitespace@12..13 " "
+      ColumnExpr@13..27
+        IdentGroup@13..26
+          Ident@13..26 "license_plate"
+        Whitespace@26..27 " "
+    Keyword@27..31 "FROM"
+    Whitespace@31..32 " "
+    IdentGroup@32..40
+      Ident@32..40 "employee"
+    Whitespace@40..41 " "
+    JoinClause@41..77
+      InnerJoinClause@41..77
+        Keyword@41..45 "JOIN"
+        Whitespace@45..46 " "
+        IdentGroup@46..49
+          Ident@46..49 "car"
+        Whitespace@49..50 " "
+        Keyword@50..52 "on"
+        Whitespace@52..53 " "
+        Expression@53..77
+          IdentGroup@53..64
+            Ident@53..61 "employee"
+            Dot@61..62 "."
+            Ident@62..64 "id"
+          ComparisonOp@64..65 "="
+          IdentGroup@65..77
+            Ident@65..68 "car"
+            Dot@68..69 "."
+            Ident@69..77 "owner_id"
+    Semicolon@77..78 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_explicit_inner_join() {
+        check(
+            parse(
+                "SELECT name, license_plate FROM employee INNER JOIN car on employee.id=car.owner_id;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..84
+  SelectStmt@0..84
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..27
+      ColumnExpr@7..11
+        Expression@7..11
+          IdentGroup@7..11
+            Ident@7..11 "name"
+      Comma@11..12 ","
+      Whitespace@12..13 " "
+      ColumnExpr@13..27
+        IdentGroup@13..26
+          Ident@13..26 "license_plate"
+        Whitespace@26..27 " "
+    Keyword@27..31 "FROM"
+    Whitespace@31..32 " "
+    IdentGroup@32..40
+      Ident@32..40 "employee"
+    Whitespace@40..41 " "
+    JoinClause@41..83
+      InnerJoinClause@41..83
+        Keyword@41..46 "INNER"
+        Whitespace@46..47 " "
+        Keyword@47..51 "JOIN"
+        Whitespace@51..52 " "
+        IdentGroup@52..55
+          Ident@52..55 "car"
+        Whitespace@55..56 " "
+        Keyword@56..58 "on"
+        Whitespace@58..59 " "
+        Expression@59..83
+          IdentGroup@59..70
+            Ident@59..67 "employee"
+            Dot@67..68 "."
+            Ident@68..70 "id"
+          ComparisonOp@70..71 "="
+          IdentGroup@71..83
+            Ident@71..74 "car"
+            Dot@74..75 "."
+            Ident@75..83 "owner_id"
+    Semicolon@83..84 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cross_join() {
+        check(
+            parse("SELECT * FROM table1 CROSS JOIN table2;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..39
+  SelectStmt@0..39
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..20
+      Ident@14..20 "table1"
+    Whitespace@20..21 " "
+    JoinClause@21..38
+      CrossJoinClause@21..38
+        Keyword@21..26 "CROSS"
+        Whitespace@26..27 " "
+        Keyword@27..31 "JOIN"
+        Whitespace@31..32 " "
+        IdentGroup@32..38
+          Ident@32..38 "table2"
+    Semicolon@38..39 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
     fn test_group_by_having() {
         check(
             parse(
@@ -1327,7 +1471,16 @@ Root@0..174
         IdentGroup@165..173
           Ident@165..173 "category"
     Semicolon@173..174 ";"
-"#]],
+"#]], vec![]);
+    }
+
+    #[test]
+    fn test_natural_inner_join() {
+        check(
+            parse("SELECT * FROM table1 NATURAL JOIN table2;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[]],
             vec![],
         );
     }
