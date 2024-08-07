@@ -4,7 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{opt_expr, parse_expr, parse_ident};
+use crate::grammar::{opt_expr, parse_expr, parse_function, parse_ident, parse_procedure};
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -12,6 +12,9 @@ use source_gen::T;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
+    if p.at(T![with]) {
+        parse_cte(p);
+    }
     p.expect(T![select]);
     parse_column_expr(p);
     parse_into_clause(p, expect_into_clause);
@@ -34,6 +37,67 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
 
     p.eat(T![;]);
     p.finish();
+}
+
+pub(crate) fn parse_cte(p: &mut Parser) {
+    p.start(SyntaxKind::WithClause);
+    p.expect(T![with]);
+    if p.at(T![create]) {
+        parse_plsql_declarations(p);
+    }
+    safe_loop!(p, {
+        if p.nth(1) == Some(T![analytic]) {
+            // parse_subav_factoring_clause(p);
+        } else if p.at(T![select]) {
+            break;
+        } else {
+            parse_subquery_factoring_clause(p);
+        }
+
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+
+    p.finish();
+}
+
+pub(crate) fn parse_subquery_factoring_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubqueryFactoringClause);
+    parse_ident(p, 1..2);
+    if p.eat(T!["("]) {
+        safe_loop!(p, {
+            parse_ident(p, 1..1);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+        p.eat(T![")"]);
+    }
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    // parse_subquery
+    p.expect(T![")"]);
+    // parse search clause or parse cycle clause
+    p.finish();
+}
+
+pub(crate) fn parse_plsql_declarations(p: &mut Parser) {
+    safe_loop!(p, {
+        if p.eat(T![create]) {
+            p.eat(T![or]);
+            p.eat(T![replace]);
+            p.eat(T![editionable]);
+            p.eat(T![noneditionable]);
+            match p.current() {
+                T![function] => parse_function(p, false),
+                T![procedure] => parse_procedure(p, false),
+                _ => (),
+            }
+        } else {
+            break;
+        }
+    });
 }
 
 pub(crate) fn parse_connect_by(p: &mut Parser) {

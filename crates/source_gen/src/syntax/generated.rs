@@ -231,6 +231,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AllKw => SyntaxKind::Keyword,
             TokenKind::AllowKw => SyntaxKind::Keyword,
             TokenKind::AlterKw => SyntaxKind::Keyword,
+            TokenKind::AnalyticKw => SyntaxKind::Keyword,
             TokenKind::AnalyzeKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::AnnotationsKw => SyntaxKind::Keyword,

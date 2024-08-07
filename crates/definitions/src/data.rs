@@ -64,6 +64,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("all"),
         T!("allow"),
         T!("alter"),
+        T!("analytic"),
         T!("analyze"),
         T!("and"),
         T!("annotations"),
