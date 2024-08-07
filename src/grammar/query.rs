@@ -261,22 +261,19 @@ pub(crate) fn parse_grouping_sets_clause(p: &mut Parser) {
 
 pub(crate) fn parse_group_expression_list(p: &mut Parser) {
     p.start(SyntaxKind::GroupingExpressionList);
+    let expect_closing_paren = p.eat(T!["("]);
 
-    if p.eat(T!["("]) {
-        safe_loop!(p, {
-            opt_expr(p);
-            if !p.eat(T![,]) {
-                break;
-            }
-        });
-        p.expect(T![")"]);
-    } else {
+    if !p.at(T![")"]) {
         safe_loop!(p, {
             parse_expr(p);
             if !p.eat(T![,]) {
                 break;
             }
         });
+    }
+
+    if expect_closing_paren {
+        p.expect(T![")"]);
     }
 
     p.finish();
