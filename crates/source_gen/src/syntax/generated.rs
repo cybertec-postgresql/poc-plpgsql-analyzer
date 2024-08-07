@@ -281,6 +281,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CrosseditionKw => SyntaxKind::Keyword,
             TokenKind::CurrentUserKw => SyntaxKind::Keyword,
             TokenKind::CursorKw => SyntaxKind::Keyword,
+            TokenKind::CycleKw => SyntaxKind::Keyword,
             TokenKind::DataKw => SyntaxKind::Keyword,
             TokenKind::DatabaseKw => SyntaxKind::Keyword,
             TokenKind::DateKw => SyntaxKind::Keyword,

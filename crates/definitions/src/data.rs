@@ -114,6 +114,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("crossedition"),
         T!("current_user"),
         T!("cursor"),
+        T!("cycle"),
         T!("data"),
         T!("database"),
         T!("date"),

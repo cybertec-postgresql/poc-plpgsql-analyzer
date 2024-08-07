@@ -12,9 +12,6 @@ use source_gen::T;
 
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
-    if p.at(T![with]) {
-        parse_cte(p);
-    }
     p.expect(T![select]);
     parse_column_expr(p);
     parse_into_clause(p, expect_into_clause);
@@ -76,9 +73,14 @@ pub(crate) fn parse_subquery_factoring_clause(p: &mut Parser) {
     }
     p.expect(T![as]);
     p.expect(T!["("]);
-    // parse_subquery
+    parse_query(p, false);
     p.expect(T![")"]);
-    // parse search clause or parse cycle clause
+    if p.at(T![search]) {
+        parse_search_clause(p);
+    }
+    if p.at(T![cycle]) {
+        parse_cycle_clause(p);
+    }
     p.finish();
 }
 
@@ -98,6 +100,46 @@ pub(crate) fn parse_plsql_declarations(p: &mut Parser) {
             break;
         }
     });
+}
+
+pub(crate) fn parse_search_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SearchClause);
+    p.expect(T![search]);
+    p.expect_one_of(&[T![breadth], T![depth]]);
+    p.expect(T![first]);
+    p.expect(T![by]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        p.eat_one_of(&[T![asc], T![desc]]);
+        if p.eat(T![nulls]) {
+            p.expect_one_of(&[T![first], T![last]]);
+        }
+
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![set]);
+    parse_ident(p, 1..2);
+    p.finish();
+}
+
+pub(crate) fn parse_cycle_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CycleClause);
+    p.expect(T![cycle]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![set]);
+    parse_ident(p, 1..1);
+    p.expect(T![set]);
+    parse_expr(p);
+    p.expect(T![default]);
+    parse_expr(p);
+    p.finish();
 }
 
 pub(crate) fn parse_connect_by(p: &mut Parser) {
