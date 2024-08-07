@@ -55,8 +55,8 @@ pub(crate) fn parse_cte(p: &mut Parser) {
             break;
         }
     });
-
     p.finish();
+    parse_query(p, false);
 }
 
 pub(crate) fn parse_subav_factoring_clause(p: &mut Parser) {
@@ -1024,6 +1024,155 @@ Root@0..46
       Whitespace@39..40 " "
       Keyword@40..45 "FIRST"
     Semicolon@45..46 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cte() {
+        check(parse("WITH CTE AS (SELECT name, employee_id FROM employee WHERE city = 'Delhi') select * from CTE;", parse_cte),
+            expect![[r#"
+Root@0..92
+  WithClause@0..74
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    SubqueryFactoringClause@5..74
+      IdentGroup@5..8
+        Ident@5..8 "CTE"
+      Whitespace@8..9 " "
+      Keyword@9..11 "AS"
+      Whitespace@11..12 " "
+      LParen@12..13 "("
+      SelectStmt@13..72
+        Keyword@13..19 "SELECT"
+        Whitespace@19..20 " "
+        SelectClause@20..38
+          ColumnExpr@20..24
+            IdentGroup@20..24
+              Ident@20..24 "name"
+          Comma@24..25 ","
+          Whitespace@25..26 " "
+          ColumnExpr@26..38
+            IdentGroup@26..37
+              Ident@26..37 "employee_id"
+            Whitespace@37..38 " "
+        Keyword@38..42 "FROM"
+        Whitespace@42..43 " "
+        IdentGroup@43..51
+          Ident@43..51 "employee"
+        Whitespace@51..52 " "
+        WhereClause@52..72
+          Keyword@52..57 "WHERE"
+          Whitespace@57..58 " "
+          Expression@58..72
+            IdentGroup@58..62
+              Ident@58..62 "city"
+            Whitespace@62..63 " "
+            ComparisonOp@63..64 "="
+            Whitespace@64..65 " "
+            QuotedLiteral@65..72 "'Delhi'"
+      RParen@72..73 ")"
+      Whitespace@73..74 " "
+  SelectStmt@74..92
+    Keyword@74..80 "select"
+    Whitespace@80..81 " "
+    Asterisk@81..82 "*"
+    Whitespace@82..83 " "
+    Keyword@83..87 "from"
+    Whitespace@87..88 " "
+    IdentGroup@88..91
+      Ident@88..91 "CTE"
+    Semicolon@91..92 ";"
+"#]],
+            vec![]);
+    }
+
+    #[test]
+    fn test_multi_cte() {
+        check(
+            parse(
+                "WITH CTE AS (SELECT name, employee_id FROM employee),
+CTE1 AS (SELECT employee_id, vehicle_name FROM vehicle)
+SELECT name, vehicle_name FROM CTE;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..145
+  WithClause@0..110
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    SubqueryFactoringClause@5..52
+      IdentGroup@5..8
+        Ident@5..8 "CTE"
+      Whitespace@8..9 " "
+      Keyword@9..11 "AS"
+      Whitespace@11..12 " "
+      LParen@12..13 "("
+      SelectStmt@13..51
+        Keyword@13..19 "SELECT"
+        Whitespace@19..20 " "
+        SelectClause@20..38
+          ColumnExpr@20..24
+            IdentGroup@20..24
+              Ident@20..24 "name"
+          Comma@24..25 ","
+          Whitespace@25..26 " "
+          ColumnExpr@26..38
+            IdentGroup@26..37
+              Ident@26..37 "employee_id"
+            Whitespace@37..38 " "
+        Keyword@38..42 "FROM"
+        Whitespace@42..43 " "
+        IdentGroup@43..51
+          Ident@43..51 "employee"
+      RParen@51..52 ")"
+    Comma@52..53 ","
+    Whitespace@53..54 "\n"
+    SubqueryFactoringClause@54..110
+      IdentGroup@54..58
+        Ident@54..58 "CTE1"
+      Whitespace@58..59 " "
+      Keyword@59..61 "AS"
+      Whitespace@61..62 " "
+      LParen@62..63 "("
+      SelectStmt@63..108
+        Keyword@63..69 "SELECT"
+        Whitespace@69..70 " "
+        SelectClause@70..96
+          ColumnExpr@70..81
+            IdentGroup@70..81
+              Ident@70..81 "employee_id"
+          Comma@81..82 ","
+          Whitespace@82..83 " "
+          ColumnExpr@83..96
+            IdentGroup@83..95
+              Ident@83..95 "vehicle_name"
+            Whitespace@95..96 " "
+        Keyword@96..100 "FROM"
+        Whitespace@100..101 " "
+        IdentGroup@101..108
+          Ident@101..108 "vehicle"
+      RParen@108..109 ")"
+      Whitespace@109..110 "\n"
+  SelectStmt@110..145
+    Keyword@110..116 "SELECT"
+    Whitespace@116..117 " "
+    SelectClause@117..136
+      ColumnExpr@117..121
+        IdentGroup@117..121
+          Ident@117..121 "name"
+      Comma@121..122 ","
+      Whitespace@122..123 " "
+      ColumnExpr@123..136
+        IdentGroup@123..135
+          Ident@123..135 "vehicle_name"
+        Whitespace@135..136 " "
+    Keyword@136..140 "FROM"
+    Whitespace@140..141 " "
+    IdentGroup@141..144
+      Ident@141..144 "CTE"
+    Semicolon@144..145 ";"
 "#]],
             vec![],
         );
