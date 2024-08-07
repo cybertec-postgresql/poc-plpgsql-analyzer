@@ -174,10 +174,133 @@ pub(crate) fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 fn parse_from_list(p: &mut Parser) {
     safe_loop!(p, {
         parse_ident(p, 1..1);
+        if [T![join], T!["("], T![inner], T![outer], T![cross]].contains(&p.current()) {
+            p.eat(T!["("]);
+            parse_join_clause(p);
+            p.eat(T![")"]);
+        }
         if !p.eat(T![,]) {
             break;
         }
     });
+}
+
+fn parse_join_clause(p: &mut Parser) {
+    p.start(SyntaxKind::JoinClause);
+    match p.current() {
+        T![join] | T![inner] => parse_inner_join_clause(p),
+        T![cross] | T![outer] => match p.nth(1) {
+            Some(T![apply]) => parse_cross_outer_apply_clause(p),
+            _ => parse_cross_join_clause(p),
+        },
+        T![natural] | T![full] | T![left] | T![right] => match p.nth(1) {
+            Some(T![full]) | Some(T![left]) | Some(T![right]) => parse_outer_join_clause(p),
+            Some(T![inner]) | Some(T![join]) => parse_natural_join_clause(p),
+            _ => (),
+        },
+        _ => (),
+    }
+    p.finish();
+}
+
+fn parse_inner_join_clause(p: &mut Parser) {
+    p.start(SyntaxKind::InnerJoinClause);
+    p.eat(T![inner]);
+    p.expect(T![join]);
+    parse_ident(p, 1..2);
+    match p.current() {
+        T![on] => parse_expr(p),
+        T![using] => {
+            p.expect(T![using]);
+            p.expect(T!["("]);
+            safe_loop!(p, {
+                parse_ident(p, 1..1);
+                if !p.eat(T![,]) {
+                    break;
+                }
+            });
+            p.expect(T![")"]);
+        }
+        _ => (),
+    }
+
+    p.finish();
+}
+
+fn parse_cross_join_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CrossJoinClause);
+    p.expect(T![cross]);
+    p.expect(T![join]);
+    parse_ident(p, 1..2);
+    p.finish();
+}
+
+fn parse_cross_outer_apply_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CrossOuterApplyClause);
+    p.expect_one_of(&[T![cross], T![outer]]);
+    p.expect(T![apply]);
+    parse_ident(p, 1..2);
+    p.finish();
+}
+
+fn parse_outer_join_clause(p: &mut Parser) {
+    p.start(SyntaxKind::OuterJoinClause);
+    if p.at(T![partition]) {
+        parse_partition_by_clause(p);
+    }
+    p.eat(T![natural]);
+    p.expect_one_of(&[T![full], T![left], T![right]]);
+    p.eat(T![outer]);
+    p.expect(T![join]);
+    parse_ident(p, 1..2);
+    if p.at(T![partition]) {
+        parse_partition_by_clause(p);
+    }
+    match p.current() {
+        T![on] => parse_expr(p),
+        T![using] => {
+            p.expect(T![using]);
+            p.expect(T!["("]);
+            safe_loop!(p, {
+                parse_ident(p, 1..1);
+                if !p.eat(T![,]) {
+                    break;
+                }
+            });
+            p.expect(T![")"]);
+        }
+        _ => (),
+    }
+
+    p.finish();
+}
+
+fn parse_natural_join_clause(p: &mut Parser) {
+    p.start(SyntaxKind::NaturalJoinClause);
+    p.expect(T![natural]);
+    p.eat(T![inner]);
+    p.expect(T![join]);
+    parse_ident(p, 1..2);
+    p.finish()
+}
+
+pub(crate) fn parse_partition_by_clause(p: &mut Parser) {
+    p.start(SyntaxKind::PartitionByClause);
+    p.expect(T![partition]);
+    p.expect(T![by]);
+    let expect_closing_paren = p.eat(T!["("]);
+    safe_loop!(p, {
+        parse_expr(p);
+
+        if p.eat(T![,]) {
+            break;
+        }
+    });
+
+    if expect_closing_paren {
+        p.expect(T![")"]);
+    }
+    p.finish();
 }
 
 pub(crate) fn parse_where_clause(p: &mut Parser) {
