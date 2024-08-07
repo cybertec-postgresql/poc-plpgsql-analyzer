@@ -75,9 +75,31 @@ pub(crate) fn parse_subav_clause(p: &mut Parser) {
     p.start(SyntaxKind::SubavClause);
     p.expect(T![using]);
     parse_ident(p, 1..2);
-    // hierarchical clause
-    // filter clause
+    if p.at(T![hierarchies]) {
+        parse_hierarchies_clause(p);
+    }
+    // filters clause
+    parse_filters_clause(p);
     // add calcs clause
+    parse_add_calcs_clause(p);
+    p.finish();
+}
+
+pub(crate) fn parse_hierarchies_clause(p: &mut Parser) {
+    p.start(SyntaxKind::HierarchiesClause);
+
+    p.finish();
+}
+
+pub(crate) fn parse_filters_clause(p: &mut Parser) {
+    p.start(SyntaxKind::FilterClauses);
+
+    p.finish();
+}
+
+pub(crate) fn parse_add_calcs_clause(p: &mut Parser) {
+    p.start(SyntaxKind::AddCalcsClause);
+
     p.finish();
 }
 

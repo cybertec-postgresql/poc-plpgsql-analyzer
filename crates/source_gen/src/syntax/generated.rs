@@ -16,6 +16,8 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
+    #[doc = "A node containing an add_calcs_clause"]
+    AddCalcsClause,
     #[doc = "An Alias for columns"]
     Alias,
     #[doc = "Logical operator AND"]
@@ -86,6 +88,10 @@ pub enum SyntaxKind {
     ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
+    #[doc = "A node that contains a full filter clause"]
+    FilterClause,
+    #[doc = "A node that contains a full filter clauses"]
+    FilterClauses,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
     Function,
     #[doc = "A node that marks a FUNCTION header with params and return type"]
@@ -94,6 +100,8 @@ pub enum SyntaxKind {
     FunctionInvocation,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
+    #[doc = "A node that marks a hierarchies clause"]
+    HierarchiesClause,
     #[doc = "An identifier, either quoted or unquoted"]
     Ident,
     #[doc = "An identifier group, consisting of multiple idents"]
@@ -324,6 +332,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExistsKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
+            TokenKind::FactKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
             TokenKind::FloatKw => SyntaxKind::Keyword,
             TokenKind::FollowsKw => SyntaxKind::Keyword,
@@ -334,6 +343,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::GrantKw => SyntaxKind::Keyword,
+            TokenKind::HierarchiesKw => SyntaxKind::Keyword,
             TokenKind::IdKw => SyntaxKind::Keyword,
             TokenKind::IdentifierKw => SyntaxKind::Keyword,
             TokenKind::IfKw => SyntaxKind::Keyword,
@@ -365,6 +375,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LogonKw => SyntaxKind::Keyword,
             TokenKind::LongKw => SyntaxKind::Keyword,
             TokenKind::MaxlenKw => SyntaxKind::Keyword,
+            TokenKind::MeasuresKw => SyntaxKind::Keyword,
             TokenKind::MetadataKw => SyntaxKind::Keyword,
             TokenKind::MleKw => SyntaxKind::Keyword,
             TokenKind::ModuleKw => SyntaxKind::Keyword,
