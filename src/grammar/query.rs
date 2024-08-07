@@ -1049,8 +1049,9 @@ Root@0..92
         Whitespace@19..20 " "
         SelectClause@20..38
           ColumnExpr@20..24
-            IdentGroup@20..24
-              Ident@20..24 "name"
+            Expression@20..24
+              IdentGroup@20..24
+                Ident@20..24 "name"
           Comma@24..25 ","
           Whitespace@25..26 " "
           ColumnExpr@26..38
@@ -1114,8 +1115,9 @@ Root@0..145
         Whitespace@19..20 " "
         SelectClause@20..38
           ColumnExpr@20..24
-            IdentGroup@20..24
-              Ident@20..24 "name"
+            Expression@20..24
+              IdentGroup@20..24
+                Ident@20..24 "name"
           Comma@24..25 ","
           Whitespace@25..26 " "
           ColumnExpr@26..38
@@ -1141,8 +1143,9 @@ Root@0..145
         Whitespace@69..70 " "
         SelectClause@70..96
           ColumnExpr@70..81
-            IdentGroup@70..81
-              Ident@70..81 "employee_id"
+            Expression@70..81
+              IdentGroup@70..81
+                Ident@70..81 "employee_id"
           Comma@81..82 ","
           Whitespace@82..83 " "
           ColumnExpr@83..96
@@ -1160,8 +1163,9 @@ Root@0..145
     Whitespace@116..117 " "
     SelectClause@117..136
       ColumnExpr@117..121
-        IdentGroup@117..121
-          Ident@117..121 "name"
+        Expression@117..121
+          IdentGroup@117..121
+            Ident@117..121 "name"
       Comma@121..122 ","
       Whitespace@122..123 " "
       ColumnExpr@123..136
