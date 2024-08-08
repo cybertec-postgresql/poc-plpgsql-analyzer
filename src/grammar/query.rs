@@ -49,10 +49,8 @@ pub(crate) fn parse_cte(p: &mut Parser) {
     safe_loop!(p, {
         if p.nth(1) == Some(T![analytic]) {
             parse_subav_factoring_clause(p);
-        } else {
-            if !p.at(T![select]) {
-                parse_subquery_factoring_clause(p);
-            }
+        } else if !p.at(T![select]) {
+            parse_subquery_factoring_clause(p);
         }
 
         if !p.eat(T![,]) || p.at(T![select]) {
@@ -171,16 +169,14 @@ fn parse_cube_meas_clause(p: &mut Parser) {
 
 fn parse_base_meas_clause(p: &mut Parser) {
     p.start(SyntaxKind::BaseMeasClause);
-    if p.eat(T![fact]) {
-        if p.eat(T!["("]) {
-            safe_loop!(p, {
-                parse_expr(p);
-                if p.at(T![")"]) {
-                    break;
-                }
-            });
-            p.expect(T![")"]);
-        }
+    if p.eat(T![fact]) && p.eat(T!["("]) {
+        safe_loop!(p, {
+            parse_expr(p);
+            if p.at(T![")"]) {
+                break;
+            }
+        });
+        p.expect(T![")"]);
     }
     if p.eat(T![aggregate]) {
         p.expect(T![by]);
