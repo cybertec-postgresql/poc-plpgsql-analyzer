@@ -82,7 +82,7 @@ pub(crate) fn parse_subav_clause(p: &mut Parser) {
         parse_filter_clauses(p);
     }
     if p.at(T![add]) {
-        parse_add_calcs_clause(p);
+        parse_add_meas_clause(p);
     }
     p.finish();
 }
@@ -126,13 +126,13 @@ pub(crate) fn parse_filter_clause(p: &mut Parser) {
     p.finish();
 }
 
-pub(crate) fn parse_add_calcs_clause(p: &mut Parser) {
+pub(crate) fn parse_add_meas_clause(p: &mut Parser) {
     p.start(SyntaxKind::AddCalcsClause);
     p.expect(T![add]);
     p.expect(T![measures]);
     p.expect(T!["("]);
     safe_loop!(p, {
-        parse_calc_meas_clause(p);
+        parse_cube_meas_clause(p);
         if !p.eat(T![,]) {
             break;
         }
@@ -141,9 +141,37 @@ pub(crate) fn parse_add_calcs_clause(p: &mut Parser) {
     p.finish();
 }
 
+fn parse_cube_meas_clause(p: &mut Parser) {
+    parse_ident(p, 1..1);
+    match p.current() {
+        T![as] => parse_calc_meas_clause(p),
+        T![fact] => parse_base_meas_clause(p),
+        _ => (),
+    }
+}
+
+fn parse_base_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::BaseMeasClause);
+    if p.eat(T![fact]) {
+        if p.eat(T!["("]) {
+            safe_loop!(p, {
+                parse_expr(p);
+                if p.at(T![")"]) {
+                    break;
+                }
+            });
+            p.expect(T![")"]);
+        }
+    }
+    if p.eat(T![aggregate]) {
+        p.expect(T![by]);
+        parse_expr(p);
+    }
+    p.finish();
+}
+
 pub(crate) fn parse_calc_meas_clause(p: &mut Parser) {
     p.start(SyntaxKind::CalcMeasClause);
-    parse_ident(p, 1..1);
     p.expect(T![as]);
     p.expect(T!["("]);
     parse_expr(p);

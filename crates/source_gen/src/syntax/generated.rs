@@ -34,6 +34,8 @@ pub enum SyntaxKind {
     AssignmentExpr,
     #[doc = "An asterisk `*`"]
     Asterisk,
+    #[doc = "A node containing a base meas clause"]
+    BaseMeasClause,
     #[doc = "A bind variable, e.g. `:OLD`"]
     BindVar,
     #[doc = "A node that marks a block"]
@@ -242,6 +244,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,
+            TokenKind::AggregateKw => SyntaxKind::Keyword,
             TokenKind::AllKw => SyntaxKind::Keyword,
             TokenKind::AllowKw => SyntaxKind::Keyword,
             TokenKind::AlterKw => SyntaxKind::Keyword,
