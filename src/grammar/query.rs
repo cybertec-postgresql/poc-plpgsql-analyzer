@@ -174,7 +174,19 @@ pub(crate) fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 fn parse_from_list(p: &mut Parser) {
     safe_loop!(p, {
         parse_ident(p, 1..1);
-        if [T![join], T!["("], T![inner], T![outer], T![cross]].contains(&p.current()) {
+        if [
+            T![join],
+            T!["("],
+            T![inner],
+            T![outer],
+            T![cross],
+            T![natural],
+            T![left],
+            T![right],
+            T![full],
+        ]
+        .contains(&p.current())
+        {
             p.eat(T!["("]);
             parse_join_clause(p);
             p.eat(T![")"]);
@@ -193,12 +205,16 @@ fn parse_join_clause(p: &mut Parser) {
             Some(T![apply]) => parse_cross_outer_apply_clause(p),
             _ => parse_cross_join_clause(p),
         },
-        T![outer] => parse_cross_join_clause(p),
-        T![natural] | T![full] | T![left] | T![right] => match p.nth(1) {
+        T![outer] => match p.nth(1) {
+            Some(T![apply]) => parse_cross_outer_apply_clause(p),
+            _ => parse_outer_join_clause(p),
+        },
+        T![natural] => match p.nth(1) {
             Some(T![full]) | Some(T![left]) | Some(T![right]) => parse_outer_join_clause(p),
             Some(T![inner]) | Some(T![join]) => parse_natural_join_clause(p),
             _ => (),
         },
+        T![full] | T![left] | T![right] => parse_outer_join_clause(p),
         _ => (),
     }
     p.finish();
@@ -261,7 +277,10 @@ fn parse_outer_join_clause(p: &mut Parser) {
         parse_partition_by_clause(p);
     }
     match p.current() {
-        T![on] => parse_expr(p),
+        T![on] => {
+            p.expect(T![on]);
+            parse_expr(p);
+        }
         T![using] => {
             p.expect(T![using]);
             p.expect(T!["("]);
@@ -1480,7 +1499,329 @@ Root@0..174
             parse("SELECT * FROM table1 NATURAL JOIN table2;", |p| {
                 parse_query(p, false)
             }),
-            expect![[]],
+            expect![[r#"
+Root@0..41
+  SelectStmt@0..41
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..20
+      Ident@14..20 "table1"
+    Whitespace@20..21 " "
+    JoinClause@21..40
+      NaturalJoinClause@21..40
+        Keyword@21..28 "NATURAL"
+        Whitespace@28..29 " "
+        Keyword@29..33 "JOIN"
+        Whitespace@33..34 " "
+        IdentGroup@34..40
+          Ident@34..40 "table2"
+    Semicolon@40..41 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_outer_join() {
+        check(
+            parse(
+                "SELECT order_id, status, first_name, last_name FROM orders
+LEFT JOIN employees ON employee_id = salesman_id ORDER BY order_date DESC;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..133
+  SelectStmt@0..133
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..47
+      ColumnExpr@7..15
+        Expression@7..15
+          IdentGroup@7..15
+            Ident@7..15 "order_id"
+      Comma@15..16 ","
+      Whitespace@16..17 " "
+      ColumnExpr@17..23
+        Expression@17..23
+          IdentGroup@17..23
+            Ident@17..23 "status"
+      Comma@23..24 ","
+      Whitespace@24..25 " "
+      ColumnExpr@25..35
+        Expression@25..35
+          IdentGroup@25..35
+            Ident@25..35 "first_name"
+      Comma@35..36 ","
+      Whitespace@36..37 " "
+      ColumnExpr@37..47
+        IdentGroup@37..46
+          Ident@37..46 "last_name"
+        Whitespace@46..47 " "
+    Keyword@47..51 "FROM"
+    Whitespace@51..52 " "
+    IdentGroup@52..58
+      Ident@52..58 "orders"
+    Whitespace@58..59 "\n"
+    JoinClause@59..108
+      OuterJoinClause@59..108
+        Keyword@59..63 "LEFT"
+        Whitespace@63..64 " "
+        Keyword@64..68 "JOIN"
+        Whitespace@68..69 " "
+        IdentGroup@69..78
+          Ident@69..78 "employees"
+        Whitespace@78..79 " "
+        Keyword@79..81 "ON"
+        Whitespace@81..82 " "
+        Expression@82..108
+          IdentGroup@82..93
+            Ident@82..93 "employee_id"
+          Whitespace@93..94 " "
+          ComparisonOp@94..95 "="
+          Whitespace@95..96 " "
+          IdentGroup@96..107
+            Ident@96..107 "salesman_id"
+          Whitespace@107..108 " "
+    OrderByClause@108..132
+      Keyword@108..113 "ORDER"
+      Whitespace@113..114 " "
+      Keyword@114..116 "BY"
+      Whitespace@116..117 " "
+      IdentGroup@117..127
+        Ident@117..127 "order_date"
+      Whitespace@127..128 " "
+      Keyword@128..132 "DESC"
+    Semicolon@132..133 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_right_join() {
+        check(
+            parse(
+                "SELECT first_name, last_name, order_id, status FROM orders RIGHT JOIN 
+employees ON employee_id = salesman_id WHERE job_title = 'Sales Representative' 
+ORDER BY first_name, last_name;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..183
+  SelectStmt@0..183
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..47
+      ColumnExpr@7..17
+        Expression@7..17
+          IdentGroup@7..17
+            Ident@7..17 "first_name"
+      Comma@17..18 ","
+      Whitespace@18..19 " "
+      ColumnExpr@19..28
+        Expression@19..28
+          IdentGroup@19..28
+            Ident@19..28 "last_name"
+      Comma@28..29 ","
+      Whitespace@29..30 " "
+      ColumnExpr@30..38
+        Expression@30..38
+          IdentGroup@30..38
+            Ident@30..38 "order_id"
+      Comma@38..39 ","
+      Whitespace@39..40 " "
+      ColumnExpr@40..47
+        IdentGroup@40..46
+          Ident@40..46 "status"
+        Whitespace@46..47 " "
+    Keyword@47..51 "FROM"
+    Whitespace@51..52 " "
+    IdentGroup@52..58
+      Ident@52..58 "orders"
+    Whitespace@58..59 " "
+    JoinClause@59..110
+      OuterJoinClause@59..110
+        Keyword@59..64 "RIGHT"
+        Whitespace@64..65 " "
+        Keyword@65..69 "JOIN"
+        Whitespace@69..71 " \n"
+        IdentGroup@71..80
+          Ident@71..80 "employees"
+        Whitespace@80..81 " "
+        Keyword@81..83 "ON"
+        Whitespace@83..84 " "
+        Expression@84..110
+          IdentGroup@84..95
+            Ident@84..95 "employee_id"
+          Whitespace@95..96 " "
+          ComparisonOp@96..97 "="
+          Whitespace@97..98 " "
+          IdentGroup@98..109
+            Ident@98..109 "salesman_id"
+          Whitespace@109..110 " "
+    WhereClause@110..152
+      Keyword@110..115 "WHERE"
+      Whitespace@115..116 " "
+      Expression@116..152
+        IdentGroup@116..125
+          Ident@116..125 "job_title"
+        Whitespace@125..126 " "
+        ComparisonOp@126..127 "="
+        Whitespace@127..128 " "
+        QuotedLiteral@128..150 "'Sales Representative'"
+        Whitespace@150..152 " \n"
+    OrderByClause@152..182
+      Keyword@152..157 "ORDER"
+      Whitespace@157..158 " "
+      Keyword@158..160 "BY"
+      Whitespace@160..161 " "
+      Expression@161..171
+        IdentGroup@161..171
+          Ident@161..171 "first_name"
+      Comma@171..172 ","
+      Whitespace@172..173 " "
+      Expression@173..182
+        IdentGroup@173..182
+          Ident@173..182 "last_name"
+    Semicolon@182..183 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_full_outer_join() {
+        check(
+            parse(
+                "SELECT member_name, project_name FROM members FULL OUTER JOIN projects 
+ON projects.project_id = members.project_id ORDER BY member_name;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..137
+  SelectStmt@0..137
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..33
+      ColumnExpr@7..18
+        Expression@7..18
+          IdentGroup@7..18
+            Ident@7..18 "member_name"
+      Comma@18..19 ","
+      Whitespace@19..20 " "
+      ColumnExpr@20..33
+        IdentGroup@20..32
+          Ident@20..32 "project_name"
+        Whitespace@32..33 " "
+    Keyword@33..37 "FROM"
+    Whitespace@37..38 " "
+    IdentGroup@38..45
+      Ident@38..45 "members"
+    Whitespace@45..46 " "
+    JoinClause@46..116
+      OuterJoinClause@46..116
+        Keyword@46..50 "FULL"
+        Whitespace@50..51 " "
+        Keyword@51..56 "OUTER"
+        Whitespace@56..57 " "
+        Keyword@57..61 "JOIN"
+        Whitespace@61..62 " "
+        IdentGroup@62..70
+          Ident@62..70 "projects"
+        Whitespace@70..72 " \n"
+        Keyword@72..74 "ON"
+        Whitespace@74..75 " "
+        Expression@75..116
+          IdentGroup@75..94
+            Ident@75..83 "projects"
+            Dot@83..84 "."
+            Ident@84..94 "project_id"
+          Whitespace@94..95 " "
+          ComparisonOp@95..96 "="
+          Whitespace@96..97 " "
+          IdentGroup@97..115
+            Ident@97..104 "members"
+            Dot@104..105 "."
+            Ident@105..115 "project_id"
+          Whitespace@115..116 " "
+    OrderByClause@116..136
+      Keyword@116..121 "ORDER"
+      Whitespace@121..122 " "
+      Keyword@122..124 "BY"
+      Whitespace@124..125 " "
+      Expression@125..136
+        IdentGroup@125..136
+          Ident@125..136 "member_name"
+    Semicolon@136..137 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cross_apply() {
+        check(
+            parse("SELECT * FROM table1 CROSS APPLY table2;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..40
+  SelectStmt@0..40
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..20
+      Ident@14..20 "table1"
+    Whitespace@20..21 " "
+    JoinClause@21..39
+      CrossOuterApplyClause@21..39
+        Keyword@21..26 "CROSS"
+        Whitespace@26..27 " "
+        Keyword@27..32 "APPLY"
+        Whitespace@32..33 " "
+        IdentGroup@33..39
+          Ident@33..39 "table2"
+    Semicolon@39..40 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_outer_apply() {
+        check(
+            parse("SELECT * FROM table1 OUTER APPLY table2;", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..40
+  SelectStmt@0..40
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..20
+      Ident@14..20 "table1"
+    Whitespace@20..21 " "
+    JoinClause@21..39
+      CrossOuterApplyClause@21..39
+        Keyword@21..26 "OUTER"
+        Whitespace@26..27 " "
+        Keyword@27..32 "APPLY"
+        Whitespace@32..33 " "
+        IdentGroup@33..39
+          Ident@33..39 "table2"
+    Semicolon@39..40 ";"
+"#]],
             vec![],
         );
     }
