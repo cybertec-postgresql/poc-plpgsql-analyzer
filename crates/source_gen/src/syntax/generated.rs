@@ -64,6 +64,8 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node that contains a cube meas clause"]
+    CubeMeasClause,
     #[doc = "A node containing a cursor parameter declaration"]
     CursorParameterDeclaration,
     #[doc = "A node containing cursor parameter declarations"]
@@ -102,6 +104,8 @@ pub enum SyntaxKind {
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "A node containing hier_ids"]
+    HierIds,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
     #[doc = "A node that marks a hierarchies clause"]

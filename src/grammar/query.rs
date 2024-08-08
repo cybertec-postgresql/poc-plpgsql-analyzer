@@ -119,10 +119,23 @@ pub(crate) fn parse_filter_clauses(p: &mut Parser) {
 pub(crate) fn parse_filter_clause(p: &mut Parser) {
     p.start(SyntaxKind::FilterClause);
     if !p.eat(T![measures]) {
-        parse_ident(p, 1..2);
+        parse_hier_ids(p)
     }
     p.expect(T![to]);
     parse_expr(p);
+    p.finish();
+}
+
+fn parse_hier_ids(p: &mut Parser) {
+    p.start(SyntaxKind::HierIds);
+    safe_loop!(p, {
+        if !p.eat(T![measures]) {
+            parse_ident(p, 2..2);
+        }
+        if p.at(T![to]) || !p.eat(T![,]) {
+            break;
+        }
+    });
     p.finish();
 }
 
@@ -142,12 +155,14 @@ pub(crate) fn parse_add_meas_clause(p: &mut Parser) {
 }
 
 fn parse_cube_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CubeMeasClause);
     parse_ident(p, 1..1);
     match p.current() {
         T![as] => parse_calc_meas_clause(p),
         T![fact] => parse_base_meas_clause(p),
         _ => (),
     }
+    p.finish();
 }
 
 fn parse_base_meas_clause(p: &mut Parser) {
