@@ -106,6 +106,12 @@ pub enum SyntaxKind {
     FunctionInvocation,
     #[doc = "A node containing hier_ids"]
     HierIds,
+    #[doc = "A node containing a group by clause"]
+    GroupByClause,
+    #[doc = "A node containing a grouping expression list"]
+    GroupingExpressionList,
+    #[doc = "A node containing a grouping set clause"]
+    GroupingSetsClause,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
     #[doc = "A node that marks a hierarchies clause"]
@@ -158,6 +164,8 @@ pub enum SyntaxKind {
     ReturnIntoClause,
     #[doc = "A node that contains the whole RAISE statement for exceptions"]
     RaiseStmt,
+    #[doc = "A node containing a rollup_cube_clause"]
+    RollupCubeClause,
     #[doc = "The root node element"]
     Root,
     #[doc = "A node containing a rowtype definition for cursors"]
@@ -302,6 +310,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ContextKw => SyntaxKind::Keyword,
             TokenKind::CreateKw => SyntaxKind::Keyword,
             TokenKind::CrosseditionKw => SyntaxKind::Keyword,
+            TokenKind::CubeKw => SyntaxKind::Keyword,
             TokenKind::CurrentUserKw => SyntaxKind::Keyword,
             TokenKind::CursorKw => SyntaxKind::Keyword,
             TokenKind::CycleKw => SyntaxKind::Keyword,
@@ -356,6 +365,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::GrantKw => SyntaxKind::Keyword,
             TokenKind::HierarchiesKw => SyntaxKind::Keyword,
+            TokenKind::GroupKw => SyntaxKind::Keyword,
+            TokenKind::GroupingKw => SyntaxKind::Keyword,
+            TokenKind::HavingKw => SyntaxKind::Keyword,
             TokenKind::IdKw => SyntaxKind::Keyword,
             TokenKind::IdentifierKw => SyntaxKind::Keyword,
             TokenKind::IfKw => SyntaxKind::Keyword,
@@ -456,6 +468,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ReturningKw => SyntaxKind::Keyword,
             TokenKind::ReverseKw => SyntaxKind::Keyword,
             TokenKind::RevokeKw => SyntaxKind::Keyword,
+            TokenKind::RollupKw => SyntaxKind::Keyword,
             TokenKind::RowKw => SyntaxKind::Keyword,
             TokenKind::RowidKw => SyntaxKind::Keyword,
             TokenKind::RowtypeKw => SyntaxKind::Keyword,
@@ -467,6 +480,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SelfKw => SyntaxKind::Keyword,
             TokenKind::ServererrorKw => SyntaxKind::Keyword,
             TokenKind::SetKw => SyntaxKind::Keyword,
+            TokenKind::SetsKw => SyntaxKind::Keyword,
             TokenKind::SharingKw => SyntaxKind::Keyword,
             TokenKind::ShutdownKw => SyntaxKind::Keyword,
             TokenKind::SiblingsKw => SyntaxKind::Keyword,
