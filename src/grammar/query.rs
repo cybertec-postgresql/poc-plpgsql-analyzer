@@ -45,13 +45,11 @@ pub(crate) fn parse_cte(p: &mut Parser) {
     safe_loop!(p, {
         if p.nth(1) == Some(T![analytic]) {
             parse_subav_factoring_clause(p);
-        } else if p.at(T![select]) {
-            break;
         } else {
             parse_subquery_factoring_clause(p);
         }
 
-        if !p.eat(T![,]) {
+        if !p.eat(T![,]) || p.at(T![select]) {
             break;
         }
     });
