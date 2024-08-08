@@ -16,6 +16,8 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
+    #[doc = "A node containing an add_calcs_clause"]
+    AddCalcsClause,
     #[doc = "An Alias for columns"]
     Alias,
     #[doc = "Logical operator AND"]
@@ -32,6 +34,8 @@ pub enum SyntaxKind {
     AssignmentExpr,
     #[doc = "An asterisk `*`"]
     Asterisk,
+    #[doc = "A node containing a base meas clause"]
+    BaseMeasClause,
     #[doc = "A bind variable, e.g. `:OLD`"]
     BindVar,
     #[doc = "A node that marks a block"]
@@ -40,6 +44,8 @@ pub enum SyntaxKind {
     BlockStatement,
     #[doc = "A node containing a BULK COLLECT INTO clause"]
     BulkIntoClause,
+    #[doc = "A node containing a calc meas clause"]
+    CalcMeasClause,
     #[doc = "A colon token"]
     Colon,
     #[doc = "A single column expression, as part of an SELECT clause"]
@@ -58,12 +64,16 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node that contains a cube meas clause"]
+    CubeMeasClause,
     #[doc = "A node containing a cursor parameter declaration"]
     CursorParameterDeclaration,
     #[doc = "A node containing cursor parameter declarations"]
     CursorParameterDeclarations,
     #[doc = "A node that marks a full cursor statement"]
     CursorStmt,
+    #[doc = "A node that contains a full cycle clause"]
+    CycleClause,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
     #[doc = "A decimal, positive, or negative"]
@@ -84,12 +94,18 @@ pub enum SyntaxKind {
     ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
+    #[doc = "A node that contains a full filter clause"]
+    FilterClause,
+    #[doc = "A node that contains a full filter clauses"]
+    FilterClauses,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
     Function,
     #[doc = "A node that marks a FUNCTION header with params and return type"]
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "A node containing hier_ids"]
+    HierIds,
     #[doc = "A node containing a group by clause"]
     GroupByClause,
     #[doc = "A node containing a grouping expression list"]
@@ -98,6 +114,8 @@ pub enum SyntaxKind {
     GroupingSetsClause,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
+    #[doc = "A node that marks a hierarchies clause"]
+    HierarchiesClause,
     #[doc = "An identifier, either quoted or unquoted"]
     Ident,
     #[doc = "An identifier group, consisting of multiple idents"]
@@ -154,6 +172,8 @@ pub enum SyntaxKind {
     RowtypeClause,
     #[doc = "Right Paren"]
     RParen,
+    #[doc = "A node containing a search clause"]
+    SearchClause,
     #[doc = "A node that contains the whole SELECT clause of a query"]
     SelectClause,
     #[doc = "A node that marks a full SELECT statement"]
@@ -166,6 +186,12 @@ pub enum SyntaxKind {
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
     Starts,
+    #[doc = "A node containing a full subav clause"]
+    SubavClause,
+    #[doc = "A node containing a full subav factoring clause"]
+    SubavFactoringClause,
+    #[doc = "A node containing a full subquery factoring clause"]
+    SubqueryFactoringClause,
     #[doc = "A text slice node"]
     Text,
     #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
@@ -180,6 +206,8 @@ pub enum SyntaxKind {
     UpdateStmt,
     #[doc = "A node containing a using clause"]
     UsingClause,
+    #[doc = "A node containing a values clause"]
+    ValuesClause,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]
@@ -190,6 +218,8 @@ pub enum SyntaxKind {
     WhereClause,
     #[doc = "Any whitespace character"]
     Whitespace,
+    #[doc = "A node containing a with clause"]
+    WithClause,
 }
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
@@ -228,9 +258,11 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,
+            TokenKind::AggregateKw => SyntaxKind::Keyword,
             TokenKind::AllKw => SyntaxKind::Keyword,
             TokenKind::AllowKw => SyntaxKind::Keyword,
             TokenKind::AlterKw => SyntaxKind::Keyword,
+            TokenKind::AnalyticKw => SyntaxKind::Keyword,
             TokenKind::AnalyzeKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::AnnotationsKw => SyntaxKind::Keyword,
@@ -251,6 +283,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BinaryIntegerKw => SyntaxKind::Keyword,
             TokenKind::BlobKw => SyntaxKind::Keyword,
             TokenKind::BodyKw => SyntaxKind::Keyword,
+            TokenKind::BreadthKw => SyntaxKind::Keyword,
             TokenKind::BulkKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
@@ -280,6 +313,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CubeKw => SyntaxKind::Keyword,
             TokenKind::CurrentUserKw => SyntaxKind::Keyword,
             TokenKind::CursorKw => SyntaxKind::Keyword,
+            TokenKind::CycleKw => SyntaxKind::Keyword,
             TokenKind::DataKw => SyntaxKind::Keyword,
             TokenKind::DatabaseKw => SyntaxKind::Keyword,
             TokenKind::DateKw => SyntaxKind::Keyword,
@@ -294,6 +328,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeferredKw => SyntaxKind::Keyword,
             TokenKind::DefinerKw => SyntaxKind::Keyword,
             TokenKind::DeleteKw => SyntaxKind::Keyword,
+            TokenKind::DepthKw => SyntaxKind::Keyword,
             TokenKind::DescKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::DisableKw => SyntaxKind::Keyword,
@@ -317,6 +352,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExistsKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
+            TokenKind::FactKw => SyntaxKind::Keyword,
+            TokenKind::FilterKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
             TokenKind::FloatKw => SyntaxKind::Keyword,
             TokenKind::FollowsKw => SyntaxKind::Keyword,
@@ -327,6 +364,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FromKw => SyntaxKind::Keyword,
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::GrantKw => SyntaxKind::Keyword,
+            TokenKind::HierarchiesKw => SyntaxKind::Keyword,
             TokenKind::GroupKw => SyntaxKind::Keyword,
             TokenKind::GroupingKw => SyntaxKind::Keyword,
             TokenKind::HavingKw => SyntaxKind::Keyword,
@@ -361,6 +399,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LogonKw => SyntaxKind::Keyword,
             TokenKind::LongKw => SyntaxKind::Keyword,
             TokenKind::MaxlenKw => SyntaxKind::Keyword,
+            TokenKind::MeasuresKw => SyntaxKind::Keyword,
             TokenKind::MetadataKw => SyntaxKind::Keyword,
             TokenKind::MleKw => SyntaxKind::Keyword,
             TokenKind::ModuleKw => SyntaxKind::Keyword,
@@ -435,6 +474,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RowtypeKw => SyntaxKind::Keyword,
             TokenKind::SchemaKw => SyntaxKind::Keyword,
             TokenKind::ScopeKw => SyntaxKind::Keyword,
+            TokenKind::SearchKw => SyntaxKind::Keyword,
             TokenKind::SecondKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::SelfKw => SyntaxKind::Keyword,

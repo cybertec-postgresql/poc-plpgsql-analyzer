@@ -4,7 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{opt_expr, parse_expr, parse_ident};
+use crate::grammar::{opt_expr, parse_expr, parse_function, parse_ident, parse_procedure};
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -37,6 +37,277 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     }
 
     p.eat(T![;]);
+    p.finish();
+}
+
+pub(crate) fn parse_cte(p: &mut Parser) {
+    p.start(SyntaxKind::WithClause);
+    p.expect(T![with]);
+    if [T![function], T![procedure]].contains(&p.current()) {
+        parse_plsql_declarations(p);
+    }
+    safe_loop!(p, {
+        if p.nth(1) == Some(T![analytic]) {
+            parse_subav_factoring_clause(p);
+        } else if !p.at(T![select]) {
+            parse_subquery_factoring_clause(p);
+        }
+
+        if !p.eat(T![,]) || p.at(T![select]) {
+            break;
+        }
+    });
+    p.finish();
+    parse_query(p, false);
+}
+
+pub(crate) fn parse_subav_factoring_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubavFactoringClause);
+    parse_ident(p, 1..1);
+    p.expect(T![analytic]);
+    p.expect(T![view]);
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    parse_subav_clause(p);
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_subav_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubavClause);
+    p.expect(T![using]);
+    parse_ident(p, 1..2);
+    if p.at(T![hierarchies]) {
+        parse_hierarchies_clause(p);
+    }
+    if p.at(T![filter]) {
+        parse_filter_clauses(p);
+    }
+    if p.at(T![add]) {
+        parse_add_meas_clause(p);
+    }
+    p.finish();
+}
+
+pub(crate) fn parse_hierarchies_clause(p: &mut Parser) {
+    p.start(SyntaxKind::HierarchiesClause);
+    p.expect(T![hierarchies]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_ident(p, 1..2);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_filter_clauses(p: &mut Parser) {
+    p.start(SyntaxKind::FilterClauses);
+    p.expect(T![filter]);
+    p.expect(T![fact]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_filter_clause(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_filter_clause(p: &mut Parser) {
+    p.start(SyntaxKind::FilterClause);
+    if !p.eat(T![measures]) {
+        parse_hier_ids(p)
+    }
+    p.expect(T![to]);
+    parse_expr(p);
+    p.finish();
+}
+
+fn parse_hier_ids(p: &mut Parser) {
+    p.start(SyntaxKind::HierIds);
+    safe_loop!(p, {
+        if !p.eat(T![measures]) {
+            parse_ident(p, 2..2);
+        }
+        if p.at(T![to]) || !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.finish();
+}
+
+pub(crate) fn parse_add_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::AddCalcsClause);
+    p.expect(T![add]);
+    p.expect(T![measures]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_cube_meas_clause(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
+
+fn parse_cube_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CubeMeasClause);
+    parse_ident(p, 1..1);
+    match p.current() {
+        T![as] => parse_calc_meas_clause(p),
+        T![fact] => parse_base_meas_clause(p),
+        _ => (),
+    }
+    p.finish();
+}
+
+fn parse_base_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::BaseMeasClause);
+    if p.eat(T![fact]) && p.eat(T!["("]) {
+        safe_loop!(p, {
+            parse_expr(p);
+            if p.at(T![")"]) {
+                break;
+            }
+        });
+        p.expect(T![")"]);
+    }
+    if p.eat(T![aggregate]) {
+        p.expect(T![by]);
+        parse_expr(p);
+    }
+    p.finish();
+}
+
+pub(crate) fn parse_calc_meas_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CalcMeasClause);
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    parse_expr(p);
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_subquery_factoring_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SubqueryFactoringClause);
+    parse_ident(p, 1..2);
+    if p.eat(T!["("]) {
+        safe_loop!(p, {
+            parse_ident(p, 1..1);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+        p.eat(T![")"]);
+    }
+    p.expect(T![as]);
+    p.expect(T!["("]);
+    if p.nth(1) != Some(T![values]) {
+        parse_query(p, false);
+        p.expect(T![")"]);
+    } else {
+        parse_values_clause(p);
+    }
+    if p.at(T![search]) {
+        parse_search_clause(p);
+    }
+    if p.at(T![cycle]) {
+        parse_cycle_clause(p);
+    }
+    p.finish();
+}
+
+fn parse_values_clause(p: &mut Parser) {
+    p.start(SyntaxKind::ValuesClause);
+    p.expect(T![values]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_expr(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    safe_loop!(p, {
+        if !p.eat(T![,]) {
+            break;
+        }
+        p.expect(T!["("]);
+        safe_loop!(p, {
+            parse_expr(p);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+        p.expect(T![")"]);
+    });
+    p.expect(T![")"]);
+    p.eat(T![as]);
+    parse_ident(p, 1..2);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    p.finish();
+}
+
+pub(crate) fn parse_plsql_declarations(p: &mut Parser) {
+    safe_loop!(p, {
+        match p.current() {
+            T![function] => parse_function(p, true),
+            T![procedure] => parse_procedure(p, true),
+            _ => break,
+        }
+    });
+}
+
+pub(crate) fn parse_search_clause(p: &mut Parser) {
+    p.start(SyntaxKind::SearchClause);
+    p.expect(T![search]);
+    p.expect_one_of(&[T![breadth], T![depth]]);
+    p.expect(T![first]);
+    p.expect(T![by]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        p.eat_one_of(&[T![asc], T![desc]]);
+        if p.eat(T![nulls]) {
+            p.expect_one_of(&[T![first], T![last]]);
+        }
+
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![set]);
+    parse_ident(p, 1..2);
+    p.finish();
+}
+
+pub(crate) fn parse_cycle_clause(p: &mut Parser) {
+    p.start(SyntaxKind::CycleClause);
+    p.expect(T![cycle]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![set]);
+    parse_ident(p, 1..1);
+    p.expect(T![set]);
+    parse_expr(p);
+    p.expect(T![default]);
+    parse_expr(p);
     p.finish();
 }
 
@@ -905,6 +1176,159 @@ Root@0..46
     }
 
     #[test]
+    fn test_cte() {
+        check(parse("WITH CTE AS (SELECT name, employee_id FROM employee WHERE city = 'Delhi') select * from CTE;", parse_cte),
+            expect![[r#"
+Root@0..92
+  WithClause@0..74
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    SubqueryFactoringClause@5..74
+      IdentGroup@5..8
+        Ident@5..8 "CTE"
+      Whitespace@8..9 " "
+      Keyword@9..11 "AS"
+      Whitespace@11..12 " "
+      LParen@12..13 "("
+      SelectStmt@13..72
+        Keyword@13..19 "SELECT"
+        Whitespace@19..20 " "
+        SelectClause@20..38
+          ColumnExpr@20..24
+            Expression@20..24
+              IdentGroup@20..24
+                Ident@20..24 "name"
+          Comma@24..25 ","
+          Whitespace@25..26 " "
+          ColumnExpr@26..38
+            IdentGroup@26..37
+              Ident@26..37 "employee_id"
+            Whitespace@37..38 " "
+        Keyword@38..42 "FROM"
+        Whitespace@42..43 " "
+        IdentGroup@43..51
+          Ident@43..51 "employee"
+        Whitespace@51..52 " "
+        WhereClause@52..72
+          Keyword@52..57 "WHERE"
+          Whitespace@57..58 " "
+          Expression@58..72
+            IdentGroup@58..62
+              Ident@58..62 "city"
+            Whitespace@62..63 " "
+            ComparisonOp@63..64 "="
+            Whitespace@64..65 " "
+            QuotedLiteral@65..72 "'Delhi'"
+      RParen@72..73 ")"
+      Whitespace@73..74 " "
+  SelectStmt@74..92
+    Keyword@74..80 "select"
+    Whitespace@80..81 " "
+    Asterisk@81..82 "*"
+    Whitespace@82..83 " "
+    Keyword@83..87 "from"
+    Whitespace@87..88 " "
+    IdentGroup@88..91
+      Ident@88..91 "CTE"
+    Semicolon@91..92 ";"
+"#]],
+            vec![]);
+    }
+
+    #[test]
+    fn test_multi_cte() {
+        check(
+            parse(
+                "WITH CTE AS (SELECT name, employee_id FROM employee),
+CTE1 AS (SELECT employee_id, vehicle_name FROM vehicle)
+SELECT name, vehicle_name FROM CTE;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..145
+  WithClause@0..110
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    SubqueryFactoringClause@5..52
+      IdentGroup@5..8
+        Ident@5..8 "CTE"
+      Whitespace@8..9 " "
+      Keyword@9..11 "AS"
+      Whitespace@11..12 " "
+      LParen@12..13 "("
+      SelectStmt@13..51
+        Keyword@13..19 "SELECT"
+        Whitespace@19..20 " "
+        SelectClause@20..38
+          ColumnExpr@20..24
+            Expression@20..24
+              IdentGroup@20..24
+                Ident@20..24 "name"
+          Comma@24..25 ","
+          Whitespace@25..26 " "
+          ColumnExpr@26..38
+            IdentGroup@26..37
+              Ident@26..37 "employee_id"
+            Whitespace@37..38 " "
+        Keyword@38..42 "FROM"
+        Whitespace@42..43 " "
+        IdentGroup@43..51
+          Ident@43..51 "employee"
+      RParen@51..52 ")"
+    Comma@52..53 ","
+    Whitespace@53..54 "\n"
+    SubqueryFactoringClause@54..110
+      IdentGroup@54..58
+        Ident@54..58 "CTE1"
+      Whitespace@58..59 " "
+      Keyword@59..61 "AS"
+      Whitespace@61..62 " "
+      LParen@62..63 "("
+      SelectStmt@63..108
+        Keyword@63..69 "SELECT"
+        Whitespace@69..70 " "
+        SelectClause@70..96
+          ColumnExpr@70..81
+            Expression@70..81
+              IdentGroup@70..81
+                Ident@70..81 "employee_id"
+          Comma@81..82 ","
+          Whitespace@82..83 " "
+          ColumnExpr@83..96
+            IdentGroup@83..95
+              Ident@83..95 "vehicle_name"
+            Whitespace@95..96 " "
+        Keyword@96..100 "FROM"
+        Whitespace@100..101 " "
+        IdentGroup@101..108
+          Ident@101..108 "vehicle"
+      RParen@108..109 ")"
+      Whitespace@109..110 "\n"
+  SelectStmt@110..145
+    Keyword@110..116 "SELECT"
+    Whitespace@116..117 " "
+    SelectClause@117..136
+      ColumnExpr@117..121
+        Expression@117..121
+          IdentGroup@117..121
+            Ident@117..121 "name"
+      Comma@121..122 ","
+      Whitespace@122..123 " "
+      ColumnExpr@123..136
+        IdentGroup@123..135
+          Ident@123..135 "vehicle_name"
+        Whitespace@135..136 " "
+    Keyword@136..140 "FROM"
+    Whitespace@140..141 " "
+    IdentGroup@141..144
+      Ident@141..144 "CTE"
+    Semicolon@144..145 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
     fn test_group_by() {
         check(
             parse("SELECT column_list FROM T GROUP BY c1,c2,c3;", |p| {
@@ -948,6 +1372,95 @@ Root@0..44
     }
 
     #[test]
+    fn test_cte_function() {
+        check(
+            parse(
+                "WITH FUNCTION text_length(a CLOB) 
+   RETURN NUMBER DETERMINISTIC IS
+BEGIN 
+  RETURN DBMS_LOB.GETLENGTH(a);
+END;
+SELECT text_length('hans') FROM DUAL;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..150
+  WithClause@0..113
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    Function@5..113
+      FunctionHeader@5..66
+        Keyword@5..13 "FUNCTION"
+        Whitespace@13..14 " "
+        IdentGroup@14..25
+          Ident@14..25 "text_length"
+        ParamList@25..33
+          LParen@25..26 "("
+          Param@26..32
+            IdentGroup@26..27
+              Ident@26..27 "a"
+            Whitespace@27..28 " "
+            Datatype@28..32
+              Keyword@28..32 "CLOB"
+          RParen@32..33 ")"
+        Whitespace@33..38 " \n   "
+        Keyword@38..44 "RETURN"
+        Whitespace@44..45 " "
+        Datatype@45..52
+          Keyword@45..51 "NUMBER"
+          Whitespace@51..52 " "
+        Keyword@52..65 "DETERMINISTIC"
+        Whitespace@65..66 " "
+      Keyword@66..68 "IS"
+      Whitespace@68..69 "\n"
+      Block@69..112
+        Keyword@69..74 "BEGIN"
+        Whitespace@74..78 " \n  "
+        BlockStatement@78..107
+          Keyword@78..84 "RETURN"
+          Whitespace@84..85 " "
+          Expression@85..106
+            FunctionInvocation@85..106
+              IdentGroup@85..103
+                Ident@85..93 "DBMS_LOB"
+                Dot@93..94 "."
+                Ident@94..103 "GETLENGTH"
+              LParen@103..104 "("
+              ArgumentList@104..105
+                Argument@104..105
+                  IdentGroup@104..105
+                    Ident@104..105 "a"
+              RParen@105..106 ")"
+          Semicolon@106..107 ";"
+        Whitespace@107..108 "\n"
+        Keyword@108..111 "END"
+        Semicolon@111..112 ";"
+      Whitespace@112..113 "\n"
+  SelectStmt@113..150
+    Keyword@113..119 "SELECT"
+    Whitespace@119..120 " "
+    SelectClause@120..140
+      ColumnExpr@120..140
+        FunctionInvocation@120..139
+          IdentGroup@120..131
+            Ident@120..131 "text_length"
+          LParen@131..132 "("
+          ArgumentList@132..138
+            Argument@132..138
+              QuotedLiteral@132..138 "'hans'"
+          RParen@138..139 ")"
+        Whitespace@139..140 " "
+    Keyword@140..144 "FROM"
+    Whitespace@144..145 " "
+    IdentGroup@145..149
+      Ident@145..149 "DUAL"
+    Semicolon@149..150 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
     fn test_group_by_having() {
         check(
             parse(
@@ -983,6 +1496,170 @@ Root@0..61
         IdentGroup@45..60
           Ident@45..60 "group_condition"
     Semicolon@60..61 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cte_procedure() {
+        check(
+            parse(
+                "WITH PROCEDURE print_contact(
+    in_customer_id NUMBER 
+)
+IS
+  r_contact contacts%ROWTYPE;
+BEGIN
+  -- get contact based on customer id
+  SELECT *
+  INTO r_contact
+  FROM contacts
+  WHERE customer_id = p_customer_id;
+
+  -- print out contact's information
+  dbms_output.put_line( r_contact.first_name || ' ' ||
+  r_contact.last_name || '<' || r_contact.email ||'>' );
+
+END; 
+SELECT * from employee;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..397
+  WithClause@0..374
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    Procedure@5..374
+      ProcedureHeader@5..59
+        Keyword@5..14 "PROCEDURE"
+        Whitespace@14..15 " "
+        IdentGroup@15..28
+          Ident@15..28 "print_contact"
+        ParamList@28..58
+          LParen@28..29 "("
+          Whitespace@29..34 "\n    "
+          Param@34..57
+            IdentGroup@34..48
+              Ident@34..48 "in_customer_id"
+            Whitespace@48..49 " "
+            Datatype@49..57
+              Keyword@49..55 "NUMBER"
+              Whitespace@55..57 " \n"
+          RParen@57..58 ")"
+        Whitespace@58..59 "\n"
+      Keyword@59..61 "IS"
+      Whitespace@61..64 "\n  "
+      Block@64..372
+        DeclareSection@64..92
+          IdentGroup@64..73
+            Ident@64..73 "r_contact"
+          Whitespace@73..74 " "
+          Datatype@74..90
+            IdentGroup@74..82
+              Ident@74..82 "contacts"
+            TypeAttribute@82..90
+              Percentage@82..83 "%"
+              Keyword@83..90 "ROWTYPE"
+          Semicolon@90..91 ";"
+          Whitespace@91..92 "\n"
+        Keyword@92..97 "BEGIN"
+        Whitespace@97..100 "\n  "
+        Comment@100..135 "-- get contact based  ..."
+        Whitespace@135..138 "\n  "
+        BlockStatement@138..257
+          SelectStmt@138..216
+            Keyword@138..144 "SELECT"
+            Whitespace@144..145 " "
+            Asterisk@145..146 "*"
+            Whitespace@146..149 "\n  "
+            IntoClause@149..166
+              Keyword@149..153 "INTO"
+              Whitespace@153..154 " "
+              IdentGroup@154..163
+                Ident@154..163 "r_contact"
+              Whitespace@163..166 "\n  "
+            Keyword@166..170 "FROM"
+            Whitespace@170..171 " "
+            IdentGroup@171..179
+              Ident@171..179 "contacts"
+            Whitespace@179..182 "\n  "
+            WhereClause@182..215
+              Keyword@182..187 "WHERE"
+              Whitespace@187..188 " "
+              Expression@188..215
+                IdentGroup@188..199
+                  Ident@188..199 "customer_id"
+                Whitespace@199..200 " "
+                ComparisonOp@200..201 "="
+                Whitespace@201..202 " "
+                IdentGroup@202..215
+                  Ident@202..215 "p_customer_id"
+            Semicolon@215..216 ";"
+          Whitespace@216..220 "\n\n  "
+          Comment@220..254 "-- print out contact' ..."
+          Whitespace@254..257 "\n  "
+        BlockStatement@257..366
+          FunctionInvocation@257..365
+            IdentGroup@257..277
+              Ident@257..268 "dbms_output"
+              Dot@268..269 "."
+              Ident@269..277 "put_line"
+            LParen@277..278 "("
+            Whitespace@278..279 " "
+            ArgumentList@279..364
+              Argument@279..364
+                Expression@279..364
+                  Expression@279..358
+                    Expression@279..339
+                      Expression@279..332
+                        Expression@279..307
+                          IdentGroup@279..299
+                            Ident@279..288 "r_contact"
+                            Dot@288..289 "."
+                            Ident@289..299 "first_name"
+                          Whitespace@299..300 " "
+                          Concat@300..302 "||"
+                          Whitespace@302..303 " "
+                          QuotedLiteral@303..306 "' '"
+                          Whitespace@306..307 " "
+                        Concat@307..309 "||"
+                        Whitespace@309..312 "\n  "
+                        IdentGroup@312..331
+                          Ident@312..321 "r_contact"
+                          Dot@321..322 "."
+                          Ident@322..331 "last_name"
+                        Whitespace@331..332 " "
+                      Concat@332..334 "||"
+                      Whitespace@334..335 " "
+                      QuotedLiteral@335..338 "'<'"
+                      Whitespace@338..339 " "
+                    Concat@339..341 "||"
+                    Whitespace@341..342 " "
+                    IdentGroup@342..357
+                      Ident@342..351 "r_contact"
+                      Dot@351..352 "."
+                      Ident@352..357 "email"
+                    Whitespace@357..358 " "
+                  Concat@358..360 "||"
+                  QuotedLiteral@360..363 "'>'"
+                  Whitespace@363..364 " "
+            RParen@364..365 ")"
+          Semicolon@365..366 ";"
+        Whitespace@366..368 "\n\n"
+        Keyword@368..371 "END"
+        Semicolon@371..372 ";"
+      Whitespace@372..374 " \n"
+  SelectStmt@374..397
+    Keyword@374..380 "SELECT"
+    Whitespace@380..381 " "
+    Asterisk@381..382 "*"
+    Whitespace@382..383 " "
+    Keyword@383..387 "from"
+    Whitespace@387..388 " "
+    IdentGroup@388..396
+      Ident@388..396 "employee"
+    Semicolon@396..397 ";"
 "#]],
             vec![],
         );
@@ -1067,16 +1744,14 @@ Root@0..73
             Ident@15..17 "c3"
       Comma@17..18 ","
       Whitespace@18..19 " "
-      ColumnExpr@19..33
-        FunctionInvocation@19..32
-          IdentGroup@19..28
-            Ident@19..28 "aggregate"
-          LParen@28..29 "("
-          ArgumentList@29..31
-            Argument@29..31
-              IdentGroup@29..31
-                Ident@29..31 "c4"
-          RParen@31..32 ")"
+      ColumnExpr@19..28
+        IdentGroup@19..28
+          Ident@19..28 "aggregate"
+      ColumnExpr@28..33
+        LParen@28..29 "("
+        IdentGroup@29..31
+          Ident@29..31 "c4"
+        RParen@31..32 ")"
         Whitespace@32..33 " "
     Keyword@33..37 "FROM"
     Whitespace@37..38 " "
