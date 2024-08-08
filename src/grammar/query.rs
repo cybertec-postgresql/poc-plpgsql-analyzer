@@ -39,14 +39,16 @@ pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
 pub(crate) fn parse_cte(p: &mut Parser) {
     p.start(SyntaxKind::WithClause);
     p.expect(T![with]);
-    if p.at(T![create]) {
+    if [T![function], T![procedure]].contains(&p.current()) {
         parse_plsql_declarations(p);
     }
     safe_loop!(p, {
         if p.nth(1) == Some(T![analytic]) {
             parse_subav_factoring_clause(p);
         } else {
-            parse_subquery_factoring_clause(p);
+            if !p.at(T![select]) {
+                parse_subquery_factoring_clause(p);
+            }
         }
 
         if !p.eat(T![,]) || p.at(T![select]) {
@@ -176,18 +178,10 @@ pub(crate) fn parse_subquery_factoring_clause(p: &mut Parser) {
 
 pub(crate) fn parse_plsql_declarations(p: &mut Parser) {
     safe_loop!(p, {
-        if p.eat(T![create]) {
-            p.eat(T![or]);
-            p.eat(T![replace]);
-            p.eat(T![editionable]);
-            p.eat(T![noneditionable]);
-            match p.current() {
-                T![function] => parse_function(p, false),
-                T![procedure] => parse_procedure(p, false),
-                _ => (),
-            }
-        } else {
-            break;
+        match p.current() {
+            T![function] => parse_function(p, true),
+            T![procedure] => parse_procedure(p, true),
+            _ => break,
         }
     });
 }
@@ -1175,6 +1169,259 @@ Root@0..145
     IdentGroup@141..144
       Ident@141..144 "CTE"
     Semicolon@144..145 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cte_function() {
+        check(
+            parse(
+                "WITH FUNCTION text_length(a CLOB) 
+   RETURN NUMBER DETERMINISTIC IS
+BEGIN 
+  RETURN DBMS_LOB.GETLENGTH(a);
+END;
+SELECT text_length('hans') FROM DUAL;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..150
+  WithClause@0..113
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    Function@5..113
+      FunctionHeader@5..66
+        Keyword@5..13 "FUNCTION"
+        Whitespace@13..14 " "
+        IdentGroup@14..25
+          Ident@14..25 "text_length"
+        ParamList@25..33
+          LParen@25..26 "("
+          Param@26..32
+            IdentGroup@26..27
+              Ident@26..27 "a"
+            Whitespace@27..28 " "
+            Datatype@28..32
+              Keyword@28..32 "CLOB"
+          RParen@32..33 ")"
+        Whitespace@33..38 " \n   "
+        Keyword@38..44 "RETURN"
+        Whitespace@44..45 " "
+        Datatype@45..52
+          Keyword@45..51 "NUMBER"
+          Whitespace@51..52 " "
+        Keyword@52..65 "DETERMINISTIC"
+        Whitespace@65..66 " "
+      Keyword@66..68 "IS"
+      Whitespace@68..69 "\n"
+      Block@69..112
+        Keyword@69..74 "BEGIN"
+        Whitespace@74..78 " \n  "
+        BlockStatement@78..107
+          Keyword@78..84 "RETURN"
+          Whitespace@84..85 " "
+          Expression@85..106
+            FunctionInvocation@85..106
+              IdentGroup@85..103
+                Ident@85..93 "DBMS_LOB"
+                Dot@93..94 "."
+                Ident@94..103 "GETLENGTH"
+              LParen@103..104 "("
+              ArgumentList@104..105
+                Argument@104..105
+                  IdentGroup@104..105
+                    Ident@104..105 "a"
+              RParen@105..106 ")"
+          Semicolon@106..107 ";"
+        Whitespace@107..108 "\n"
+        Keyword@108..111 "END"
+        Semicolon@111..112 ";"
+      Whitespace@112..113 "\n"
+  SelectStmt@113..150
+    Keyword@113..119 "SELECT"
+    Whitespace@119..120 " "
+    SelectClause@120..140
+      ColumnExpr@120..140
+        FunctionInvocation@120..139
+          IdentGroup@120..131
+            Ident@120..131 "text_length"
+          LParen@131..132 "("
+          ArgumentList@132..138
+            Argument@132..138
+              QuotedLiteral@132..138 "'hans'"
+          RParen@138..139 ")"
+        Whitespace@139..140 " "
+    Keyword@140..144 "FROM"
+    Whitespace@144..145 " "
+    IdentGroup@145..149
+      Ident@145..149 "DUAL"
+    Semicolon@149..150 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_cte_procedure() {
+        check(
+            parse(
+                "WITH PROCEDURE print_contact(
+    in_customer_id NUMBER 
+)
+IS
+  r_contact contacts%ROWTYPE;
+BEGIN
+  -- get contact based on customer id
+  SELECT *
+  INTO r_contact
+  FROM contacts
+  WHERE customer_id = p_customer_id;
+
+  -- print out contact's information
+  dbms_output.put_line( r_contact.first_name || ' ' ||
+  r_contact.last_name || '<' || r_contact.email ||'>' );
+
+END; 
+SELECT * from employee;",
+                parse_cte,
+            ),
+            expect![[r#"
+Root@0..397
+  WithClause@0..374
+    Keyword@0..4 "WITH"
+    Whitespace@4..5 " "
+    Procedure@5..374
+      ProcedureHeader@5..59
+        Keyword@5..14 "PROCEDURE"
+        Whitespace@14..15 " "
+        IdentGroup@15..28
+          Ident@15..28 "print_contact"
+        ParamList@28..58
+          LParen@28..29 "("
+          Whitespace@29..34 "\n    "
+          Param@34..57
+            IdentGroup@34..48
+              Ident@34..48 "in_customer_id"
+            Whitespace@48..49 " "
+            Datatype@49..57
+              Keyword@49..55 "NUMBER"
+              Whitespace@55..57 " \n"
+          RParen@57..58 ")"
+        Whitespace@58..59 "\n"
+      Keyword@59..61 "IS"
+      Whitespace@61..64 "\n  "
+      Block@64..372
+        DeclareSection@64..92
+          IdentGroup@64..73
+            Ident@64..73 "r_contact"
+          Whitespace@73..74 " "
+          Datatype@74..90
+            IdentGroup@74..82
+              Ident@74..82 "contacts"
+            TypeAttribute@82..90
+              Percentage@82..83 "%"
+              Keyword@83..90 "ROWTYPE"
+          Semicolon@90..91 ";"
+          Whitespace@91..92 "\n"
+        Keyword@92..97 "BEGIN"
+        Whitespace@97..100 "\n  "
+        Comment@100..135 "-- get contact based  ..."
+        Whitespace@135..138 "\n  "
+        BlockStatement@138..257
+          SelectStmt@138..216
+            Keyword@138..144 "SELECT"
+            Whitespace@144..145 " "
+            Asterisk@145..146 "*"
+            Whitespace@146..149 "\n  "
+            IntoClause@149..166
+              Keyword@149..153 "INTO"
+              Whitespace@153..154 " "
+              IdentGroup@154..163
+                Ident@154..163 "r_contact"
+              Whitespace@163..166 "\n  "
+            Keyword@166..170 "FROM"
+            Whitespace@170..171 " "
+            IdentGroup@171..179
+              Ident@171..179 "contacts"
+            Whitespace@179..182 "\n  "
+            WhereClause@182..215
+              Keyword@182..187 "WHERE"
+              Whitespace@187..188 " "
+              Expression@188..215
+                IdentGroup@188..199
+                  Ident@188..199 "customer_id"
+                Whitespace@199..200 " "
+                ComparisonOp@200..201 "="
+                Whitespace@201..202 " "
+                IdentGroup@202..215
+                  Ident@202..215 "p_customer_id"
+            Semicolon@215..216 ";"
+          Whitespace@216..220 "\n\n  "
+          Comment@220..254 "-- print out contact' ..."
+          Whitespace@254..257 "\n  "
+        BlockStatement@257..366
+          FunctionInvocation@257..365
+            IdentGroup@257..277
+              Ident@257..268 "dbms_output"
+              Dot@268..269 "."
+              Ident@269..277 "put_line"
+            LParen@277..278 "("
+            Whitespace@278..279 " "
+            ArgumentList@279..364
+              Argument@279..364
+                Expression@279..364
+                  Expression@279..358
+                    Expression@279..339
+                      Expression@279..332
+                        Expression@279..307
+                          IdentGroup@279..299
+                            Ident@279..288 "r_contact"
+                            Dot@288..289 "."
+                            Ident@289..299 "first_name"
+                          Whitespace@299..300 " "
+                          Concat@300..302 "||"
+                          Whitespace@302..303 " "
+                          QuotedLiteral@303..306 "' '"
+                          Whitespace@306..307 " "
+                        Concat@307..309 "||"
+                        Whitespace@309..312 "\n  "
+                        IdentGroup@312..331
+                          Ident@312..321 "r_contact"
+                          Dot@321..322 "."
+                          Ident@322..331 "last_name"
+                        Whitespace@331..332 " "
+                      Concat@332..334 "||"
+                      Whitespace@334..335 " "
+                      QuotedLiteral@335..338 "'<'"
+                      Whitespace@338..339 " "
+                    Concat@339..341 "||"
+                    Whitespace@341..342 " "
+                    IdentGroup@342..357
+                      Ident@342..351 "r_contact"
+                      Dot@351..352 "."
+                      Ident@352..357 "email"
+                    Whitespace@357..358 " "
+                  Concat@358..360 "||"
+                  QuotedLiteral@360..363 "'>'"
+                  Whitespace@363..364 " "
+            RParen@364..365 ")"
+          Semicolon@365..366 ";"
+        Whitespace@366..368 "\n\n"
+        Keyword@368..371 "END"
+        Semicolon@371..372 ";"
+      Whitespace@372..374 " \n"
+  SelectStmt@374..397
+    Keyword@374..380 "SELECT"
+    Whitespace@380..381 " "
+    Asterisk@381..382 "*"
+    Whitespace@382..383 " "
+    Keyword@383..387 "from"
+    Whitespace@387..388 " "
+    IdentGroup@388..396
+      Ident@388..396 "employee"
+    Semicolon@396..397 ";"
 "#]],
             vec![],
         );
