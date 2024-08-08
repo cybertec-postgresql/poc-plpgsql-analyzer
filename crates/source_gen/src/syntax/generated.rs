@@ -198,6 +198,8 @@ pub enum SyntaxKind {
     UpdateStmt,
     #[doc = "A node containing a using clause"]
     UsingClause,
+    #[doc = "A node containing a values clause"]
+    ValuesClause,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]

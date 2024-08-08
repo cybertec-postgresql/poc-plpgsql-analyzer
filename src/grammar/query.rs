@@ -208,14 +208,56 @@ pub(crate) fn parse_subquery_factoring_clause(p: &mut Parser) {
     }
     p.expect(T![as]);
     p.expect(T!["("]);
-    parse_query(p, false);
-    p.expect(T![")"]);
+    if p.nth(1) != Some(T![values]) {
+        parse_query(p, false);
+        p.expect(T![")"]);
+    } else {
+        parse_values_clause(p);
+    }
     if p.at(T![search]) {
         parse_search_clause(p);
     }
     if p.at(T![cycle]) {
         parse_cycle_clause(p);
     }
+    p.finish();
+}
+
+fn parse_values_clause(p: &mut Parser) {
+    p.start(SyntaxKind::ValuesClause);
+    p.expect(T![values]);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_expr(p);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+    safe_loop!(p, {
+        if !p.eat(T![,]) {
+            break;
+        }
+        p.expect(T!["("]);
+        safe_loop!(p, {
+            parse_expr(p);
+            if !p.eat(T![,]) {
+                break;
+            }
+        });
+    });
+    p.expect(T![")"]);
+    p.eat(T![as]);
+    parse_ident(p, 1..2);
+    p.expect(T!["("]);
+    safe_loop!(p, {
+        parse_ident(p, 1..1);
+        if !p.eat(T![,]) {
+            break;
+        }
+    });
+
+    p.expect(T![")"]);
     p.finish();
 }
 

@@ -418,6 +418,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("type_name", "A type name"),
     S!("update_stmt", "A node that marks a full UPDATE statement"),
     S!("using_clause", "A node containing a using clause"),
+    S!("values_clause", "A node containing a values clause"),
     S!("variable_decl", "A node that marks a variable declaration as part of a function or procedure"),
     S!("variable_decl_list", "A node that marks a list of variable declarations of functions and procedures"),
     S!("view", "A node that marks a full CREATE VIEW block"),
