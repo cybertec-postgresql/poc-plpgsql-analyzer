@@ -245,6 +245,7 @@ fn parse_values_clause(p: &mut Parser) {
                 break;
             }
         });
+        p.expect(T![")"]);
     });
     p.expect(T![")"]);
     p.eat(T![as]);
@@ -256,7 +257,6 @@ fn parse_values_clause(p: &mut Parser) {
             break;
         }
     });
-
     p.expect(T![")"]);
     p.finish();
 }
