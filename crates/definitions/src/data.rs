@@ -101,6 +101,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("collation"),
         T!("collect"),
         T!("comment"),
+        T!("comment_word", "commentWord", "keyword", r"COMMENT", 2),
         T!("commit"),
         T!("connect"),
         T!("connect_by_root"),

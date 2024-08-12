@@ -270,6 +270,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
+            TokenKind::CommentWord => SyntaxKind::Keyword,
             TokenKind::CommitKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
