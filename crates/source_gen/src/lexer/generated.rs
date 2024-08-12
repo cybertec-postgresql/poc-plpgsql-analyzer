@@ -144,7 +144,7 @@ pub enum TokenKind {
     CollectKw,
     #[token("comment", ignore(case))]
     CommentKw,
-    #[regex("COMMENT", priority = 2)]
+    #[regex("(?i)comment", priority = 2)]
     CommentWord,
     #[token("commit", ignore(case))]
     CommitKw,
