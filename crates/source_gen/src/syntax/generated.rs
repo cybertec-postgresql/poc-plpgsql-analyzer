@@ -48,6 +48,8 @@ pub enum SyntaxKind {
     Comma,
     #[doc = "Inline comment starting with `--`"]
     Comment,
+    #[doc = "A node containing a full commit statement"]
+    CommitStmt,
     #[doc = "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"]
     ComparisonOp,
     #[doc = "A concatination operator `||`"]
@@ -240,6 +242,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AscKw => SyntaxKind::Keyword,
             TokenKind::AssociateKw => SyntaxKind::Keyword,
             TokenKind::AuditKw => SyntaxKind::Keyword,
+            TokenKind::BatchKw => SyntaxKind::Keyword,
             TokenKind::BeforeKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::BequeathKw => SyntaxKind::Keyword,
@@ -267,6 +270,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
+            TokenKind::CommitKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
             TokenKind::ConstantKw => SyntaxKind::Keyword,
@@ -381,6 +385,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::NorelyKw => SyntaxKind::Keyword,
             TokenKind::NotKw => SyntaxKind::Keyword,
             TokenKind::NovalidateKw => SyntaxKind::Keyword,
+            TokenKind::NowaitKw => SyntaxKind::Keyword,
             TokenKind::NullKw => SyntaxKind::Keyword,
             TokenKind::NullsKw => SyntaxKind::Keyword,
             TokenKind::NumberKw => SyntaxKind::Keyword,
@@ -479,9 +484,12 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::VaryingKw => SyntaxKind::Keyword,
             TokenKind::ViewKw => SyntaxKind::Keyword,
             TokenKind::VisibleKw => SyntaxKind::Keyword,
+            TokenKind::WaitKw => SyntaxKind::Keyword,
             TokenKind::WhenKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
             TokenKind::WithKw => SyntaxKind::Keyword,
+            TokenKind::WorkKw => SyntaxKind::Keyword,
+            TokenKind::WriteKw => SyntaxKind::Keyword,
             TokenKind::XmlschemaKw => SyntaxKind::Keyword,
             TokenKind::XmltypeKw => SyntaxKind::Keyword,
             TokenKind::YearKw => SyntaxKind::Keyword,
