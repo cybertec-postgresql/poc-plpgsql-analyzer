@@ -47,7 +47,7 @@ pub enum SyntaxKind {
     #[doc = "A single comma"]
     Comma,
     #[doc = "Inline comment starting with `--`"]
-    Comment,
+    InlineComment,
     #[doc = "A node containing a full commit statement"]
     CommitStmt,
     #[doc = "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"]
@@ -201,7 +201,7 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 impl From<TokenKind> for SyntaxKind {
     fn from(kind: TokenKind) -> Self {
         match kind {
-            TokenKind::Comment => SyntaxKind::Comment,
+            TokenKind::InlineComment => SyntaxKind::InlineComment,
             TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,
             TokenKind::Assign => SyntaxKind::Assign,
@@ -270,7 +270,6 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
-            TokenKind::CommentWord => SyntaxKind::Keyword,
             TokenKind::CommitKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,

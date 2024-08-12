@@ -25,7 +25,7 @@ fn parse_force(p: &mut Parser) {
 }
 
 fn parse_comment(p: &mut Parser) {
-    p.expect(T![comment_word]);
+    p.expect(T![comment]);
     p.expect(T![quoted_literal]);
     if p.at(T![write]) {
         parse_write(p);
@@ -102,10 +102,20 @@ Root@0..29
         check(
             parse("COMMIT COMMENT 'i am pleb' WRITE WAIT BATCH;", parse_commit),
             expect![[r#"
-Root@0..7
-  CommitStmt@0..7
+Root@0..44
+  CommitStmt@0..44
     Keyword@0..6 "COMMIT"
     Whitespace@6..7 " "
+    Keyword@7..14 "COMMENT"
+    Whitespace@14..15 " "
+    QuotedLiteral@15..26 "'i am pleb'"
+    Whitespace@26..27 " "
+    Keyword@27..32 "WRITE"
+    Whitespace@32..33 " "
+    Keyword@33..37 "WAIT"
+    Whitespace@37..38 " "
+    Keyword@38..43 "BATCH"
+    Semicolon@43..44 ";"
 "#]],
             vec![],
         );

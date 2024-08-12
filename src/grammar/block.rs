@@ -249,7 +249,7 @@ Root@0..520
       Whitespace@44..45 "\n"
     Keyword@45..50 "BEGIN"
     Whitespace@50..55 "\n    "
-    Comment@55..69 "-- SELECT INTO"
+    InlineComment@55..69 "-- SELECT INTO"
     Whitespace@69..74 "\n    "
     BlockStatement@74..177
       SelectStmt@74..152
@@ -282,7 +282,7 @@ Root@0..520
           Ident@147..151 "DUAL"
         Semicolon@151..152 ";"
       Whitespace@152..157 "\n    "
-      Comment@157..172 "-- Nested block"
+      InlineComment@157..172 "-- Nested block"
       Whitespace@172..177 "\n    "
     BlockStatement@177..220
       Block@177..193
@@ -295,7 +295,7 @@ Root@0..520
         Keyword@189..192 "END"
         Semicolon@192..193 ";"
       Whitespace@193..198 "\n    "
-      Comment@198..215 "-- Procedure call"
+      InlineComment@198..215 "-- Procedure call"
       Whitespace@215..220 "\n    "
     BlockStatement@220..259
       FunctionInvocation@220..258
@@ -311,7 +311,7 @@ Root@0..520
         RParen@257..258 ")"
       Semicolon@258..259 ";"
     Whitespace@259..264 "\n    "
-    Comment@264..279 "-- IF statement"
+    InlineComment@264..279 "-- IF statement"
     Whitespace@279..288 "\n        "
     BlockStatement@288..397
       Keyword@288..290 "IF"
@@ -358,7 +358,7 @@ Root@0..520
       Keyword@394..396 "IF"
       Semicolon@396..397 ";"
     Whitespace@397..402 "\n    "
-    Comment@402..425 "-- Assignment operation"
+    InlineComment@402..425 "-- Assignment operation"
     Whitespace@425..430 "\n    "
     BlockStatement@430..456
       IdentGroup@430..446
@@ -370,7 +370,7 @@ Root@0..520
         QuotedLiteral@450..455 "'abc'"
       Semicolon@455..456 ";"
     Whitespace@456..461 "\n    "
-    Comment@461..480 "-- Return statement"
+    InlineComment@461..480 "-- Return statement"
     Whitespace@480..485 "\n    "
     BlockStatement@485..494
       Keyword@485..491 "RETURN"

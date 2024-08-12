@@ -455,7 +455,7 @@ Root@0..328
     WhereClause@30..93
       Keyword@30..35 "WHERE"
       Whitespace@35..38 "\n  "
-      Comment@38..58 "-- LEFT (OUTER) JOIN"
+      InlineComment@38..58 "-- LEFT (OUTER) JOIN"
       Whitespace@58..61 "\n  "
       Expression@61..93
         IdentGroup@61..77
@@ -472,17 +472,17 @@ Root@0..328
           Ident@91..93 "id"
     Semicolon@93..94 ";"
   Whitespace@94..97 "\n  "
-  Comment@97..131 "-- Can be switched, s ..."
+  InlineComment@97..131 "-- Can be switched, s ..."
   Whitespace@131..134 "\n  "
-  Comment@134..170 "-- persons.id = place ..."
+  InlineComment@134..170 "-- persons.id = place ..."
   Whitespace@170..173 "\n  "
-  Comment@173..175 "--"
+  InlineComment@173..175 "--"
   Whitespace@175..178 "\n  "
-  Comment@178..248 "-- Valid syntax: whit ..."
+  InlineComment@178..248 "-- Valid syntax: whit ..."
   Whitespace@248..251 "\n  "
-  Comment@251..288 "-- places.person_id ( ..."
+  InlineComment@251..288 "-- places.person_id ( ..."
   Whitespace@288..291 "\n  "
-  Comment@291..327 "-- places.person_id ( ..."
+  InlineComment@291..327 "-- places.person_id ( ..."
   Whitespace@327..328 "\n"
 "#]],
             vec![],

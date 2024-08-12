@@ -9,7 +9,7 @@ use crate::token::{Tokens, T};
 
 pub const TOKENS: Tokens<'_> = Tokens {
     trivia: &[
-        T!("comment", "comment", "comment", "--.*"),
+        T!("inline_comment", "inline_comment", "inline_comment", "--.*"),
         T!("whitespace", "whitespace", "whitespace", "[ \t\n\r]+"),
     ],
     punctuation: &[
@@ -101,7 +101,6 @@ pub const TOKENS: Tokens<'_> = Tokens {
         T!("collation"),
         T!("collect"),
         T!("comment"),
-        T!("comment_word", "commentWord", "keyword", r"(?i)comment", 2),
         T!("commit"),
         T!("connect"),
         T!("connect_by_root"),
@@ -345,7 +344,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("colon", "A colon token"),
     S!("column_expr", "A single column expression, as part of an SELECT clause"),
     S!("comma", "A single comma"),
-    S!("comment", "Inline comment starting with `--`"),
+    S!("inline_comment", "Inline comment starting with `--`"),
     S!("commit_stmt", "A node containing a full commit statement"),
     S!("comparison_op", "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"),
     S!("concat", "A concatination operator `||`"),
