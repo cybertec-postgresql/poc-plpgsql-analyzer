@@ -403,6 +403,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("trigger_header","A node that marks a TRIGGER header"),
     S!("type_attribute", "A `%TYPE` attribute"),
     S!("type_name", "A type name"),
+    S!("udt_definition_stmt", "A node containing a UDT-Definitions"),
     S!("update_stmt", "A node that marks a full UPDATE statement"),
     S!("using_clause", "A node containing a using clause"),
     S!("variable_decl", "A node that marks a variable declaration as part of a function or procedure"),

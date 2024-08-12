@@ -176,6 +176,8 @@ pub enum SyntaxKind {
     TypeAttribute,
     #[doc = "A type name"]
     TypeName,
+    #[doc = "A node containing a UDT-Definitions"]
+    UdtDefinitionStmt,
     #[doc = "A node that marks a full UPDATE statement"]
     UpdateStmt,
     #[doc = "A node containing a using clause"]

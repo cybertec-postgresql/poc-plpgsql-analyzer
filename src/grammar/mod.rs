@@ -45,6 +45,7 @@ mod procedure;
 mod query;
 mod raise;
 mod trigger;
+mod udt;
 mod view;
 
 /// Parses the parameter list in the procedure header
