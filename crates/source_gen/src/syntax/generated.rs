@@ -60,6 +60,8 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node containing a constructor_declaration"]
+    ConstructorDeclaration,
     #[doc = "A node containing a cursor parameter declaration"]
     CursorParameterDeclaration,
     #[doc = "A node containing cursor parameter declarations"]
@@ -90,6 +92,8 @@ pub enum SyntaxKind {
     ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
+    #[doc = "A node containing a func_decl_in_type"]
+    FuncDeclInType,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
     Function,
     #[doc = "A node that marks a FUNCTION header with params and return type"]
@@ -124,6 +128,8 @@ pub enum SyntaxKind {
     LogicOp,
     #[doc = "Left Paren"]
     LParen,
+    #[doc = "A node containing a map_order_func_declaration"]
+    MapOrderFuncDeclaration,
     #[doc = "A minus `-`"]
     Minus,
     #[doc = "A node containing a full nested_table_type_spec"]
@@ -146,14 +152,20 @@ pub enum SyntaxKind {
     Param,
     #[doc = "A node that consists of multiple parameters"]
     ParamList,
+    #[doc = "A node containing a parallel enable clause"]
+    ParallelEnableClause,
     #[doc = "Percentage symbol"]
     Percentage,
     #[doc = "A node containing a plsql type source for UDTs"]
     PlsqlTypeSource,
+    #[doc = "A node containing a plsql type"]
+    PlsqlBodyTypeSource,
     #[doc = "A plus `+`"]
     Plus,
     #[doc = "The PL/SQL unary prior operator"]
     Prior,
+    #[doc = "A node containing a proc_decl_in_type"]
+    ProcDeclInType,
     #[doc = "A node that marks a full CREATE [..] PROCEDURE block"]
     Procedure,
     #[doc = "A node that marks a PROCEDURE header with params"]
@@ -164,6 +176,8 @@ pub enum SyntaxKind {
     QuotedLiteral,
     #[doc = "Two dots"]
     Range,
+    #[doc = "A node containing a result_cache clause"]
+    ResultCacheClause,
     #[doc = "A node containing a return into clause"]
     ReturnIntoClause,
     #[doc = "A node that contains the whole RAISE statement for exceptions"]
@@ -190,6 +204,10 @@ pub enum SyntaxKind {
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
     Starts,
+    #[doc = "A node containing a streaming clause"]
+    StreamingClause,
+    #[doc = "A node containing a subprog_decl_in_type"]
+    SubprogDeclInType,
     #[doc = "A text slice node"]
     Text,
     #[doc = "A node that marks a full CREATE [..] TRIGGER block"]
@@ -263,6 +281,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AnalyzeKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::AnnotationsKw => SyntaxKind::Keyword,
+            TokenKind::AnyKw => SyntaxKind::Keyword,
             TokenKind::AnyschemaKw => SyntaxKind::Keyword,
             TokenKind::ArrayKw => SyntaxKind::Keyword,
             TokenKind::AsKw => SyntaxKind::Keyword,
@@ -294,6 +313,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CheckKw => SyntaxKind::Keyword,
             TokenKind::ClobKw => SyntaxKind::Keyword,
             TokenKind::CloneKw => SyntaxKind::Keyword,
+            TokenKind::ClusterKw => SyntaxKind::Keyword,
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
@@ -361,6 +381,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::GrantKw => SyntaxKind::Keyword,
             TokenKind::GroupKw => SyntaxKind::Keyword,
             TokenKind::GroupingKw => SyntaxKind::Keyword,
+            TokenKind::HashKw => SyntaxKind::Keyword,
             TokenKind::HavingKw => SyntaxKind::Keyword,
             TokenKind::IdKw => SyntaxKind::Keyword,
             TokenKind::IdentifierKw => SyntaxKind::Keyword,
@@ -437,6 +458,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ParallelEnableKw => SyntaxKind::Keyword,
             TokenKind::ParametersKw => SyntaxKind::Keyword,
             TokenKind::ParentKw => SyntaxKind::Keyword,
+            TokenKind::PartitionKw => SyntaxKind::Keyword,
             TokenKind::PersistableKw => SyntaxKind::Keyword,
             TokenKind::PipelinedKw => SyntaxKind::Keyword,
             TokenKind::PlpgsqlKw => SyntaxKind::Keyword,
@@ -517,6 +539,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::UsingKw => SyntaxKind::Keyword,
             TokenKind::UsingNlsCompKw => SyntaxKind::Keyword,
             TokenKind::ValidateKw => SyntaxKind::Keyword,
+            TokenKind::ValueKw => SyntaxKind::Keyword,
             TokenKind::ValuesKw => SyntaxKind::Keyword,
             TokenKind::VarcharKw => SyntaxKind::Keyword,
             TokenKind::Varchar2Kw => SyntaxKind::Keyword,
