@@ -233,12 +233,14 @@ fn parse_varray_type_spec(p: &mut Parser) {
     p.expect(T![int_literal]);
     p.expect(T![")"]);
     p.expect(T![of]);
-    p.expect(T!["("]);
+    let expect_rparen = p.eat(T!["("]);
     parse_datatype(p);
     if p.eat(T![not]) {
         p.expect(T![null]);
     }
-    p.expect(T![")"]);
+    if expect_rparen {
+        p.expect(T![")"]);
+    }
     p.eat(T![not]);
     p.eat(T![persistable]);
     p.finish();
@@ -248,12 +250,14 @@ fn parse_nested_table_type_spec(p: &mut Parser) {
     p.start(SyntaxKind::NestedTableTypeSpec);
     p.expect(T![table]);
     p.expect(T![of]);
-    p.expect(T!["("]);
+    let expect_rparen = p.eat(T!["("]);
     parse_datatype(p);
     if p.eat(T![not]) {
         p.expect(T![null]);
     }
-    p.expect(T![")"]);
+    if expect_rparen {
+        p.expect(T![")"]);
+    }
     p.eat(T![not]);
     p.eat(T![persistable]);
     p.finish();
@@ -416,6 +420,108 @@ Root@0..419
     }
 
     #[test]
+    fn test_simple_udt2() {
+        check(
+            parse(
+                "CREATE TYPE cust_address_typ2 AS OBJECT
+       ( street_address     VARCHAR2(40)
+       , postal_code        VARCHAR2(10)
+       , city               VARCHAR2(30)
+       , state_province     VARCHAR2(10)
+       , country_id         CHAR(2)
+       , phone              phone_list_typ_demo
+       );",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..297
+  UdtDefinitionStmt@0..297
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..296
+      IdentGroup@12..29
+        Ident@12..29 "cust_address_typ2"
+      Whitespace@29..30 " "
+      ObjectBaseTypeDef@30..296
+        Keyword@30..32 "AS"
+        Whitespace@32..33 " "
+        ObjectTypeDef@33..296
+          Keyword@33..39 "OBJECT"
+          Whitespace@39..47 "\n       "
+          LParen@47..48 "("
+          Whitespace@48..49 " "
+          IdentGroup@49..63
+            Ident@49..63 "street_address"
+          Whitespace@63..68 "     "
+          Datatype@68..88
+            Keyword@68..76 "VARCHAR2"
+            LParen@76..77 "("
+            Integer@77..79 "40"
+            RParen@79..80 ")"
+            Whitespace@80..88 "\n       "
+          Comma@88..89 ","
+          Whitespace@89..90 " "
+          IdentGroup@90..101
+            Ident@90..101 "postal_code"
+          Whitespace@101..109 "        "
+          Datatype@109..129
+            Keyword@109..117 "VARCHAR2"
+            LParen@117..118 "("
+            Integer@118..120 "10"
+            RParen@120..121 ")"
+            Whitespace@121..129 "\n       "
+          Comma@129..130 ","
+          Whitespace@130..131 " "
+          IdentGroup@131..135
+            Ident@131..135 "city"
+          Whitespace@135..150 "               "
+          Datatype@150..170
+            Keyword@150..158 "VARCHAR2"
+            LParen@158..159 "("
+            Integer@159..161 "30"
+            RParen@161..162 ")"
+            Whitespace@162..170 "\n       "
+          Comma@170..171 ","
+          Whitespace@171..172 " "
+          IdentGroup@172..186
+            Ident@172..186 "state_province"
+          Whitespace@186..191 "     "
+          Datatype@191..211
+            Keyword@191..199 "VARCHAR2"
+            LParen@199..200 "("
+            Integer@200..202 "10"
+            RParen@202..203 ")"
+            Whitespace@203..211 "\n       "
+          Comma@211..212 ","
+          Whitespace@212..213 " "
+          IdentGroup@213..223
+            Ident@213..223 "country_id"
+          Whitespace@223..232 "         "
+          Datatype@232..247
+            Keyword@232..236 "CHAR"
+            LParen@236..237 "("
+            Integer@237..238 "2"
+            RParen@238..239 ")"
+            Whitespace@239..247 "\n       "
+          Comma@247..248 ","
+          Whitespace@248..249 " "
+          IdentGroup@249..254
+            Ident@249..254 "phone"
+          Whitespace@254..268 "              "
+          Datatype@268..295
+            IdentGroup@268..287
+              Ident@268..287 "phone_list_typ_demo"
+            Whitespace@287..295 "\n       "
+          RParen@295..296 ")"
+    Semicolon@296..297 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
     fn test_object_sub_type() {
         check(
             parse(
@@ -518,6 +624,128 @@ Root@0..113
                 Whitespace@106..111 " \n   "
           RParen@111..112 ")"
     Semicolon@112..113 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_varray_udt() {
+        check(
+            parse(
+                "CREATE TYPE phone_list_typ_demo AS VARRAY(5) OF VARCHAR2(25);",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..61
+  UdtDefinitionStmt@0..61
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..60
+      IdentGroup@12..31
+        Ident@12..31 "phone_list_typ_demo"
+      Whitespace@31..32 " "
+      ObjectBaseTypeDef@32..60
+        Keyword@32..34 "AS"
+        Whitespace@34..35 " "
+        VarrayTypeSpec@35..60
+          Keyword@35..41 "VARRAY"
+          LParen@41..42 "("
+          Integer@42..43 "5"
+          RParen@43..44 ")"
+          Whitespace@44..45 " "
+          Keyword@45..47 "OF"
+          Whitespace@47..48 " "
+          Datatype@48..60
+            Keyword@48..56 "VARCHAR2"
+            LParen@56..57 "("
+            Integer@57..59 "25"
+            RParen@59..60 ")"
+    Semicolon@60..61 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_non_persist_varray_udt() {
+        check(
+            parse(
+                "CREATE TYPE IF NOT EXISTS varr_int AS VARRAY(10) OF (PLS_INTEGER) NOT PERSISTABLE;", 
+                parse_udt
+            ), expect![[r#"
+Root@0..82
+  UdtDefinitionStmt@0..82
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    Keyword@12..14 "IF"
+    Whitespace@14..15 " "
+    Keyword@15..18 "NOT"
+    Whitespace@18..19 " "
+    Keyword@19..25 "EXISTS"
+    Whitespace@25..26 " "
+    PlsqlTypeSource@26..81
+      IdentGroup@26..34
+        Ident@26..34 "varr_int"
+      Whitespace@34..35 " "
+      ObjectBaseTypeDef@35..81
+        Keyword@35..37 "AS"
+        Whitespace@37..38 " "
+        VarrayTypeSpec@38..81
+          Keyword@38..44 "VARRAY"
+          LParen@44..45 "("
+          Integer@45..47 "10"
+          RParen@47..48 ")"
+          Whitespace@48..49 " "
+          Keyword@49..51 "OF"
+          Whitespace@51..52 " "
+          LParen@52..53 "("
+          Datatype@53..64
+            Keyword@53..64 "PLS_INTEGER"
+          RParen@64..65 ")"
+          Whitespace@65..66 " "
+          Keyword@66..69 "NOT"
+          Whitespace@69..70 " "
+          Keyword@70..81 "PERSISTABLE"
+    Semicolon@81..82 ";"
+"#]], 
+    vec![]);
+    }
+
+    #[test]
+    fn test_nested_table_udt() {
+        check(
+            parse(
+                "CREATE TYPE textdoc_tab AS TABLE OF textdoc_typ;",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..48
+  UdtDefinitionStmt@0..48
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..47
+      IdentGroup@12..23
+        Ident@12..23 "textdoc_tab"
+      Whitespace@23..24 " "
+      ObjectBaseTypeDef@24..47
+        Keyword@24..26 "AS"
+        Whitespace@26..27 " "
+        NestedTableTypeSpec@27..47
+          Keyword@27..32 "TABLE"
+          Whitespace@32..33 " "
+          Keyword@33..35 "OF"
+          Whitespace@35..36 " "
+          Datatype@36..47
+            IdentGroup@36..47
+              Ident@36..47 "textdoc_typ"
+    Semicolon@47..48 ";"
 "#]],
             vec![],
         );
