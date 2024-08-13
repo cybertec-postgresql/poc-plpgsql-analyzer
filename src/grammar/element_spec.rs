@@ -20,10 +20,9 @@ pub(crate) fn parse_element_spec(p: &mut Parser) {
             break;
         }
     });
-    // Not working right now
-    // if p.at(T![pragma]) {
-    // parse_restrict_references_pragma(p);
-    // }
+    if p.at(T![pragma]) {
+        parse_restrict_references_pragma(p);
+    }
     p.finish();
 }
 
@@ -114,10 +113,16 @@ fn parse_function_spec(p: &mut Parser) {
     p.finish();
 }
 
-// fn parse_restrict_references_pragma(p: &mut Parser) {
-//     p.expect(T![pragma]);
-//     p.expect(T![restricted_references]);
-//     p.expect(T!["("]);
-
-//     p.expect(T![")"]);
-// }
+fn parse_restrict_references_pragma(p: &mut Parser) {
+    p.expect(T![pragma]);
+    p.expect(T![restricted_references]);
+    p.expect(T!["("]);
+    parse_ident(p, 1..1);
+    safe_loop!(p, {
+        p.expect_one_of(&[T![rnds], T![rnps], T![wnds], T![wnps], T![trust]]);
+        if !p.at(T![,]) || p.at(T![")"]) {
+            break;
+        }
+    });
+    p.expect(T![")"]);
+}
