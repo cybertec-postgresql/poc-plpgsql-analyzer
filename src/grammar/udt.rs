@@ -1,4 +1,7 @@
-use crate::{grammar::parse_datatype, safe_loop, Parser};
+use crate::{
+    grammar::{element_spec::parse_element_spec, parse_datatype},
+    safe_loop, Parser,
+};
 use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
 use super::parse_ident;
@@ -123,8 +126,27 @@ fn parse_object_subtype_def(p: &mut Parser) {
             if !p.at(T![,]) || p.at(T![")"]) {
                 break;
             }
-            // Do element_spec later
         });
+        if [
+            T![constructor],
+            T![final],
+            T![instantiable],
+            T![map],
+            T![member],
+            T![not],
+            T![order],
+            T![overriding],
+            T![static],
+        ]
+        .contains(&p.current())
+        {
+            safe_loop!(p, {
+                parse_element_spec(p);
+                if !p.at(T![,]) || p.at(T![")"]) {
+                    break;
+                }
+            });
+        }
     }
     safe_loop!(p, {
         let mut ate_something = false;
@@ -148,8 +170,27 @@ fn parse_object_type_def(p: &mut Parser) {
             if !p.at(T![,]) || p.at(T![")"]) {
                 break;
             }
-            // Do element_spec later
         });
+        if [
+            T![constructor],
+            T![final],
+            T![instantiable],
+            T![map],
+            T![member],
+            T![not],
+            T![order],
+            T![overriding],
+            T![static],
+        ]
+        .contains(&p.current())
+        {
+            safe_loop!(p, {
+                parse_element_spec(p);
+                if !p.at(T![,]) || p.at(T![")"]) {
+                    break;
+                }
+            });
+        }
     }
     safe_loop!(p, {
         let mut ate_something = false;
