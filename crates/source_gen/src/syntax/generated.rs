@@ -16,6 +16,8 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
+    #[doc = "A node containing an accessible by clause"]
+    AccessibleByClause,
     #[doc = "An Alias for columns"]
     Alias,
     #[doc = "Logical operator AND"]
@@ -70,12 +72,16 @@ pub enum SyntaxKind {
     Decimal,
     #[doc = "A node that marks the declare section of a block"]
     DeclareSection,
+    #[doc = "A node containing a default collation clause"]
+    DefaultCollationClause,
     #[doc = "A node that marks a full DELETE statement"]
     DeleteStmt,
     #[doc = "Single dollar quote `$$`"]
     DollarQuote,
     #[doc = "A single dot"]
     Dot,
+    #[doc = "A node that contains an element_spec"]
+    ElementSpec,
     #[doc = "An error token with a cause"]
     Error,
     #[doc = "An exclamation mark `!`"]
@@ -90,6 +96,8 @@ pub enum SyntaxKind {
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "A node containing a function_spec"]
+    FunctionSpec,
     #[doc = "A node containing a group by clause"]
     GroupByClause,
     #[doc = "A node containing a grouping expression list"]
@@ -108,6 +116,8 @@ pub enum SyntaxKind {
     Integer,
     #[doc = "A node that contains an `INTO` clause of a SELECT statement"]
     IntoClause,
+    #[doc = "A node that contains an invoker rights clause"]
+    InvokerRightsClause,
     #[doc = "A SQL keyword, e.g. `CREATE`"]
     Keyword,
     #[doc = "Represents a logical SQL operator (AND, OR, NOT)"]
@@ -116,8 +126,16 @@ pub enum SyntaxKind {
     LParen,
     #[doc = "A minus `-`"]
     Minus,
+    #[doc = "A node containing a full nested_table_type_spec"]
+    NestedTableTypeSpec,
     #[doc = "Unary logical operator NOT"]
     Not,
+    #[doc = "A node containing a full object_base_type_def"]
+    ObjectBaseTypeDef,
+    #[doc = "A node containing a full object_subtyep_def"]
+    ObjectSubtypeDef,
+    #[doc = "A node containing a full object_type_def"]
+    ObjectTypeDef,
     #[doc = "Logical operator OR"]
     Or,
     #[doc = "A node containing a full order by clause"]
@@ -130,6 +148,8 @@ pub enum SyntaxKind {
     ParamList,
     #[doc = "Percentage symbol"]
     Percentage,
+    #[doc = "A node containing a plsql type source for UDTs"]
+    PlsqlTypeSource,
     #[doc = "A plus `+`"]
     Plus,
     #[doc = "The PL/SQL unary prior operator"]
@@ -138,6 +158,8 @@ pub enum SyntaxKind {
     Procedure,
     #[doc = "A node that marks a PROCEDURE header with params"]
     ProcedureHeader,
+    #[doc = "A node that contains a full procedure_spec"]
+    ProcedureSpec,
     #[doc = "A single quoted literal"]
     QuotedLiteral,
     #[doc = "Two dots"]
@@ -162,6 +184,8 @@ pub enum SyntaxKind {
     Semicolon,
     #[doc = "A node containing a SET clause in an UPDATE statement"]
     SetClause,
+    #[doc = "A node containing a SHARING clause"]
+    SharingClause,
     #[doc = "Slash char `/`"]
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
@@ -182,6 +206,8 @@ pub enum SyntaxKind {
     UpdateStmt,
     #[doc = "A node containing a using clause"]
     UsingClause,
+    #[doc = "A node containing a full varray_type_spec"]
+    VarrayTypeSpec,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
     VariableDecl,
     #[doc = "A node that marks a list of variable declarations of functions and procedures"]
@@ -227,6 +253,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::QuotedIdent => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::BindVar => SyntaxKind::BindVar,
+            TokenKind::AccessibleKw => SyntaxKind::Keyword,
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,
@@ -242,6 +269,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AscKw => SyntaxKind::Keyword,
             TokenKind::AssociateKw => SyntaxKind::Keyword,
             TokenKind::AuditKw => SyntaxKind::Keyword,
+            TokenKind::AuthidKw => SyntaxKind::Keyword,
             TokenKind::BeforeKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::BequeathKw => SyntaxKind::Keyword,
@@ -273,6 +301,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
             TokenKind::ConstantKw => SyntaxKind::Keyword,
             TokenKind::ConstraintKw => SyntaxKind::Keyword,
+            TokenKind::ConstructorKw => SyntaxKind::Keyword,
             TokenKind::ContainerKw => SyntaxKind::Keyword,
             TokenKind::ContainerMapKw => SyntaxKind::Keyword,
             TokenKind::ContainersDefaultKw => SyntaxKind::Keyword,
@@ -319,6 +348,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExistsKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
+            TokenKind::FinalKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
             TokenKind::FloatKw => SyntaxKind::Keyword,
             TokenKind::FollowsKw => SyntaxKind::Keyword,
@@ -342,6 +372,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::IndicatorKw => SyntaxKind::Keyword,
             TokenKind::InitiallyKw => SyntaxKind::Keyword,
             TokenKind::InsertKw => SyntaxKind::Keyword,
+            TokenKind::InstantiableKw => SyntaxKind::Keyword,
             TokenKind::InsteadKw => SyntaxKind::Keyword,
             TokenKind::IntKw => SyntaxKind::Keyword,
             TokenKind::IntegerKw => SyntaxKind::Keyword,
@@ -362,7 +393,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LogoffKw => SyntaxKind::Keyword,
             TokenKind::LogonKw => SyntaxKind::Keyword,
             TokenKind::LongKw => SyntaxKind::Keyword,
+            TokenKind::MapKw => SyntaxKind::Keyword,
             TokenKind::MaxlenKw => SyntaxKind::Keyword,
+            TokenKind::MemberKw => SyntaxKind::Keyword,
             TokenKind::MetadataKw => SyntaxKind::Keyword,
             TokenKind::MleKw => SyntaxKind::Keyword,
             TokenKind::ModuleKw => SyntaxKind::Keyword,
@@ -390,6 +423,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::Nvarchar2Kw => SyntaxKind::Keyword,
             TokenKind::ObjectKw => SyntaxKind::Keyword,
             TokenKind::OfKw => SyntaxKind::Keyword,
+            TokenKind::OidKw => SyntaxKind::Keyword,
             TokenKind::OldKw => SyntaxKind::Keyword,
             TokenKind::OnKw => SyntaxKind::Keyword,
             TokenKind::OnlyKw => SyntaxKind::Keyword,
@@ -398,14 +432,17 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::OrderKw => SyntaxKind::Keyword,
             TokenKind::OthersKw => SyntaxKind::Keyword,
             TokenKind::OutKw => SyntaxKind::Keyword,
+            TokenKind::OverridingKw => SyntaxKind::Keyword,
             TokenKind::PackageKw => SyntaxKind::Keyword,
             TokenKind::ParallelEnableKw => SyntaxKind::Keyword,
             TokenKind::ParametersKw => SyntaxKind::Keyword,
             TokenKind::ParentKw => SyntaxKind::Keyword,
+            TokenKind::PersistableKw => SyntaxKind::Keyword,
             TokenKind::PipelinedKw => SyntaxKind::Keyword,
             TokenKind::PlpgsqlKw => SyntaxKind::Keyword,
             TokenKind::PlsIntegerKw => SyntaxKind::Keyword,
             TokenKind::PluggableKw => SyntaxKind::Keyword,
+            TokenKind::PragmaKw => SyntaxKind::Keyword,
             TokenKind::PrecedesKw => SyntaxKind::Keyword,
             TokenKind::PrecheckKw => SyntaxKind::Keyword,
             TokenKind::PrecisionKw => SyntaxKind::Keyword,
@@ -426,7 +463,9 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RelyKw => SyntaxKind::Keyword,
             TokenKind::RenameKw => SyntaxKind::Keyword,
             TokenKind::ReplaceKw => SyntaxKind::Keyword,
+            TokenKind::ResultKw => SyntaxKind::Keyword,
             TokenKind::ResultCacheKw => SyntaxKind::Keyword,
+            TokenKind::RestrictedReferencesKw => SyntaxKind::Keyword,
             TokenKind::ReturnKw => SyntaxKind::Keyword,
             TokenKind::ReturningKw => SyntaxKind::Keyword,
             TokenKind::ReverseKw => SyntaxKind::Keyword,
@@ -450,6 +489,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::SmallintKw => SyntaxKind::Keyword,
             TokenKind::StartsKw => SyntaxKind::Keyword,
             TokenKind::StartupKw => SyntaxKind::Keyword,
+            TokenKind::StaticKw => SyntaxKind::Keyword,
             TokenKind::StatisticsKw => SyntaxKind::Keyword,
             TokenKind::StoreKw => SyntaxKind::Keyword,
             TokenKind::StringKw => SyntaxKind::Keyword,
@@ -472,6 +512,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::UpdateKw => SyntaxKind::Keyword,
             TokenKind::UrowidKw => SyntaxKind::Keyword,
             TokenKind::UsingKw => SyntaxKind::Keyword,
+            TokenKind::UsingNlsCompKw => SyntaxKind::Keyword,
             TokenKind::ValidateKw => SyntaxKind::Keyword,
             TokenKind::ValuesKw => SyntaxKind::Keyword,
             TokenKind::VarcharKw => SyntaxKind::Keyword,

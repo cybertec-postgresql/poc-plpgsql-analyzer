@@ -36,6 +36,7 @@ mod cursor;
 mod datatype;
 mod declare_section;
 mod dml;
+mod element_spec;
 mod execute_immediate;
 mod expressions;
 mod function;
