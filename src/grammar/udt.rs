@@ -7,7 +7,7 @@ use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 use super::parse_ident;
 
 #[allow(unused)]
-pub(crate) fn parse_create_type(p: &mut Parser) {
+pub(crate) fn parse_udt(p: &mut Parser) {
     p.start(SyntaxKind::UdtDefinitionStmt);
     p.expect(T![create]);
     if p.eat(T![or]) {
@@ -19,6 +19,7 @@ pub(crate) fn parse_create_type(p: &mut Parser) {
         p.expect(T![not]);
         p.expect(T![exists]);
     }
+    p.eat(T![body]);
     parse_plsql_type_source(p);
     p.eat(T![;]);
     p.finish();
@@ -119,7 +120,7 @@ fn parse_object_subtype_def(p: &mut Parser) {
     p.start(SyntaxKind::ObjectSubtypeDef);
     p.expect(T![under]);
     parse_ident(p, 1..2);
-    if p.at(T!["("]) {
+    if p.eat(T!["("]) {
         safe_loop!(p, {
             parse_ident(p, 1..1);
             parse_datatype(p);
@@ -147,6 +148,7 @@ fn parse_object_subtype_def(p: &mut Parser) {
                 }
             });
         }
+        p.expect(T![")"]);
     }
     safe_loop!(p, {
         let mut ate_something = false;
@@ -163,11 +165,26 @@ fn parse_object_type_def(p: &mut Parser) {
     p.start(SyntaxKind::ObjectTypeDef);
     p.expect(T![object]);
 
-    if p.at(T!["("]) {
+    if p.eat(T!["("]) {
         safe_loop!(p, {
             parse_ident(p, 1..1);
             parse_datatype(p);
-            if !p.at(T![,]) || p.at(T![")"]) {
+            if !p.eat(T![,]) || p.at(T![")"]) {
+                break;
+            }
+            if [
+                T![constructor],
+                T![final],
+                T![instantiable],
+                T![map],
+                T![member],
+                T![not],
+                T![order],
+                T![overriding],
+                T![static],
+            ]
+            .contains(&p.current())
+            {
                 break;
             }
         });
@@ -191,6 +208,7 @@ fn parse_object_type_def(p: &mut Parser) {
                 }
             });
         }
+        p.expect(T![")"]);
     }
     safe_loop!(p, {
         let mut ate_something = false;
@@ -239,4 +257,269 @@ fn parse_nested_table_type_spec(p: &mut Parser) {
     p.eat(T![not]);
     p.eat(T![persistable]);
     p.finish();
+}
+
+#[cfg(test)]
+mod tests {
+    use expect_test::expect;
+
+    use crate::grammar::tests::{check, parse};
+
+    use super::parse_udt;
+
+    #[test]
+    fn simple_udt() {
+        check(
+            parse(
+                "CREATE TYPE customer_typ_demo AS OBJECT ( customer_id NUMBER(6)
+    , cust_first_name    VARCHAR2(20)
+    , cust_last_name     VARCHAR2(20)
+    , cust_address       CUST_ADDRESS_TYP
+    , phone_numbers      PHONE_LIST_TYP
+    , nls_language       VARCHAR2(3)
+    , nls_territory      VARCHAR2(30)
+    , credit_limit       NUMBER(9,2)
+    , cust_email         VARCHAR2(30)
+    , cust_orders        ORDER_LIST_TYP
+    ) ;",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..419
+  UdtDefinitionStmt@0..419
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..418
+      IdentGroup@12..29
+        Ident@12..29 "customer_typ_demo"
+      Whitespace@29..30 " "
+      ObjectBaseTypeDef@30..418
+        Keyword@30..32 "AS"
+        Whitespace@32..33 " "
+        ObjectTypeDef@33..418
+          Keyword@33..39 "OBJECT"
+          Whitespace@39..40 " "
+          LParen@40..41 "("
+          Whitespace@41..42 " "
+          IdentGroup@42..53
+            Ident@42..53 "customer_id"
+          Whitespace@53..54 " "
+          Datatype@54..68
+            Keyword@54..60 "NUMBER"
+            LParen@60..61 "("
+            Integer@61..62 "6"
+            RParen@62..63 ")"
+            Whitespace@63..68 "\n    "
+          Comma@68..69 ","
+          Whitespace@69..70 " "
+          IdentGroup@70..85
+            Ident@70..85 "cust_first_name"
+          Whitespace@85..89 "    "
+          Datatype@89..106
+            Keyword@89..97 "VARCHAR2"
+            LParen@97..98 "("
+            Integer@98..100 "20"
+            RParen@100..101 ")"
+            Whitespace@101..106 "\n    "
+          Comma@106..107 ","
+          Whitespace@107..108 " "
+          IdentGroup@108..122
+            Ident@108..122 "cust_last_name"
+          Whitespace@122..127 "     "
+          Datatype@127..144
+            Keyword@127..135 "VARCHAR2"
+            LParen@135..136 "("
+            Integer@136..138 "20"
+            RParen@138..139 ")"
+            Whitespace@139..144 "\n    "
+          Comma@144..145 ","
+          Whitespace@145..146 " "
+          IdentGroup@146..158
+            Ident@146..158 "cust_address"
+          Whitespace@158..165 "       "
+          Datatype@165..186
+            IdentGroup@165..181
+              Ident@165..181 "CUST_ADDRESS_TYP"
+            Whitespace@181..186 "\n    "
+          Comma@186..187 ","
+          Whitespace@187..188 " "
+          IdentGroup@188..201
+            Ident@188..201 "phone_numbers"
+          Whitespace@201..207 "      "
+          Datatype@207..226
+            IdentGroup@207..221
+              Ident@207..221 "PHONE_LIST_TYP"
+            Whitespace@221..226 "\n    "
+          Comma@226..227 ","
+          Whitespace@227..228 " "
+          IdentGroup@228..240
+            Ident@228..240 "nls_language"
+          Whitespace@240..247 "       "
+          Datatype@247..263
+            Keyword@247..255 "VARCHAR2"
+            LParen@255..256 "("
+            Integer@256..257 "3"
+            RParen@257..258 ")"
+            Whitespace@258..263 "\n    "
+          Comma@263..264 ","
+          Whitespace@264..265 " "
+          IdentGroup@265..278
+            Ident@265..278 "nls_territory"
+          Whitespace@278..284 "      "
+          Datatype@284..301
+            Keyword@284..292 "VARCHAR2"
+            LParen@292..293 "("
+            Integer@293..295 "30"
+            RParen@295..296 ")"
+            Whitespace@296..301 "\n    "
+          Comma@301..302 ","
+          Whitespace@302..303 " "
+          IdentGroup@303..315
+            Ident@303..315 "credit_limit"
+          Whitespace@315..322 "       "
+          Datatype@322..338
+            Keyword@322..328 "NUMBER"
+            LParen@328..329 "("
+            Integer@329..330 "9"
+            Comma@330..331 ","
+            Integer@331..332 "2"
+            RParen@332..333 ")"
+            Whitespace@333..338 "\n    "
+          Comma@338..339 ","
+          Whitespace@339..340 " "
+          IdentGroup@340..350
+            Ident@340..350 "cust_email"
+          Whitespace@350..359 "         "
+          Datatype@359..376
+            Keyword@359..367 "VARCHAR2"
+            LParen@367..368 "("
+            Integer@368..370 "30"
+            RParen@370..371 ")"
+            Whitespace@371..376 "\n    "
+          Comma@376..377 ","
+          Whitespace@377..378 " "
+          IdentGroup@378..389
+            Ident@378..389 "cust_orders"
+          Whitespace@389..397 "        "
+          Datatype@397..416
+            IdentGroup@397..411
+              Ident@397..411 "ORDER_LIST_TYP"
+            Whitespace@411..416 "\n    "
+          RParen@416..417 ")"
+          Whitespace@417..418 " "
+    Semicolon@418..419 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_object_sub_type() {
+        check(
+            parse(
+                "CREATE TYPE corporate_customer_typ_demo UNDER customer_typ
+    ( account_mgr_id     NUMBER(6)
+    );",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..100
+  UdtDefinitionStmt@0..100
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..99
+      IdentGroup@12..39
+        Ident@12..39 "corporate_customer_ty ..."
+      Whitespace@39..40 " "
+      ObjectSubtypeDef@40..99
+        Keyword@40..45 "UNDER"
+        Whitespace@45..46 " "
+        IdentGroup@46..58
+          Ident@46..58 "customer_typ"
+        Whitespace@58..63 "\n    "
+        LParen@63..64 "("
+        Whitespace@64..65 " "
+        IdentGroup@65..79
+          Ident@65..79 "account_mgr_id"
+        Whitespace@79..84 "     "
+        Datatype@84..98
+          Keyword@84..90 "NUMBER"
+          LParen@90..91 "("
+          Integer@91..92 "6"
+          RParen@92..93 ")"
+          Whitespace@93..98 "\n    "
+        RParen@98..99 ")"
+    Semicolon@99..100 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_member_type() {
+        check(
+            parse(
+                "CREATE TYPE data_typ1 AS OBJECT 
+   ( year NUMBER, 
+     MEMBER FUNCTION prod(invent NUMBER) RETURN NUMBER 
+   );",
+                parse_udt,
+            ),
+            expect![[r#"
+Root@0..113
+  UdtDefinitionStmt@0..113
+    Keyword@0..6 "CREATE"
+    Whitespace@6..7 " "
+    Keyword@7..11 "TYPE"
+    Whitespace@11..12 " "
+    PlsqlTypeSource@12..112
+      IdentGroup@12..21
+        Ident@12..21 "data_typ1"
+      Whitespace@21..22 " "
+      ObjectBaseTypeDef@22..112
+        Keyword@22..24 "AS"
+        Whitespace@24..25 " "
+        ObjectTypeDef@25..112
+          Keyword@25..31 "OBJECT"
+          Whitespace@31..36 " \n   "
+          LParen@36..37 "("
+          Whitespace@37..38 " "
+          IdentGroup@38..42
+            Ident@38..42 "year"
+          Whitespace@42..43 " "
+          Datatype@43..49
+            Keyword@43..49 "NUMBER"
+          Comma@49..50 ","
+          Whitespace@50..57 " \n     "
+          ElementSpec@57..111
+            Keyword@57..63 "MEMBER"
+            Whitespace@63..64 " "
+            FunctionSpec@64..111
+              Keyword@64..72 "FUNCTION"
+              Whitespace@72..73 " "
+              IdentGroup@73..77
+                Ident@73..77 "prod"
+              LParen@77..78 "("
+              IdentGroup@78..84
+                Ident@78..84 "invent"
+              Whitespace@84..85 " "
+              Datatype@85..91
+                Keyword@85..91 "NUMBER"
+              RParen@91..92 ")"
+              Whitespace@92..93 " "
+              Keyword@93..99 "RETURN"
+              Whitespace@99..100 " "
+              Datatype@100..111
+                Keyword@100..106 "NUMBER"
+                Whitespace@106..111 " \n   "
+          RParen@111..112 ")"
+    Semicolon@112..113 ";"
+"#]],
+            vec![],
+        );
+    }
 }
