@@ -19,7 +19,6 @@ pub(crate) fn parse_udt(p: &mut Parser) {
         p.expect(T![not]);
         p.expect(T![exists]);
     }
-    p.eat(T![body]);
     parse_plsql_type_source(p);
     p.eat(T![;]);
     p.finish();
