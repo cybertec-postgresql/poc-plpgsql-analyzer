@@ -40,6 +40,7 @@ mod execute_immediate;
 mod expressions;
 mod function;
 mod function_invocation;
+mod loops;
 mod package;
 mod procedure;
 mod query;

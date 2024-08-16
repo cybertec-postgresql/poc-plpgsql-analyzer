@@ -32,6 +32,8 @@ pub enum SyntaxKind {
     AssignmentExpr,
     #[doc = "An asterisk `*`"]
     Asterisk,
+    #[doc = "A node that contains a basic LOOP"]
+    BasicLoop,
     #[doc = "A bind variable, e.g. `:OLD`"]
     BindVar,
     #[doc = "A node that marks a block"]
@@ -84,6 +86,8 @@ pub enum SyntaxKind {
     ExecuteImmediateStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
+    #[doc = "A node containing a FOR LOOP"]
+    ForLoop,
     #[doc = "A node that marks a full CREATE [..] FUNCTION block"]
     Function,
     #[doc = "A node that marks a FUNCTION header with params and return type"]
@@ -108,10 +112,14 @@ pub enum SyntaxKind {
     Integer,
     #[doc = "A node that contains an `INTO` clause of a SELECT statement"]
     IntoClause,
+    #[doc = "A node that contains an Iterator"]
+    Iterator,
     #[doc = "A SQL keyword, e.g. `CREATE`"]
     Keyword,
     #[doc = "Represents a logical SQL operator (AND, OR, NOT)"]
     LogicOp,
+    #[doc = "A node that contains a Basic, For, or While LOOP"]
+    Loop,
     #[doc = "Left Paren"]
     LParen,
     #[doc = "A minus `-`"]
@@ -188,6 +196,8 @@ pub enum SyntaxKind {
     View,
     #[doc = "Represent a complete `WHERE` clause expression"]
     WhereClause,
+    #[doc = "A node containing a WHILE LOOP"]
+    WhileLoop,
     #[doc = "Any whitespace character"]
     Whitespace,
 }
@@ -335,6 +345,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::IfKw => SyntaxKind::Keyword,
             TokenKind::IlikeKw => SyntaxKind::ComparisonOp,
             TokenKind::ImmediateKw => SyntaxKind::Keyword,
+            TokenKind::ImmutableKw => SyntaxKind::Keyword,
             TokenKind::InKw => SyntaxKind::Keyword,
             TokenKind::IndexKw => SyntaxKind::Keyword,
             TokenKind::IndicatorKw => SyntaxKind::Keyword,
@@ -360,11 +371,13 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LogoffKw => SyntaxKind::Keyword,
             TokenKind::LogonKw => SyntaxKind::Keyword,
             TokenKind::LongKw => SyntaxKind::Keyword,
+            TokenKind::LoopKw => SyntaxKind::Keyword,
             TokenKind::MaxlenKw => SyntaxKind::Keyword,
             TokenKind::MetadataKw => SyntaxKind::Keyword,
             TokenKind::MleKw => SyntaxKind::Keyword,
             TokenKind::ModuleKw => SyntaxKind::Keyword,
             TokenKind::MonthKw => SyntaxKind::Keyword,
+            TokenKind::MutableKw => SyntaxKind::Keyword,
             TokenKind::NameKw => SyntaxKind::Keyword,
             TokenKind::NationalKw => SyntaxKind::Keyword,
             TokenKind::NcharKw => SyntaxKind::Keyword,
@@ -481,6 +494,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::VisibleKw => SyntaxKind::Keyword,
             TokenKind::WhenKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
+            TokenKind::WhileKw => SyntaxKind::Keyword,
             TokenKind::WithKw => SyntaxKind::Keyword,
             TokenKind::XmlschemaKw => SyntaxKind::Keyword,
             TokenKind::XmltypeKw => SyntaxKind::Keyword,
