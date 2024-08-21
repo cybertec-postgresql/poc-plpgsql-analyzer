@@ -210,7 +210,7 @@ fn parse_from_list(p: &mut Parser) {
         {
             break;
         }
-        if [
+        expect_join = [
             T![join],
             T!["("],
             T![inner],
@@ -221,12 +221,7 @@ fn parse_from_list(p: &mut Parser) {
             T![right],
             T![full],
         ]
-        .contains(&p.current())
-        {
-            expect_join = true;
-        } else {
-            expect_join = false;
-        }
+        .contains(&p.current());
     });
 }
 
