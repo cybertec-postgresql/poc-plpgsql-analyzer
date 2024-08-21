@@ -4,7 +4,9 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{opt_expr, parse_expr, parse_function, parse_ident, parse_procedure};
+use crate::grammar::{
+    opt_expr, parse_expr, parse_function, parse_function_invocation, parse_ident, parse_procedure,
+};
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -396,7 +398,11 @@ fn parse_column_expr(p: &mut Parser) {
     safe_loop!(p, {
         p.start(SyntaxKind::ColumnExpr);
 
-        parse_expr(p);
+        if p.nth(1) == Some(T!["("]) {
+            parse_function_invocation(p);
+        } else {
+            parse_expr(p);
+        }
         if [T![as], T![quoted_ident], T![unquoted_ident]].contains(&p.current()) {
             parse_alias(p);
         }
@@ -1744,14 +1750,16 @@ Root@0..73
             Ident@15..17 "c3"
       Comma@17..18 ","
       Whitespace@18..19 " "
-      ColumnExpr@19..28
-        IdentGroup@19..28
-          Ident@19..28 "aggregate"
-      ColumnExpr@28..33
-        LParen@28..29 "("
-        IdentGroup@29..31
-          Ident@29..31 "c4"
-        RParen@31..32 ")"
+      ColumnExpr@19..33
+        FunctionInvocation@19..32
+          IdentGroup@19..28
+            Ident@19..28 "aggregate"
+          LParen@28..29 "("
+          ArgumentList@29..31
+            Argument@29..31
+              IdentGroup@29..31
+                Ident@29..31 "c4"
+          RParen@31..32 ")"
         Whitespace@32..33 " "
     Keyword@33..37 "FROM"
     Whitespace@37..38 " "
