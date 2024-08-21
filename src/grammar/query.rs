@@ -194,22 +194,6 @@ fn parse_from_list(p: &mut Parser) {
             parse_join_clause(p);
             p.eat(T![")"]);
         }
-        if !p.eat(T![,])
-            && ![
-                T![join],
-                T!["("],
-                T![inner],
-                T![outer],
-                T![cross],
-                T![natural],
-                T![left],
-                T![right],
-                T![full],
-            ]
-            .contains(&p.current())
-        {
-            break;
-        }
         expect_join = [
             T![join],
             T!["("],
@@ -222,6 +206,10 @@ fn parse_from_list(p: &mut Parser) {
             T![full],
         ]
         .contains(&p.current());
+
+        if !p.eat(T![,]) && !expect_join {
+            break;
+        }
     });
 }
 
