@@ -1,7 +1,6 @@
 use crate::parser::Parser;
 use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
-#[allow(unused)]
 pub(crate) fn parse_commit(p: &mut Parser) {
     p.start(SyntaxKind::CommitStmt);
     p.expect(T![commit]);

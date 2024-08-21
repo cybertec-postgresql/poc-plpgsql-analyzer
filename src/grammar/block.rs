@@ -14,6 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+use super::commit::parse_commit;
 use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
@@ -55,6 +56,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![select] => parse_query(p, true),
         T![raise] => parse_raise_stmt(p),
         T![delete] | T![update] => parse_dml(p),
+        T![commit] => parse_commit(p),
         current_token => {
             if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
                 p.error(ParseErrorType::ExpectedStatement(current_token));
