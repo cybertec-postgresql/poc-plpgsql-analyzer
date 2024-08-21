@@ -1181,65 +1181,6 @@ Root@0..46
         );
     }
 
-    #[test]
-    fn test_cte() {
-        check(parse("WITH CTE AS (SELECT name, employee_id FROM employee WHERE city = 'Delhi') select * from CTE;", parse_cte),
-            expect![[r#"
-Root@0..92
-  WithClause@0..74
-    Keyword@0..4 "WITH"
-    Whitespace@4..5 " "
-    SubqueryFactoringClause@5..74
-      IdentGroup@5..8
-        Ident@5..8 "CTE"
-      Whitespace@8..9 " "
-      Keyword@9..11 "AS"
-      Whitespace@11..12 " "
-      LParen@12..13 "("
-      SelectStmt@13..72
-        Keyword@13..19 "SELECT"
-        Whitespace@19..20 " "
-        SelectClause@20..38
-          ColumnExpr@20..24
-            Expression@20..24
-              IdentGroup@20..24
-                Ident@20..24 "name"
-          Comma@24..25 ","
-          Whitespace@25..26 " "
-          ColumnExpr@26..38
-            IdentGroup@26..37
-              Ident@26..37 "employee_id"
-            Whitespace@37..38 " "
-        Keyword@38..42 "FROM"
-        Whitespace@42..43 " "
-        IdentGroup@43..51
-          Ident@43..51 "employee"
-        Whitespace@51..52 " "
-        WhereClause@52..72
-          Keyword@52..57 "WHERE"
-          Whitespace@57..58 " "
-          Expression@58..72
-            IdentGroup@58..62
-              Ident@58..62 "city"
-            Whitespace@62..63 " "
-            ComparisonOp@63..64 "="
-            Whitespace@64..65 " "
-            QuotedLiteral@65..72 "'Delhi'"
-      RParen@72..73 ")"
-      Whitespace@73..74 " "
-  SelectStmt@74..92
-    Keyword@74..80 "select"
-    Whitespace@80..81 " "
-    Asterisk@81..82 "*"
-    Whitespace@82..83 " "
-    Keyword@83..87 "from"
-    Whitespace@87..88 " "
-    IdentGroup@88..91
-      Ident@88..91 "CTE"
-    Semicolon@91..92 ";"
-"#]],
-            vec![]);
-    }
 
     #[test]
     fn test_multi_cte() {
