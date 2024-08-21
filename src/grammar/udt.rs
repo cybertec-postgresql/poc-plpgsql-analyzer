@@ -707,9 +707,7 @@ Root@0..297
     fn test_object_sub_type() {
         check(
             parse(
-                "CREATE TYPE corporate_customer_typ_demo UNDER customer_typ
-    ( account_mgr_id     NUMBER(6)
-    );",
+                "CREATE TYPE corporate_customer_typ_demo UNDER customer_typ (account_mgr_id     NUMBER(6));",
                 parse_udt,
             ),
             expect![[r#"
