@@ -13,7 +13,7 @@ use source_gen::T;
 
 /// Looks ahead and parses a function invocation if applicable
 pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
-    if (p.at(T![quoted_ident]) || p.at(T![unquoted_ident]) || p.at(T![aggregate]))
+    if p.current().is_ident()
         && matches!(
             p.lookahead(3).as_slice(),
             &[T!["("], ..]

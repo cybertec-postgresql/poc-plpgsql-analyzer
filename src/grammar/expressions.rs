@@ -68,7 +68,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 .contains(&token) =>
         {
             match token {
-                token if token.is_ident() || token == T![aggregate] => {
+                token if token.is_ident() => {
                     parse_ident_or_function_invocation(p);
                 }
                 T![bind_var] => {
