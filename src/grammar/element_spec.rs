@@ -31,7 +31,10 @@ fn parse_subprogram_spec(p: &mut Parser) {
     match p.current() {
         T![procedure] => parse_procedure_spec(p),
         T![function] => parse_function_spec(p),
-        _ => (),
+        _ => p.error(crate::ParseErrorType::ExpectedOneOfTokens(vec![
+            T![function],
+            T![procedure],
+        ])),
     }
 }
 
