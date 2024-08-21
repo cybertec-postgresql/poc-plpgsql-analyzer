@@ -4,9 +4,7 @@
 
 //! Implements parsing of procedures from a token tree.
 
-use crate::grammar::{
-    opt_expr, parse_expr, parse_function, parse_function_invocation, parse_ident, parse_procedure,
-};
+use crate::grammar::{opt_expr, parse_expr, parse_function, parse_ident, parse_procedure};
 use crate::parser::{safe_loop, Parser};
 use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
@@ -398,11 +396,8 @@ fn parse_column_expr(p: &mut Parser) {
     safe_loop!(p, {
         p.start(SyntaxKind::ColumnExpr);
 
-        if p.nth(1) == Some(T!["("]) {
-            parse_function_invocation(p);
-        } else {
-            parse_expr(p);
-        }
+        parse_expr(p);
+        dbg!(p.lookahead(3).as_slice());
         if [T![as], T![quoted_ident], T![unquoted_ident]].contains(&p.current()) {
             parse_alias(p);
         }
