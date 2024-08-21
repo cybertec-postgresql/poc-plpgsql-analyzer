@@ -116,6 +116,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 T![bind_var],
                 T![prior],
                 T![connect_by_root],
+                T![case],
             ]));
         }
     }
@@ -856,12 +857,12 @@ Root@0..8
     WHEN 'US'
     THEN state
     ELSE city
-  END;",
+  END",
                 parse_expr,
             ),
             expect![[r#"
-Root@0..65
-  CaseStmt@0..65
+Root@0..64
+  CaseStmt@0..64
     Keyword@0..4 "CASE"
     Whitespace@4..5 " "
     SimpleCaseExpression@5..49
@@ -885,7 +886,6 @@ Root@0..65
         Ident@54..58 "city"
       Whitespace@58..61 "\n  "
     Keyword@61..64 "END"
-    Semicolon@64..65 ";"
 "#]],
             vec![],
         );
