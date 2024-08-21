@@ -471,20 +471,20 @@ mod tests {
                 parse_udt,
             ),
             expect![[r#"
-Root@0..419
-  UdtDefinitionStmt@0..419
+Root@0..113
+  UdtDefinitionStmt@0..113
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
     Keyword@7..11 "TYPE"
     Whitespace@11..12 " "
-    PlsqlTypeSource@12..418
+    PlsqlTypeSource@12..112
       IdentGroup@12..29
         Ident@12..29 "customer_typ_demo"
       Whitespace@29..30 " "
-      ObjectBaseTypeDef@30..418
+      ObjectBaseTypeDef@30..112
         Keyword@30..32 "AS"
         Whitespace@32..33 " "
-        ObjectTypeDef@33..418
+        ObjectTypeDef@33..112
           Keyword@33..39 "OBJECT"
           Whitespace@39..40 " "
           LParen@40..41 "("
@@ -500,102 +500,16 @@ Root@0..419
             Whitespace@63..68 "\n    "
           Comma@68..69 ","
           Whitespace@69..70 " "
-          IdentGroup@70..85
-            Ident@70..85 "cust_first_name"
-          Whitespace@85..89 "    "
-          Datatype@89..106
-            Keyword@89..97 "VARCHAR2"
-            LParen@97..98 "("
-            Integer@98..100 "20"
-            RParen@100..101 ")"
-            Whitespace@101..106 "\n    "
-          Comma@106..107 ","
-          Whitespace@107..108 " "
-          IdentGroup@108..122
-            Ident@108..122 "cust_last_name"
-          Whitespace@122..127 "     "
-          Datatype@127..144
-            Keyword@127..135 "VARCHAR2"
-            LParen@135..136 "("
-            Integer@136..138 "20"
-            RParen@138..139 ")"
-            Whitespace@139..144 "\n    "
-          Comma@144..145 ","
-          Whitespace@145..146 " "
-          IdentGroup@146..158
-            Ident@146..158 "cust_address"
-          Whitespace@158..165 "       "
-          Datatype@165..186
-            IdentGroup@165..181
-              Ident@165..181 "CUST_ADDRESS_TYP"
-            Whitespace@181..186 "\n    "
-          Comma@186..187 ","
-          Whitespace@187..188 " "
-          IdentGroup@188..201
-            Ident@188..201 "phone_numbers"
-          Whitespace@201..207 "      "
-          Datatype@207..226
-            IdentGroup@207..221
-              Ident@207..221 "PHONE_LIST_TYP"
-            Whitespace@221..226 "\n    "
-          Comma@226..227 ","
-          Whitespace@227..228 " "
-          IdentGroup@228..240
-            Ident@228..240 "nls_language"
-          Whitespace@240..247 "       "
-          Datatype@247..263
-            Keyword@247..255 "VARCHAR2"
-            LParen@255..256 "("
-            Integer@256..257 "3"
-            RParen@257..258 ")"
-            Whitespace@258..263 "\n    "
-          Comma@263..264 ","
-          Whitespace@264..265 " "
-          IdentGroup@265..278
-            Ident@265..278 "nls_territory"
-          Whitespace@278..284 "      "
-          Datatype@284..301
-            Keyword@284..292 "VARCHAR2"
-            LParen@292..293 "("
-            Integer@293..295 "30"
-            RParen@295..296 ")"
-            Whitespace@296..301 "\n    "
-          Comma@301..302 ","
-          Whitespace@302..303 " "
-          IdentGroup@303..315
-            Ident@303..315 "credit_limit"
-          Whitespace@315..322 "       "
-          Datatype@322..338
-            Keyword@322..328 "NUMBER"
-            LParen@328..329 "("
-            Integer@329..330 "9"
-            Comma@330..331 ","
-            Integer@331..332 "2"
-            RParen@332..333 ")"
-            Whitespace@333..338 "\n    "
-          Comma@338..339 ","
-          Whitespace@339..340 " "
-          IdentGroup@340..350
-            Ident@340..350 "cust_email"
-          Whitespace@350..359 "         "
-          Datatype@359..376
-            Keyword@359..367 "VARCHAR2"
-            LParen@367..368 "("
-            Integer@368..370 "30"
-            RParen@370..371 ")"
-            Whitespace@371..376 "\n    "
-          Comma@376..377 ","
-          Whitespace@377..378 " "
-          IdentGroup@378..389
-            Ident@378..389 "cust_orders"
-          Whitespace@389..397 "        "
-          Datatype@397..416
-            IdentGroup@397..411
-              Ident@397..411 "ORDER_LIST_TYP"
-            Whitespace@411..416 "\n    "
-          RParen@416..417 ")"
-          Whitespace@417..418 " "
-    Semicolon@418..419 ";"
+          IdentGroup@70..82
+            Ident@70..82 "cust_address"
+          Whitespace@82..89 "       "
+          Datatype@89..110
+            IdentGroup@89..105
+              Ident@89..105 "CUST_ADDRESS_TYP"
+            Whitespace@105..110 "\n    "
+          RParen@110..111 ")"
+          Whitespace@111..112 " "
+    Semicolon@112..113 ";"
 "#]],
             vec![],
         );
@@ -609,35 +523,33 @@ Root@0..419
                 parse_udt,
             ),
             expect![[r#"
-Root@0..100
-  UdtDefinitionStmt@0..100
+Root@0..90
+  UdtDefinitionStmt@0..90
     Keyword@0..6 "CREATE"
     Whitespace@6..7 " "
     Keyword@7..11 "TYPE"
     Whitespace@11..12 " "
-    PlsqlTypeSource@12..99
+    PlsqlTypeSource@12..89
       IdentGroup@12..39
         Ident@12..39 "corporate_customer_ty ..."
       Whitespace@39..40 " "
-      ObjectSubtypeDef@40..99
+      ObjectSubtypeDef@40..89
         Keyword@40..45 "UNDER"
         Whitespace@45..46 " "
         IdentGroup@46..58
           Ident@46..58 "customer_typ"
-        Whitespace@58..63 "\n    "
-        LParen@63..64 "("
-        Whitespace@64..65 " "
-        IdentGroup@65..79
-          Ident@65..79 "account_mgr_id"
-        Whitespace@79..84 "     "
-        Datatype@84..98
-          Keyword@84..90 "NUMBER"
-          LParen@90..91 "("
-          Integer@91..92 "6"
-          RParen@92..93 ")"
-          Whitespace@93..98 "\n    "
-        RParen@98..99 ")"
-    Semicolon@99..100 ";"
+        Whitespace@58..59 " "
+        LParen@59..60 "("
+        IdentGroup@60..74
+          Ident@60..74 "account_mgr_id"
+        Whitespace@74..79 "     "
+        Datatype@79..88
+          Keyword@79..85 "NUMBER"
+          LParen@85..86 "("
+          Integer@86..87 "6"
+          RParen@87..88 ")"
+        RParen@88..89 ")"
+    Semicolon@89..90 ";"
 "#]],
             vec![],
         );
