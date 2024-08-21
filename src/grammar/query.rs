@@ -1905,4 +1905,151 @@ Root@0..56
             vec![],
         );
     }
+
+    #[test]
+    fn test_select_case() {
+        check(
+            parse(
+                "SELECT
+  product_name,
+  list_price,
+  CASE category_id
+    WHEN 1
+    THEN ROUND(list_price * 0.05,2) -- CPU
+    WHEN 2
+    THEN ROUND(List_price * 0.1,2)  -- Video Card
+    ELSE ROUND(list_price * 0.08,2) -- other categories
+  END discount
+FROM
+  products
+ORDER BY
+  product_name;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..282
+  SelectStmt@0..282
+    Keyword@0..6 "SELECT"
+    Whitespace@6..9 "\n  "
+    SelectClause@9..242
+      ColumnExpr@9..21
+        Expression@9..21
+          IdentGroup@9..21
+            Ident@9..21 "product_name"
+      Comma@21..22 ","
+      Whitespace@22..25 "\n  "
+      ColumnExpr@25..35
+        Expression@25..35
+          IdentGroup@25..35
+            Ident@25..35 "list_price"
+      Comma@35..36 ","
+      Whitespace@36..39 "\n  "
+      ColumnExpr@39..242
+        CaseStmt@39..233
+          Keyword@39..43 "CASE"
+          Whitespace@43..44 " "
+          SimpleCaseExpression@44..175
+            IdentGroup@44..55
+              Ident@44..55 "category_id"
+            Whitespace@55..60 "\n    "
+            Keyword@60..64 "WHEN"
+            Whitespace@64..65 " "
+            ComparissonExpression@65..71
+              Integer@65..66 "1"
+              Whitespace@66..71 "\n    "
+            Keyword@71..75 "THEN"
+            Whitespace@75..76 " "
+            FunctionInvocation@76..102
+              IdentGroup@76..81
+                Ident@76..81 "ROUND"
+              LParen@81..82 "("
+              ArgumentList@82..101
+                Argument@82..99
+                  Expression@82..99
+                    IdentGroup@82..92
+                      Ident@82..92 "list_price"
+                    Whitespace@92..93 " "
+                    ArithmeticOp@93..94 "*"
+                    Whitespace@94..95 " "
+                    Decimal@95..99 "0.05"
+                Comma@99..100 ","
+                Argument@100..101
+                  Integer@100..101 "2"
+              RParen@101..102 ")"
+            Whitespace@102..103 " "
+            Comment@103..109 "-- CPU"
+            Whitespace@109..114 "\n    "
+            Keyword@114..118 "WHEN"
+            Whitespace@118..119 " "
+            ComparissonExpression@119..125
+              Integer@119..120 "2"
+              Whitespace@120..125 "\n    "
+            Keyword@125..129 "THEN"
+            Whitespace@129..130 " "
+            FunctionInvocation@130..155
+              IdentGroup@130..135
+                Ident@130..135 "ROUND"
+              LParen@135..136 "("
+              ArgumentList@136..154
+                Argument@136..152
+                  Expression@136..152
+                    IdentGroup@136..146
+                      Ident@136..146 "List_price"
+                    Whitespace@146..147 " "
+                    ArithmeticOp@147..148 "*"
+                    Whitespace@148..149 " "
+                    Decimal@149..152 "0.1"
+                Comma@152..153 ","
+                Argument@153..154
+                  Integer@153..154 "2"
+              RParen@154..155 ")"
+            Whitespace@155..157 "  "
+            Comment@157..170 "-- Video Card"
+            Whitespace@170..175 "\n    "
+          ElseExpression@175..229
+            Keyword@175..179 "ELSE"
+            Whitespace@179..180 " "
+            FunctionInvocation@180..206
+              IdentGroup@180..185
+                Ident@180..185 "ROUND"
+              LParen@185..186 "("
+              ArgumentList@186..205
+                Argument@186..203
+                  Expression@186..203
+                    IdentGroup@186..196
+                      Ident@186..196 "list_price"
+                    Whitespace@196..197 " "
+                    ArithmeticOp@197..198 "*"
+                    Whitespace@198..199 " "
+                    Decimal@199..203 "0.08"
+                Comma@203..204 ","
+                Argument@204..205
+                  Integer@204..205 "2"
+              RParen@205..206 ")"
+            Whitespace@206..207 " "
+            Comment@207..226 "-- other categories"
+            Whitespace@226..229 "\n  "
+          Keyword@229..232 "END"
+          Whitespace@232..233 " "
+        Alias@233..241
+          Ident@233..241 "discount"
+        Whitespace@241..242 "\n"
+    Keyword@242..246 "FROM"
+    Whitespace@246..249 "\n  "
+    IdentGroup@249..257
+      Ident@249..257 "products"
+    Whitespace@257..258 "\n"
+    OrderByClause@258..281
+      Keyword@258..263 "ORDER"
+      Whitespace@263..264 " "
+      Keyword@264..266 "BY"
+      Whitespace@266..269 "\n  "
+      Expression@269..281
+        IdentGroup@269..281
+          Ident@269..281 "product_name"
+    Semicolon@281..282 ";"
+"#]],
+            vec![],
+        );
+    }
 }

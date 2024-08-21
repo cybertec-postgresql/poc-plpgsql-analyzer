@@ -4,7 +4,6 @@ use crate::{
 };
 use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
-#[allow(unused)]
 pub(crate) fn parse_case(p: &mut Parser) {
     p.start(SyntaxKind::CaseStmt);
     p.expect(T![case]);
@@ -18,6 +17,7 @@ pub(crate) fn parse_case(p: &mut Parser) {
         parse_else_expression(p);
     }
     p.eat(T![end]);
+    p.eat(T![;]);
     p.finish();
 }
 
