@@ -172,8 +172,11 @@ pub(crate) fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 }
 
 fn parse_from_list(p: &mut Parser) {
+    let mut expect_join = false;
     safe_loop!(p, {
-        parse_ident(p, 1..1);
+        if !expect_join {
+            parse_ident(p, 1..1);
+        }
         if [
             T![join],
             T!["("],
@@ -191,8 +194,38 @@ fn parse_from_list(p: &mut Parser) {
             parse_join_clause(p);
             p.eat(T![")"]);
         }
-        if !p.eat(T![,]) {
+        if !p.eat(T![,])
+            && ![
+                T![join],
+                T!["("],
+                T![inner],
+                T![outer],
+                T![cross],
+                T![natural],
+                T![left],
+                T![right],
+                T![full],
+            ]
+            .contains(&p.current())
+        {
             break;
+        }
+        if [
+            T![join],
+            T!["("],
+            T![inner],
+            T![outer],
+            T![cross],
+            T![natural],
+            T![left],
+            T![right],
+            T![full],
+        ]
+        .contains(&p.current())
+        {
+            expect_join = true;
+        } else {
+            expect_join = false;
         }
     });
 }
@@ -215,7 +248,16 @@ fn parse_join_clause(p: &mut Parser) {
             _ => (),
         },
         T![full] | T![left] | T![right] => parse_outer_join_clause(p),
-        _ => (),
+        _ => p.error(crate::ParseErrorType::ExpectedOneOfTokens(vec![
+            T![join],
+            T![inner],
+            T![cross],
+            T![outer],
+            T![natural],
+            T![full],
+            T![left],
+            T![right],
+        ])),
     }
     p.finish();
 }
@@ -1821,6 +1863,70 @@ Root@0..40
         IdentGroup@33..39
           Ident@33..39 "table2"
     Semicolon@39..40 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_multi_join() {
+        check(
+            parse(
+                "SELECT * FROM a JOIN b ON a.id=b.id JOIN c ON c.id=a.id;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..56
+  SelectStmt@0..56
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..15
+      Ident@14..15 "a"
+    Whitespace@15..16 " "
+    JoinClause@16..36
+      InnerJoinClause@16..36
+        Keyword@16..20 "JOIN"
+        Whitespace@20..21 " "
+        IdentGroup@21..22
+          Ident@21..22 "b"
+        Whitespace@22..23 " "
+        Keyword@23..25 "ON"
+        Whitespace@25..26 " "
+        Expression@26..36
+          IdentGroup@26..30
+            Ident@26..27 "a"
+            Dot@27..28 "."
+            Ident@28..30 "id"
+          ComparisonOp@30..31 "="
+          IdentGroup@31..35
+            Ident@31..32 "b"
+            Dot@32..33 "."
+            Ident@33..35 "id"
+          Whitespace@35..36 " "
+    JoinClause@36..55
+      InnerJoinClause@36..55
+        Keyword@36..40 "JOIN"
+        Whitespace@40..41 " "
+        IdentGroup@41..42
+          Ident@41..42 "c"
+        Whitespace@42..43 " "
+        Keyword@43..45 "ON"
+        Whitespace@45..46 " "
+        Expression@46..55
+          IdentGroup@46..50
+            Ident@46..47 "c"
+            Dot@47..48 "."
+            Ident@48..50 "id"
+          ComparisonOp@50..51 "="
+          IdentGroup@51..55
+            Ident@51..52 "a"
+            Dot@52..53 "."
+            Ident@53..55 "id"
+    Semicolon@55..56 ";"
 "#]],
             vec![],
         );
