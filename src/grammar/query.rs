@@ -190,9 +190,11 @@ fn parse_from_list(p: &mut Parser) {
         ]
         .contains(&p.current())
         {
-            p.eat(T!["("]);
+            let expect_r_param = p.eat(T!["("]);
             parse_join_clause(p);
-            p.eat(T![")"]);
+            if expect_r_param {
+                p.eat(T![")"]);
+            }
         }
         expect_join = [
             T![join],
