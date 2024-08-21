@@ -3,7 +3,6 @@ use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
 use super::{call_spec::parse_call_spec, parse_datatype};
 
-#[allow(unused)]
 pub(crate) fn parse_element_spec(p: &mut Parser) {
     p.start(SyntaxKind::ElementSpec);
     p.eat(T![not]);
