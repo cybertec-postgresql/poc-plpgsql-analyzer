@@ -69,7 +69,6 @@ fn parse_constructor_spec(p: &mut Parser) {
 fn parse_map_order_function_spec(p: &mut Parser) {
     p.expect_one_of(&[T![map], T![order]]);
     p.expect(T![member]);
-    // parse function spec
     parse_function_spec(p);
 }
 
