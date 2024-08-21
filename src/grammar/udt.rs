@@ -108,7 +108,6 @@ fn parse_func_decl_in_type(p: &mut Parser) {
     parse_param_list(p);
     p.expect(T![return]);
     parse_datatype(p);
-    // Parse stupid bullshit
     safe_loop!(p, {
         match p.current() {
             T![deterministic] => {
