@@ -17,7 +17,6 @@ pub(crate) fn parse_case(p: &mut Parser) {
         parse_else_expression(p);
     }
     p.eat(T![end]);
-    p.eat(T![;]);
     p.finish();
 }
 
