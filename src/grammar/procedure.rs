@@ -239,7 +239,7 @@ Root@0..98
         Keyword@52..56 "NULL"
         Semicolon@56..57 ";"
       Whitespace@57..58 " "
-      Comment@58..68 "-- メ メ"
+      InlineComment@58..68 "-- メ メ"
       Whitespace@68..69 "\n"
       Keyword@69..72 "END"
       Whitespace@72..73 " "
@@ -259,7 +259,7 @@ Root@0..98
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..124
-  Comment@0..58 "-- test: Qualify the  ..."
+  InlineComment@0..58 "-- test: Qualify the  ..."
   Whitespace@58..59 "\n"
   Procedure@59..124
     ProcedureHeader@59..100
@@ -423,7 +423,7 @@ Root@0..304
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..176
-  Comment@0..73 "-- test: ignore EDITI ..."
+  InlineComment@0..73 "-- test: ignore EDITI ..."
   Whitespace@73..74 "\n"
   Procedure@74..176
     ProcedureHeader@74..133
@@ -469,7 +469,7 @@ Root@0..176
             parse(INPUT, |p| parse_procedure(p, false)),
             expect![[r#"
 Root@0..193
-  Comment@0..81 "-- test: ignore NONED ..."
+  InlineComment@0..81 "-- test: ignore NONED ..."
   Whitespace@81..82 "\n"
   Procedure@82..193
     ProcedureHeader@82..147

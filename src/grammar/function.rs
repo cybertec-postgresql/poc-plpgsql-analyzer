@@ -207,7 +207,7 @@ Root@0..25
             parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..171
-  Comment@0..73 "-- test: ignore EDITI ..."
+  InlineComment@0..73 "-- test: ignore EDITI ..."
   Whitespace@73..74 "\n"
   Function@74..171
     FunctionHeader@74..146
@@ -258,7 +258,7 @@ Root@0..171
             parse(INPUT, |p| parse_function(p, false)),
             expect![[r#"
 Root@0..180
-  Comment@0..76 "-- test: ignore NONED ..."
+  InlineComment@0..76 "-- test: ignore NONED ..."
   Whitespace@76..77 "\n"
   Function@77..180
     FunctionHeader@77..155

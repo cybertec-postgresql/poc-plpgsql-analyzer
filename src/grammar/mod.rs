@@ -31,6 +31,8 @@ use source_gen::T;
 
 mod block;
 mod call_spec;
+mod case;
+mod commit;
 mod constraint;
 mod cursor;
 mod datatype;
@@ -251,7 +253,7 @@ Root@0..9
             expect![[r#"
 Root@0..15
   Whitespace@0..1 " "
-  Comment@1..9 "-- hello"
+  InlineComment@1..9 "-- hello"
   Whitespace@9..12 "\n  "
   IdentGroup@12..15
     Ident@12..15 "foo"
