@@ -193,7 +193,7 @@ fn parse_from_list(p: &mut Parser) {
             let expect_r_param = p.eat(T!["("]);
             parse_join_clause(p);
             if expect_r_param {
-                p.eat(T![")"]);
+                p.expect(T![")"]);
             }
         }
         expect_join = JOIN_TOKENS.contains(&p.current());
