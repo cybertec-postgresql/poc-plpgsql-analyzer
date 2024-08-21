@@ -55,6 +55,7 @@ pub fn parse_datatype(p: &mut Parser) {
         | T![integer]
         | T![long]
         | T![national]
+        | T![natural]
         | T![nchar]
         | T![nclob]
         | T![number]
