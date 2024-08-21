@@ -49,6 +49,10 @@ pub enum SyntaxKind {
     #[doc = "A single comma"]
     Comma,
     #[doc = "Inline comment starting with `--`"]
+    InlineComment,
+    #[doc = "A node containing a full commit statement"]
+    CommitStmt,
+    #[doc = "Inline comment starting with `--`"]
     Comment,
     #[doc = "A node containing a comparisson expression"]
     ComparissonExpression,
@@ -223,7 +227,7 @@ impl From<SyntaxKind> for rowan::SyntaxKind {
 impl From<TokenKind> for SyntaxKind {
     fn from(kind: TokenKind) -> Self {
         match kind {
-            TokenKind::Comment => SyntaxKind::Comment,
+            TokenKind::InlineComment => SyntaxKind::InlineComment,
             TokenKind::Whitespace => SyntaxKind::Whitespace,
             TokenKind::DollarQuote => SyntaxKind::DollarQuote,
             TokenKind::Assign => SyntaxKind::Assign,
@@ -265,6 +269,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AscKw => SyntaxKind::Keyword,
             TokenKind::AssociateKw => SyntaxKind::Keyword,
             TokenKind::AuditKw => SyntaxKind::Keyword,
+            TokenKind::BatchKw => SyntaxKind::Keyword,
             TokenKind::BeforeKw => SyntaxKind::Keyword,
             TokenKind::BeginKw => SyntaxKind::Keyword,
             TokenKind::BequeathKw => SyntaxKind::Keyword,
@@ -293,6 +298,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::CollationKw => SyntaxKind::Keyword,
             TokenKind::CollectKw => SyntaxKind::Keyword,
             TokenKind::CommentKw => SyntaxKind::Keyword,
+            TokenKind::CommitKw => SyntaxKind::Keyword,
             TokenKind::ConnectKw => SyntaxKind::Keyword,
             TokenKind::ConnectByRootKw => SyntaxKind::Keyword,
             TokenKind::ConstantKw => SyntaxKind::Keyword,
@@ -413,6 +419,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::NorelyKw => SyntaxKind::Keyword,
             TokenKind::NotKw => SyntaxKind::Keyword,
             TokenKind::NovalidateKw => SyntaxKind::Keyword,
+            TokenKind::NowaitKw => SyntaxKind::Keyword,
             TokenKind::NullKw => SyntaxKind::Keyword,
             TokenKind::NullsKw => SyntaxKind::Keyword,
             TokenKind::NumberKw => SyntaxKind::Keyword,
@@ -514,9 +521,12 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::VaryingKw => SyntaxKind::Keyword,
             TokenKind::ViewKw => SyntaxKind::Keyword,
             TokenKind::VisibleKw => SyntaxKind::Keyword,
+            TokenKind::WaitKw => SyntaxKind::Keyword,
             TokenKind::WhenKw => SyntaxKind::Keyword,
             TokenKind::WhereKw => SyntaxKind::Keyword,
             TokenKind::WithKw => SyntaxKind::Keyword,
+            TokenKind::WorkKw => SyntaxKind::Keyword,
+            TokenKind::WriteKw => SyntaxKind::Keyword,
             TokenKind::XmlschemaKw => SyntaxKind::Keyword,
             TokenKind::XmltypeKw => SyntaxKind::Keyword,
             TokenKind::YearKw => SyntaxKind::Keyword,
