@@ -24,7 +24,6 @@ pub(crate) fn parse_sequence(p: &mut Parser) {
 
 pub(crate) fn parse_sequence_params(p: &mut Parser) {
     p.start(SyntaxKind::SequenceParameters);
-    // parse until no longer can lol
     safe_loop!(p, {
         match p.current() {
             T![increment] => {
@@ -38,7 +37,7 @@ pub(crate) fn parse_sequence_params(p: &mut Parser) {
                 p.expect(T![int_literal]);
             }
             T![maxvalue] | T![minvalue] | T![cache] => {
-                p.expect_one_of(&[T![maxvalue], T![minvalue], T![cache]]);
+                p.bump_any();
                 p.expect(T![int_literal]);
             }
             T![nomaxvalue]
@@ -54,24 +53,10 @@ pub(crate) fn parse_sequence_params(p: &mut Parser) {
             | T![noshard]
             | T![session]
             | T![global] => {
-                p.expect_one_of(&[
-                    T![nomaxvalue],
-                    T![nominvalue],
-                    T![cycle],
-                    T![nocycle],
-                    T![nocache],
-                    T![order],
-                    T![noorder],
-                    T![keep],
-                    T![nokeep],
-                    T![noscale],
-                    T![noshard],
-                    T![session],
-                    T![global],
-                ]);
+                p.bump_any();
             }
             T![scale] | T![shard] => {
-                p.expect_one_of(&[T![scale], T![shard]]);
+                p.bump_any();
                 p.expect_one_of(&[T![extend], T![noextend]]);
             }
 
