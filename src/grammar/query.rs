@@ -189,6 +189,14 @@ fn parse_from_list(p: &mut Parser) {
         if !expect_join {
             parse_ident(p, 1..1);
         }
+        match p.nth(1) {
+            Some(x) => {
+                if JOIN_TOKENS.contains(&x) {
+                    parse_ident(p, 1..1);
+                }
+            }
+            None => (),
+        }
         if JOIN_TOKENS.contains(&p.current()) {
             let expect_r_param = p.eat(T!["("]);
             parse_join_clause(p);
@@ -241,6 +249,9 @@ fn parse_inner_join_clause(p: &mut Parser) {
     p.eat(T![inner]);
     p.expect(T![join]);
     parse_ident(p, 1..2);
+    if !p.at(T![on]) || p.at(T![using]) {
+        parse_ident(p, 1..1);
+    }
     match p.current() {
         T![on] => {
             p.expect(T![on]);
@@ -1902,6 +1913,17 @@ Root@0..56
             Ident@53..55 "id"
     Semicolon@55..56 ";"
 "#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_join_alias() {
+        check(
+            parse("SELECT * FROM abc a JOIN def d ON a.id=d.id", |p| {
+                parse_query(p, false)
+            }),
+            expect![[]],
             vec![],
         );
     }
