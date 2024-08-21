@@ -173,41 +173,30 @@ pub(crate) fn parse_into_clause(p: &mut Parser, expect_into_clause: bool) {
 
 fn parse_from_list(p: &mut Parser) {
     let mut expect_join = false;
+    const JOIN_TOKENS: &[TokenKind] = &[
+        T![join],
+        T!["("],
+        T![inner],
+        T![outer],
+        T![cross],
+        T![natural],
+        T![left],
+        T![right],
+        T![full],
+    ];
+
     safe_loop!(p, {
         if !expect_join {
             parse_ident(p, 1..1);
         }
-        if [
-            T![join],
-            T!["("],
-            T![inner],
-            T![outer],
-            T![cross],
-            T![natural],
-            T![left],
-            T![right],
-            T![full],
-        ]
-        .contains(&p.current())
-        {
+        if JOIN_TOKENS.contains(&p.current()) {
             let expect_r_param = p.eat(T!["("]);
             parse_join_clause(p);
             if expect_r_param {
                 p.eat(T![")"]);
             }
         }
-        expect_join = [
-            T![join],
-            T!["("],
-            T![inner],
-            T![outer],
-            T![cross],
-            T![natural],
-            T![left],
-            T![right],
-            T![full],
-        ]
-        .contains(&p.current());
+        expect_join = JOIN_TOKENS.contains(&p.current());
 
         if !p.eat(T![,]) && !expect_join {
             break;
