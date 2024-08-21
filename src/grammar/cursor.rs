@@ -112,7 +112,7 @@ Root@0..395
           Keyword@39..46 "ROWTYPE"
         Semicolon@46..47 ";"
       Whitespace@47..51 "    "
-      Comment@51..64 "-- Declare c1"
+      InlineComment@51..64 "-- Declare c1"
       Whitespace@64..69 "\n \n  "
       CursorStmt@69..219
         Keyword@69..75 "CURSOR"
@@ -122,7 +122,7 @@ Root@0..395
         Whitespace@78..79 " "
         Keyword@79..81 "IS"
         Whitespace@81..110 "                      ..."
-        Comment@110..134 "-- Declare and define c2"
+        InlineComment@110..134 "-- Declare and define c2"
         Whitespace@134..139 "\n    "
         SelectStmt@139..213
           Keyword@139..145 "SELECT"
@@ -177,7 +177,7 @@ Root@0..395
         Whitespace@255..256 " "
         Keyword@256..258 "IS"
         Whitespace@258..260 "  "
-        Comment@260..273 "-- Define c1,"
+        InlineComment@260..273 "-- Define c1,"
         Whitespace@273..278 "\n    "
         SelectStmt@278..372
           Keyword@278..284 "SELECT"
@@ -189,7 +189,7 @@ Root@0..395
           IdentGroup@292..303
             Ident@292..303 "departments"
           Whitespace@303..317 "              "
-          Comment@317..341 "-- repeating return type"
+          InlineComment@317..341 "-- repeating return type"
           Whitespace@341..346 "\n    "
           WhereClause@346..371
             Keyword@346..351 "WHERE"
