@@ -15,7 +15,7 @@ use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
 use super::commit::parse_commit;
-use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
+use super::{parse_cte, parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {

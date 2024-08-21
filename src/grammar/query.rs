@@ -1558,11 +1558,12 @@ Root@0..150
     IdentGroup@145..149
       Ident@145..149 "DUAL"
     Semicolon@149..150 ";"
-    "#]],
+"#]],
             vec![],
         );
     }
-    
+
+    #[test]
     fn test_simple_join() {
         check(
             parse(
