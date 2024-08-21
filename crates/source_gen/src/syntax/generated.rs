@@ -40,6 +40,8 @@ pub enum SyntaxKind {
     BlockStatement,
     #[doc = "A node containing a BULK COLLECT INTO clause"]
     BulkIntoClause,
+    #[doc = "A node containing a CASE statement"]
+    CaseStmt,
     #[doc = "A colon token"]
     Colon,
     #[doc = "A single column expression, as part of an SELECT clause"]
@@ -48,6 +50,8 @@ pub enum SyntaxKind {
     Comma,
     #[doc = "Inline comment starting with `--`"]
     Comment,
+    #[doc = "A node containing a comparisson expression"]
+    ComparissonExpression,
     #[doc = "Represents an arithmetic SQL comparison operator (=, <>, <, >, <=, >=) or other types of comparison operators of SQL (ilike, like)"]
     ComparisonOp,
     #[doc = "A concatination operator `||`"]
@@ -80,6 +84,8 @@ pub enum SyntaxKind {
     DollarQuote,
     #[doc = "A single dot"]
     Dot,
+    #[doc = "A node containing an else expression"]
+    ElseExpression,
     #[doc = "An error token with a cause"]
     Error,
     #[doc = "An exclamation mark `!`"]
@@ -168,6 +174,8 @@ pub enum SyntaxKind {
     RowtypeClause,
     #[doc = "Right Paren"]
     RParen,
+    #[doc = "A node containing a searched case expression"]
+    SearchedCaseExpression,
     #[doc = "A node that contains the whole SELECT clause of a query"]
     SelectClause,
     #[doc = "A node that marks a full SELECT statement"]
@@ -176,6 +184,8 @@ pub enum SyntaxKind {
     Semicolon,
     #[doc = "A node containing a SET clause in an UPDATE statement"]
     SetClause,
+    #[doc = "A node containing a simple case expression"]
+    SimpleCaseExpression,
     #[doc = "Slash char `/`"]
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
@@ -271,6 +281,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ByteKw => SyntaxKind::Keyword,
             TokenKind::CallKw => SyntaxKind::Keyword,
             TokenKind::CascadeKw => SyntaxKind::Keyword,
+            TokenKind::CaseKw => SyntaxKind::Keyword,
             TokenKind::CKw => SyntaxKind::Keyword,
             TokenKind::CharKw => SyntaxKind::Keyword,
             TokenKind::CharacterKw => SyntaxKind::Keyword,

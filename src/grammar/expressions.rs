@@ -17,6 +17,8 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+use super::case::parse_case;
+
 /// Attempts to parse an expression if applicable
 pub(crate) fn opt_expr(p: &mut Parser) -> bool {
     expr_bp(p, 0).is_ok()
@@ -63,7 +65,8 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                     T![or],
                     T![then],
                     T![prior],
-                    T![connect_by_root]
+                    T![connect_by_root],
+                    T![case]
                 ]
                 .contains(&token) =>
         {
@@ -90,6 +93,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 p.error(ParseErrorType::UnbalancedParens);
             }
         }
+        T![case] => parse_case(p),
         T![not] | T![+] | T![-] | T![prior] | T![connect_by_root] => {
             if let Some(operator) = prefix_bp(token) {
                 match operator.mapping {
@@ -112,6 +116,7 @@ fn expr_bp(p: &mut Parser, min_bp: u8) -> Result<(), ParseErrorType> {
                 T![bind_var],
                 T![prior],
                 T![connect_by_root],
+                T![case],
             ]));
         }
     }
@@ -841,6 +846,48 @@ Root@0..8
                 ParseError::new(ExpectedToken(RParen), 0..0),
                 ParseError::new(UnbalancedParens, 0..0),
             ],
+        );
+    }
+
+    #[test]
+    fn test_parse_case() {
+        check(
+            parse(
+                "CASE country_id
+    WHEN 'US'
+    THEN state
+    ELSE city
+  END",
+                parse_expr,
+            ),
+            expect![[r#"
+Root@0..64
+  CaseStmt@0..64
+    Keyword@0..4 "CASE"
+    Whitespace@4..5 " "
+    SimpleCaseExpression@5..49
+      IdentGroup@5..15
+        Ident@5..15 "country_id"
+      Whitespace@15..20 "\n    "
+      Keyword@20..24 "WHEN"
+      Whitespace@24..25 " "
+      ComparissonExpression@25..34
+        QuotedLiteral@25..29 "'US'"
+        Whitespace@29..34 "\n    "
+      Keyword@34..38 "THEN"
+      Whitespace@38..39 " "
+      IdentGroup@39..44
+        Ident@39..44 "state"
+      Whitespace@44..49 "\n    "
+    ElseExpression@49..61
+      Keyword@49..53 "ELSE"
+      Whitespace@53..54 " "
+      IdentGroup@54..58
+        Ident@54..58 "city"
+      Whitespace@58..61 "\n  "
+    Keyword@61..64 "END"
+"#]],
+            vec![],
         );
     }
 }
