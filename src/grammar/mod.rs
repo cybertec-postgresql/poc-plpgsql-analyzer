@@ -31,8 +31,8 @@ use source_gen::T;
 
 mod block;
 mod call_spec;
-mod commit;
 mod case;
+mod commit;
 mod constraint;
 mod cursor;
 mod datatype;
