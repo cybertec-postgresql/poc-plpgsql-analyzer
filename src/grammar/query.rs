@@ -397,7 +397,6 @@ fn parse_column_expr(p: &mut Parser) {
         p.start(SyntaxKind::ColumnExpr);
 
         parse_expr(p);
-        dbg!(p.lookahead(3).as_slice());
         if [T![as], T![quoted_ident], T![unquoted_ident]].contains(&p.current()) {
             parse_alias(p);
         }
