@@ -48,6 +48,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![cursor] => parse_cursor(p),
         T![declare] | T![begin] => parse_block(p),
         T![execute] => parse_execute_immediate(p),
+        T![exit] => parse_exit_stmt(p),
         T![if] => parse_if_stmt(p),
         T![insert] => parse_insert(p),
         T![null] => parse_null_stmt(p),
@@ -106,6 +107,14 @@ fn parse_if_stmt(p: &mut Parser) {
     p.expect(T![end]);
     p.expect(T![if]);
     p.expect(T![;]);
+}
+
+fn parse_exit_stmt(p: &mut Parser) {
+    p.expect(T![exit]);
+    if p.eat(T![when]) {
+        parse_expr(p);
+    }
+    p.eat(T![;]);
 }
 
 fn parse_null_stmt(p: &mut Parser) {

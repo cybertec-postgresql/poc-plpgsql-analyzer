@@ -106,6 +106,8 @@ pub enum SyntaxKind {
     Ident,
     #[doc = "An identifier group, consisting of multiple idents"]
     IdentGroup,
+    #[doc = "A node containing an iteration control block"]
+    IterationControl,
     #[doc = "A node that marks a full INSERT statement"]
     InsertStmt,
     #[doc = "Any integer, positive and negative"]
@@ -325,6 +327,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExceptionsKw => SyntaxKind::Keyword,
             TokenKind::ExecuteKw => SyntaxKind::Keyword,
             TokenKind::ExistsKw => SyntaxKind::Keyword,
+            TokenKind::ExitKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
@@ -349,6 +352,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::InKw => SyntaxKind::Keyword,
             TokenKind::IndexKw => SyntaxKind::Keyword,
             TokenKind::IndicatorKw => SyntaxKind::Keyword,
+            TokenKind::IndicesKw => SyntaxKind::Keyword,
             TokenKind::InitiallyKw => SyntaxKind::Keyword,
             TokenKind::InsertKw => SyntaxKind::Keyword,
             TokenKind::InsteadKw => SyntaxKind::Keyword,
@@ -413,6 +417,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ParallelEnableKw => SyntaxKind::Keyword,
             TokenKind::ParametersKw => SyntaxKind::Keyword,
             TokenKind::ParentKw => SyntaxKind::Keyword,
+            TokenKind::PairsKw => SyntaxKind::Keyword,
             TokenKind::PipelinedKw => SyntaxKind::Keyword,
             TokenKind::PlpgsqlKw => SyntaxKind::Keyword,
             TokenKind::PlsIntegerKw => SyntaxKind::Keyword,
@@ -436,6 +441,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ReliesOnKw => SyntaxKind::Keyword,
             TokenKind::RelyKw => SyntaxKind::Keyword,
             TokenKind::RenameKw => SyntaxKind::Keyword,
+            TokenKind::RepeatKw => SyntaxKind::Keyword,
             TokenKind::ReplaceKw => SyntaxKind::Keyword,
             TokenKind::ResultCacheKw => SyntaxKind::Keyword,
             TokenKind::ReturnKw => SyntaxKind::Keyword,
