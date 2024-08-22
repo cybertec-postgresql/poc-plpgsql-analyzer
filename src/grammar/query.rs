@@ -189,13 +189,10 @@ fn parse_from_list(p: &mut Parser) {
         if !expect_join {
             parse_ident(p, 1..1);
         }
-        match p.nth(1) {
-            Some(x) => {
-                if JOIN_TOKENS.contains(&x) && !JOIN_TOKENS.contains(&p.current()) {
-                    parse_ident(p, 1..1);
-                }
+        if let Some(x) = p.nth(1) {
+            if JOIN_TOKENS.contains(&x) && !JOIN_TOKENS.contains(&p.current()) {
+                parse_ident(p, 1..1);
             }
-            None => (),
         }
         if JOIN_TOKENS.contains(&p.current()) {
             let expect_r_param = p.eat(T!["("]);
