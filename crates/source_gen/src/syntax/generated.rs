@@ -84,6 +84,8 @@ pub enum SyntaxKind {
     Exclam,
     #[doc = "A node that contains a full EXECUTE IMMEDIATE statement"]
     ExecuteImmediateStmt,
+    #[doc = "A node that contains a full EXIT statement"]
+    ExitStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
     #[doc = "A node containing a FOR LOOP"]
@@ -237,6 +239,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::QuotedIdent => SyntaxKind::Ident,
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::BindVar => SyntaxKind::BindVar,
+            TokenKind::LoopLabel => SyntaxKind::Ident,
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,

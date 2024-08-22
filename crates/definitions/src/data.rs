@@ -56,6 +56,13 @@ pub const TOKENS: Tokens<'_> = Tokens {
             "'[^']*'"
         ),
         T!("bind_var", "bind_var", "bind_var", r"(?i):[a-z][a-z0-9_]*"),
+        T!(
+            "loop_label",
+            "loop_label",
+            "ident",
+            r"(?i)(<<){1,2}[a-z_][a-z0-9_$#]*(>){1,2}",
+            1
+        ),
     ],
     keywords: &[
         T!("add"),
@@ -365,6 +372,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("error", "An error token with a cause"),
     S!("exclam", "An exclamation mark `!`"),   
     S!("execute_immediate_stmt", "A node that contains a full EXECUTE IMMEDIATE statement"),
+    S!("exit_stmt", "A node that contains a full EXIT statement"),
     S!("expression", "Holds a generic SQL logic/arithmetic expression"),
     S!("for_loop", "A node containing a FOR LOOP"),
     S!("function", "A node that marks a full CREATE [..] FUNCTION block"),

@@ -14,6 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+use super::loops::{parse_exit_stmt, parse_loop};
 use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
@@ -51,6 +52,9 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![exit] => parse_exit_stmt(p),
         T![if] => parse_if_stmt(p),
         T![insert] => parse_insert(p),
+        T![loop] | T![loop_label] => {
+            parse_loop(p);
+        }
         T![null] => parse_null_stmt(p),
         T![return] => parse_return_stmt(p),
         T![select] => parse_query(p, true),
@@ -107,14 +111,6 @@ fn parse_if_stmt(p: &mut Parser) {
     p.expect(T![end]);
     p.expect(T![if]);
     p.expect(T![;]);
-}
-
-fn parse_exit_stmt(p: &mut Parser) {
-    p.expect(T![exit]);
-    if p.eat(T![when]) {
-        parse_expr(p);
-    }
-    p.eat(T![;]);
 }
 
 fn parse_null_stmt(p: &mut Parser) {

@@ -9,6 +9,7 @@ use super::{opt_expr, parse_ident};
 #[allow(unused)]
 pub(crate) fn parse_loop(p: &mut Parser) {
     p.start(SyntaxKind::Loop);
+    p.eat(T![loop_label]);
 
     match p.current() {
         T![loop] => parse_basic_loop(p),
@@ -141,6 +142,18 @@ fn parse_pred_clause_seq(p: &mut Parser) {
     }
 }
 
+pub(crate) fn parse_exit_stmt(p: &mut Parser) {
+    p.start(SyntaxKind::ExitStmt);
+    p.expect(T![exit]);
+    p.eat_one_of(&[T![loop_label], T![unquoted_ident]]);
+    if p.eat(T![when]) {
+        parse_expr(p);
+    }
+    p.eat(T![;]);
+
+    p.finish();
+}
+
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
@@ -195,10 +208,11 @@ Root@0..98
           Whitespace@57..58 " "
         Keyword@58..62 "THEN"
         Whitespace@62..69 "\n      "
-        BlockStatement@69..74
-          Keyword@69..73 "EXIT"
-          Semicolon@73..74 ";"
-        Whitespace@74..79 "\n    "
+        BlockStatement@69..79
+          ExitStmt@69..74
+            Keyword@69..73 "EXIT"
+            Semicolon@73..74 ";"
+          Whitespace@74..79 "\n    "
         Keyword@79..82 "END"
         Whitespace@82..83 " "
         Keyword@83..85 "IF"
@@ -208,6 +222,172 @@ Root@0..98
       Whitespace@92..93 " "
       Keyword@93..97 "LOOP"
     Semicolon@97..98 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_parse_nested_loop() {
+        check(
+            parse(
+                "<<outer_loop>>
+  LOOP
+    l_i := l_i + 1;
+    EXIT outer_loop WHEN l_i > 2;    
+    dbms_output.put_line('Outer counter ' || l_i);
+    -- reset inner counter
+    l_j := 0;
+      <<inner_loop>> LOOP
+      l_j := l_j + 1;
+      EXIT inner_loop WHEN l_j > 3;
+      dbms_output.put_line(' Inner counter ' || l_j);
+    END LOOP inner_loop;
+  END LOOP outer_loop;",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..357
+  Loop@0..357
+    Ident@0..14 "<<outer_loop>>"
+    Whitespace@14..17 "\n  "
+    BasicLoop@17..356
+      Keyword@17..21 "LOOP"
+      Whitespace@21..26 "\n    "
+      BlockStatement@26..41
+        IdentGroup@26..29
+          Ident@26..29 "l_i"
+        Whitespace@29..30 " "
+        Assign@30..32 ":="
+        Whitespace@32..33 " "
+        Expression@33..40
+          IdentGroup@33..36
+            Ident@33..36 "l_i"
+          Whitespace@36..37 " "
+          ArithmeticOp@37..38 "+"
+          Whitespace@38..39 " "
+          Integer@39..40 "1"
+        Semicolon@40..41 ";"
+      Whitespace@41..46 "\n    "
+      BlockStatement@46..84
+        ExitStmt@46..75
+          Keyword@46..50 "EXIT"
+          Whitespace@50..51 " "
+          Ident@51..61 "outer_loop"
+          Whitespace@61..62 " "
+          Keyword@62..66 "WHEN"
+          Whitespace@66..67 " "
+          Expression@67..74
+            IdentGroup@67..70
+              Ident@67..70 "l_i"
+            Whitespace@70..71 " "
+            ComparisonOp@71..72 ">"
+            Whitespace@72..73 " "
+            Integer@73..74 "2"
+          Semicolon@74..75 ";"
+        Whitespace@75..84 "    \n    "
+      BlockStatement@84..130
+        FunctionInvocation@84..129
+          IdentGroup@84..104
+            Ident@84..95 "dbms_output"
+            Dot@95..96 "."
+            Ident@96..104 "put_line"
+          LParen@104..105 "("
+          ArgumentList@105..128
+            Argument@105..128
+              Expression@105..128
+                QuotedLiteral@105..121 "'Outer counter '"
+                Whitespace@121..122 " "
+                Concat@122..124 "||"
+                Whitespace@124..125 " "
+                IdentGroup@125..128
+                  Ident@125..128 "l_i"
+          RParen@128..129 ")"
+        Semicolon@129..130 ";"
+      Whitespace@130..135 "\n    "
+      Comment@135..157 "-- reset inner counter"
+      Whitespace@157..162 "\n    "
+      BlockStatement@162..171
+        IdentGroup@162..165
+          Ident@162..165 "l_j"
+        Whitespace@165..166 " "
+        Assign@166..168 ":="
+        Whitespace@168..169 " "
+        Expression@169..170
+          Integer@169..170 "0"
+        Semicolon@170..171 ";"
+      Whitespace@171..178 "\n      "
+      BlockStatement@178..337
+        Loop@178..334
+          Ident@178..192 "<<inner_loop>>"
+          Whitespace@192..193 " "
+          BasicLoop@193..333
+            Keyword@193..197 "LOOP"
+            Whitespace@197..204 "\n      "
+            BlockStatement@204..219
+              IdentGroup@204..207
+                Ident@204..207 "l_j"
+              Whitespace@207..208 " "
+              Assign@208..210 ":="
+              Whitespace@210..211 " "
+              Expression@211..218
+                IdentGroup@211..214
+                  Ident@211..214 "l_j"
+                Whitespace@214..215 " "
+                ArithmeticOp@215..216 "+"
+                Whitespace@216..217 " "
+                Integer@217..218 "1"
+              Semicolon@218..219 ";"
+            Whitespace@219..226 "\n      "
+            BlockStatement@226..262
+              ExitStmt@226..255
+                Keyword@226..230 "EXIT"
+                Whitespace@230..231 " "
+                Ident@231..241 "inner_loop"
+                Whitespace@241..242 " "
+                Keyword@242..246 "WHEN"
+                Whitespace@246..247 " "
+                Expression@247..254
+                  IdentGroup@247..250
+                    Ident@247..250 "l_j"
+                  Whitespace@250..251 " "
+                  ComparisonOp@251..252 ">"
+                  Whitespace@252..253 " "
+                  Integer@253..254 "3"
+                Semicolon@254..255 ";"
+              Whitespace@255..262 "\n      "
+            BlockStatement@262..309
+              FunctionInvocation@262..308
+                IdentGroup@262..282
+                  Ident@262..273 "dbms_output"
+                  Dot@273..274 "."
+                  Ident@274..282 "put_line"
+                LParen@282..283 "("
+                ArgumentList@283..307
+                  Argument@283..307
+                    Expression@283..307
+                      QuotedLiteral@283..300 "' Inner counter '"
+                      Whitespace@300..301 " "
+                      Concat@301..303 "||"
+                      Whitespace@303..304 " "
+                      IdentGroup@304..307
+                        Ident@304..307 "l_j"
+                RParen@307..308 ")"
+              Semicolon@308..309 ";"
+            Whitespace@309..314 "\n    "
+            Keyword@314..317 "END"
+            Whitespace@317..318 " "
+            Keyword@318..322 "LOOP"
+            Whitespace@322..323 " "
+            Ident@323..333 "inner_loop"
+          Semicolon@333..334 ";"
+        Whitespace@334..337 "\n  "
+      Keyword@337..340 "END"
+      Whitespace@340..341 " "
+      Keyword@341..345 "LOOP"
+      Whitespace@345..346 " "
+      Ident@346..356 "outer_loop"
+    Semicolon@356..357 ";"
 "#]],
             vec![],
         );
