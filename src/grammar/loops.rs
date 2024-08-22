@@ -1,12 +1,11 @@
 use crate::{
-    grammar::{parse_expr, parse_stmt},
+    grammar::{parse_execute_immediate, parse_expr, parse_query, parse_stmt},
     safe_loop, Parser,
 };
 use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
 use super::{opt_expr, parse_ident};
 
-#[allow(unused)]
 pub(crate) fn parse_loop(p: &mut Parser) {
     p.start(SyntaxKind::Loop);
     p.eat(T![loop_label]);
@@ -111,8 +110,14 @@ fn parse_iteration_control(p: &mut Parser) {
             p.expect_one_of(&[T![values], T![indices], T![pairs]]);
             p.expect(T![of]);
             if p.eat(T!["("]) {
-                todo!("The rest of cursor_object, dynamic_sql, sql_statements");
-                // p.expect(T![")"]);
+                if [T![with], T![select]].contains(&p.current()) {
+                    parse_query(p, false);
+                } else if p.at(T![execute]) {
+                    parse_execute_immediate(p);
+                } else {
+                    parse_ident(p, 1..2);
+                }
+                p.expect(T![")"]);
             } else if opt_expr(p) {
             } else {
                 parse_ident(p, 1..2);
@@ -122,11 +127,23 @@ fn parse_iteration_control(p: &mut Parser) {
             if p.eat(T![repeat]) {
                 parse_expr(p);
             } else if p.eat(T!["("]) {
-                todo!("The rest of cursor_iteration_control");
-                // p.expect(T![")"]);
+                if [T![with], T![select]].contains(&p.current()) {
+                    parse_query(p, false);
+                } else if p.at(T![ref]) {
+                    p.eat(T![ref]);
+                    parse_ident(p, 1..2);
+                } else if p.at(T![execute]) {
+                    parse_execute_immediate(p);
+                } else {
+                    parse_ident(p, 1..2);
+                }
+                p.expect(T![")"]);
             } else {
                 parse_expr(p);
                 if p.eat(T![..]) {
+                    parse_expr(p);
+                }
+                if p.eat(T![by]) {
                     parse_expr(p);
                 }
             }
@@ -388,6 +405,170 @@ Root@0..357
       Whitespace@345..346 " "
       Ident@346..356 "outer_loop"
     Semicolon@356..357 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_for_loop() {
+        check(
+            parse(
+                "FOR l_counter IN 1..5
+  LOOP
+    DBMS_OUTPUT.PUT_LINE( l_counter );
+  END LOOP;
+",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..80
+  Loop@0..79
+    ForLoop@0..78
+      Keyword@0..3 "FOR"
+      Whitespace@3..4 " "
+      Iterator@4..24
+        IdentGroup@4..13
+          Ident@4..13 "l_counter"
+        Whitespace@13..14 " "
+        Keyword@14..16 "IN"
+        Whitespace@16..17 " "
+        IterationControl@17..24
+          IterRange@17..21 "1..5"
+          Whitespace@21..24 "\n  "
+      Keyword@24..28 "LOOP"
+      Whitespace@28..33 "\n    "
+      BlockStatement@33..67
+        FunctionInvocation@33..66
+          IdentGroup@33..53
+            Ident@33..44 "DBMS_OUTPUT"
+            Dot@44..45 "."
+            Ident@45..53 "PUT_LINE"
+          LParen@53..54 "("
+          Whitespace@54..55 " "
+          ArgumentList@55..65
+            Argument@55..65
+              IdentGroup@55..64
+                Ident@55..64 "l_counter"
+              Whitespace@64..65 " "
+          RParen@65..66 ")"
+        Semicolon@66..67 ";"
+      Whitespace@67..70 "\n  "
+      Keyword@70..73 "END"
+      Whitespace@73..74 " "
+      Keyword@74..78 "LOOP"
+    Semicolon@78..79 ";"
+  Whitespace@79..80 "\n"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_for_step_by() {
+        check(
+            parse(
+                "FOR l_conuter IN 1..10 BY 2
+    LOOP
+        DBMS_OUTPUT.PUT_LINE( l_counter );
+    END LOOP;",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..93
+  Loop@0..93
+    ForLoop@0..92
+      Keyword@0..3 "FOR"
+      Whitespace@3..4 " "
+      Iterator@4..32
+        IdentGroup@4..13
+          Ident@4..13 "l_conuter"
+        Whitespace@13..14 " "
+        Keyword@14..16 "IN"
+        Whitespace@16..17 " "
+        IterationControl@17..32
+          IterRange@17..22 "1..10"
+          Whitespace@22..23 " "
+          Keyword@23..25 "BY"
+          Whitespace@25..26 " "
+          Integer@26..27 "2"
+          Whitespace@27..32 "\n    "
+      Keyword@32..36 "LOOP"
+      Whitespace@36..45 "\n        "
+      BlockStatement@45..79
+        FunctionInvocation@45..78
+          IdentGroup@45..65
+            Ident@45..56 "DBMS_OUTPUT"
+            Dot@56..57 "."
+            Ident@57..65 "PUT_LINE"
+          LParen@65..66 "("
+          Whitespace@66..67 " "
+          ArgumentList@67..77
+            Argument@67..77
+              IdentGroup@67..76
+                Ident@67..76 "l_counter"
+              Whitespace@76..77 " "
+          RParen@77..78 ")"
+        Semicolon@78..79 ";"
+      Whitespace@79..84 "\n    "
+      Keyword@84..87 "END"
+      Whitespace@87..88 " "
+      Keyword@88..92 "LOOP"
+    Semicolon@92..93 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_for_loop_reverse() {
+        check(
+            parse(
+                "FOR l_counter IN REVERSE 1..3
+  LOOP
+    DBMS_OUTPUT.PUT_LINE( l_counter );
+  END LOOP;",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..87
+  Loop@0..87
+    ForLoop@0..86
+      Keyword@0..3 "FOR"
+      Whitespace@3..4 " "
+      Iterator@4..32
+        IdentGroup@4..13
+          Ident@4..13 "l_counter"
+        Whitespace@13..14 " "
+        Keyword@14..16 "IN"
+        Whitespace@16..17 " "
+        Keyword@17..24 "REVERSE"
+        Whitespace@24..25 " "
+        IterationControl@25..32
+          IterRange@25..29 "1..3"
+          Whitespace@29..32 "\n  "
+      Keyword@32..36 "LOOP"
+      Whitespace@36..41 "\n    "
+      BlockStatement@41..75
+        FunctionInvocation@41..74
+          IdentGroup@41..61
+            Ident@41..52 "DBMS_OUTPUT"
+            Dot@52..53 "."
+            Ident@53..61 "PUT_LINE"
+          LParen@61..62 "("
+          Whitespace@62..63 " "
+          ArgumentList@63..73
+            Argument@63..73
+              IdentGroup@63..72
+                Ident@63..72 "l_counter"
+              Whitespace@72..73 " "
+          RParen@73..74 ")"
+        Semicolon@74..75 ";"
+      Whitespace@75..78 "\n  "
+      Keyword@78..81 "END"
+      Whitespace@81..82 " "
+      Keyword@82..86 "LOOP"
+    Semicolon@86..87 ";"
 "#]],
             vec![],
         );

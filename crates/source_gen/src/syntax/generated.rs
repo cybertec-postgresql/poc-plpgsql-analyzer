@@ -118,6 +118,8 @@ pub enum SyntaxKind {
     IntoClause,
     #[doc = "A node that contains an Iterator"]
     Iterator,
+    #[doc = "A node containing an iter range like 1..69"]
+    IterRange,
     #[doc = "A SQL keyword, e.g. `CREATE`"]
     Keyword,
     #[doc = "Represents a logical SQL operator (AND, OR, NOT)"]
@@ -240,6 +242,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::QuotedLiteral => SyntaxKind::QuotedLiteral,
             TokenKind::BindVar => SyntaxKind::BindVar,
             TokenKind::LoopLabel => SyntaxKind::Ident,
+            TokenKind::IterRange => SyntaxKind::IterRange,
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,

@@ -63,6 +63,13 @@ pub const TOKENS: Tokens<'_> = Tokens {
             r"(?i)(<<){1,2}[a-z_][a-z0-9_$#]*(>){1,2}",
             1
         ),
+        T!(
+            "iter_range",
+            "iter_range",
+            "iter_range",
+            r"[0-9]*\.\.[0-9]*",
+            5
+        ),
     ],
     keywords: &[
         T!("add"),
@@ -389,6 +396,7 @@ pub const SYNTAX_NODES: &'_ [SyntaxNode<'_>] = &[
     S!("integer", "Any integer, positive and negative"),
     S!("into_clause", "A node that contains an `INTO` clause of a SELECT statement"),
     S!("iterator", "A node that contains an Iterator"),
+    S!("iter_range", "A node containing an iter range like 1..69"),
     S!("keyword", "A SQL keyword, e.g. `CREATE`"),
     S!("logic_op", "Represents a logical SQL operator (AND, OR, NOT)"),
     S!("loop", "A node that contains a Basic, For, or While LOOP"),
