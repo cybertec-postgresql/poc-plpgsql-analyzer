@@ -38,6 +38,7 @@ mod cursor;
 mod datatype;
 mod declare_section;
 mod dml;
+mod element_spec;
 mod execute_immediate;
 mod expressions;
 mod function;
@@ -47,6 +48,7 @@ mod procedure;
 mod query;
 mod raise;
 mod trigger;
+mod udt;
 mod view;
 
 /// Parses the parameter list in the procedure header
