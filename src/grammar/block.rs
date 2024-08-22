@@ -14,7 +14,7 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-use super::loops::{parse_exit_stmt, parse_loop};
+use super::loops::{parse_continue_stmt, parse_exit_stmt, parse_loop};
 use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
@@ -46,6 +46,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
     p.start(SyntaxKind::BlockStatement);
 
     match p.current() {
+        T![continue] => parse_continue_stmt(p),
         T![cursor] => parse_cursor(p),
         T![declare] | T![begin] => parse_block(p),
         T![execute] => parse_execute_immediate(p),

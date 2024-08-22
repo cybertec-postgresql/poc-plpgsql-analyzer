@@ -60,6 +60,8 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node that contains a continue statement"]
+    ContinueStmt,
     #[doc = "A node containing a cursor parameter declaration"]
     CursorParameterDeclaration,
     #[doc = "A node containing cursor parameter declarations"]
@@ -292,6 +294,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ContainerKw => SyntaxKind::Keyword,
             TokenKind::ContainerMapKw => SyntaxKind::Keyword,
             TokenKind::ContainersDefaultKw => SyntaxKind::Keyword,
+            TokenKind::ContinueKw => SyntaxKind::Keyword,
             TokenKind::ContextKw => SyntaxKind::Keyword,
             TokenKind::CreateKw => SyntaxKind::Keyword,
             TokenKind::CrosseditionKw => SyntaxKind::Keyword,

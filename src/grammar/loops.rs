@@ -171,6 +171,17 @@ pub(crate) fn parse_exit_stmt(p: &mut Parser) {
     p.finish();
 }
 
+pub(crate) fn parse_continue_stmt(p: &mut Parser) {
+    p.start(SyntaxKind::ContinueStmt);
+    p.expect(T![continue]);
+    if p.eat(T![when]) {
+        parse_expr(p);
+    }
+    p.eat(T![;]);
+
+    p.finish();
+}
+
 #[cfg(test)]
 mod tests {
     use expect_test::expect;
@@ -569,6 +580,164 @@ Root@0..87
       Whitespace@81..82 " "
       Keyword@82..86 "LOOP"
     Semicolon@86..87 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_while_loop() {
+        check(
+            parse(
+                "WHILE n_counter <= 5
+  LOOP
+    DBMS_OUTPUT.PUT_LINE( 'Counter : ' || n_counter );
+    n_counter := n_counter + 1;
+  END LOOP;",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..126
+  Loop@0..126
+    WhileLoop@0..125
+      Keyword@0..5 "WHILE"
+      Whitespace@5..6 " "
+      Expression@6..23
+        IdentGroup@6..15
+          Ident@6..15 "n_counter"
+        Whitespace@15..16 " "
+        ComparisonOp@16..18 "<="
+        Whitespace@18..19 " "
+        Integer@19..20 "5"
+        Whitespace@20..23 "\n  "
+      Keyword@23..27 "LOOP"
+      Whitespace@27..32 "\n    "
+      BlockStatement@32..82
+        FunctionInvocation@32..81
+          IdentGroup@32..52
+            Ident@32..43 "DBMS_OUTPUT"
+            Dot@43..44 "."
+            Ident@44..52 "PUT_LINE"
+          LParen@52..53 "("
+          Whitespace@53..54 " "
+          ArgumentList@54..80
+            Argument@54..80
+              Expression@54..80
+                QuotedLiteral@54..66 "'Counter : '"
+                Whitespace@66..67 " "
+                Concat@67..69 "||"
+                Whitespace@69..70 " "
+                IdentGroup@70..79
+                  Ident@70..79 "n_counter"
+                Whitespace@79..80 " "
+          RParen@80..81 ")"
+        Semicolon@81..82 ";"
+      Whitespace@82..87 "\n    "
+      BlockStatement@87..114
+        IdentGroup@87..96
+          Ident@87..96 "n_counter"
+        Whitespace@96..97 " "
+        Assign@97..99 ":="
+        Whitespace@99..100 " "
+        Expression@100..113
+          IdentGroup@100..109
+            Ident@100..109 "n_counter"
+          Whitespace@109..110 " "
+          ArithmeticOp@110..111 "+"
+          Whitespace@111..112 " "
+          Integer@112..113 "1"
+        Semicolon@113..114 ";"
+      Whitespace@114..117 "\n  "
+      Keyword@117..120 "END"
+      Whitespace@120..121 " "
+      Keyword@121..125 "LOOP"
+    Semicolon@125..126 ";"
+"#]],
+            vec![],
+        )
+    }
+
+    #[test]
+    fn test_parse_continue() {
+        check(
+            parse(
+                "FOR n_index IN 1 .. 10
+  LOOP
+    -- skip even numbers
+    CONTINUE
+  WHEN MOD( n_index, 2 ) = 0;
+    DBMS_OUTPUT.PUT_LINE( n_index );
+  END LOOP;",
+                parse_loop,
+            ),
+            expect![[r#"
+Root@0..146
+  Loop@0..146
+    ForLoop@0..145
+      Keyword@0..3 "FOR"
+      Whitespace@3..4 " "
+      Iterator@4..25
+        IdentGroup@4..11
+          Ident@4..11 "n_index"
+        Whitespace@11..12 " "
+        Keyword@12..14 "IN"
+        Whitespace@14..15 " "
+        IterationControl@15..25
+          IterRange@15..22 "1 .. 10"
+          Whitespace@22..25 "\n  "
+      Keyword@25..29 "LOOP"
+      Whitespace@29..34 "\n    "
+      Comment@34..54 "-- skip even numbers"
+      Whitespace@54..59 "\n    "
+      BlockStatement@59..102
+        ContinueStmt@59..97
+          Keyword@59..67 "CONTINUE"
+          Whitespace@67..70 "\n  "
+          Keyword@70..74 "WHEN"
+          Whitespace@74..75 " "
+          Expression@75..96
+            FunctionInvocation@75..92
+              IdentGroup@75..78
+                Ident@75..78 "MOD"
+              LParen@78..79 "("
+              Whitespace@79..80 " "
+              ArgumentList@80..91
+                Argument@80..87
+                  Expression@80..87
+                    IdentGroup@80..87
+                      Ident@80..87 "n_index"
+                Comma@87..88 ","
+                Whitespace@88..89 " "
+                Argument@89..91
+                  Integer@89..90 "2"
+                  Whitespace@90..91 " "
+              RParen@91..92 ")"
+            Whitespace@92..93 " "
+            ComparisonOp@93..94 "="
+            Whitespace@94..95 " "
+            Integer@95..96 "0"
+          Semicolon@96..97 ";"
+        Whitespace@97..102 "\n    "
+      BlockStatement@102..134
+        FunctionInvocation@102..133
+          IdentGroup@102..122
+            Ident@102..113 "DBMS_OUTPUT"
+            Dot@113..114 "."
+            Ident@114..122 "PUT_LINE"
+          LParen@122..123 "("
+          Whitespace@123..124 " "
+          ArgumentList@124..132
+            Argument@124..132
+              IdentGroup@124..131
+                Ident@124..131 "n_index"
+              Whitespace@131..132 " "
+          RParen@132..133 ")"
+        Semicolon@133..134 ";"
+      Whitespace@134..137 "\n  "
+      Keyword@137..140 "END"
+      Whitespace@140..141 " "
+      Keyword@141..145 "LOOP"
+    Semicolon@145..146 ";"
 "#]],
             vec![],
         );
