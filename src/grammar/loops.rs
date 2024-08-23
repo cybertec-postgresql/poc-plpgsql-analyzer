@@ -4,7 +4,7 @@ use crate::{
 };
 use source_gen::{lexer::TokenKind, syntax::SyntaxKind, T};
 
-use super::{opt_expr, parse_ident};
+use super::{opt_expr, opt_parse_datatype, parse_ident};
 
 pub(crate) fn parse_loop(p: &mut Parser) {
     p.start(SyntaxKind::Loop);
@@ -90,6 +90,7 @@ fn parse_iterator(p: &mut Parser) {
 fn parse_iterand_decl(p: &mut Parser) {
     parse_ident(p, 1..1);
     p.eat_one_of(&[T![mutable], T![immutable]]);
+    opt_parse_datatype(p);
 }
 
 fn parse_iteration_ctl_seq(p: &mut Parser) {

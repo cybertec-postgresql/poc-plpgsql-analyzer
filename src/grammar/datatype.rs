@@ -12,6 +12,52 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+pub fn opt_parse_datatype(p: &mut Parser) -> bool {
+    match p.current() {
+        T![bfile]
+        | T![binary]
+        | T![binary_double]
+        | T![binary_float]
+        | T![binary_integer]
+        | T![blob]
+        | T![char]
+        | T![character]
+        | T![clob]
+        | T![date]
+        | T![dec]
+        | T![decimal]
+        | T![double]
+        | T![float]
+        | T![int]
+        | T![integer]
+        | T![interval]
+        | T![long]
+        | T![national]
+        | T![natural]
+        | T![nchar]
+        | T![nclob]
+        | T![number]
+        | T![numeric]
+        | T![nvarchar2]
+        | T![pls_integer]
+        | T![quoted_ident]
+        | T![raw]
+        | T![real]
+        | T![rowid]
+        | T![smallint]
+        | T![string]
+        | T![timestamp]
+        | T![unquoted_ident]
+        | T![urowid]
+        | T![varchar2]
+        | T![varchar] => {
+            parse_datatype(p);
+            true
+        }
+        _ => false,
+    }
+}
+
 /// Parses a complete datatype.
 pub fn parse_datatype(p: &mut Parser) {
     p.start(SyntaxKind::Datatype);
