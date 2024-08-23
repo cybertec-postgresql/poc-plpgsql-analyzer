@@ -13,21 +13,23 @@ use source_gen::T;
 
 /// Looks ahead and parses a function invocation if applicable
 pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
-    if p.current().is_ident() && is_start_of_function(p) {
+    let mut tokens = p.lookahead(3);
+    tokens.insert(0, p.current());
+
+    let is_invocation = match tokens.as_slice() {
+        [first, second, ..] if first.is_ident() && *second == T!["("] => true,
+        [first, T![.], third, fourth, ..]
+            if first.is_ident() && third.is_ident() && *fourth == T!["("] =>
+        {
+            true
+        }
+        _ => false,
+    };
+    if is_invocation {
         parse_function_invocation(p);
         return true;
     }
     false
-}
-
-fn is_start_of_function(p: &mut Parser) -> bool {
-    let lookahead = p.lookahead(3);
-    if lookahead.len() < 3 {
-        false
-    } else {
-        lookahead[0] == T!["("]
-            || (lookahead[0] == T![.] && lookahead[1].is_ident() && lookahead[2] == T!["("])
-    }
 }
 
 pub(crate) fn parse_function_invocation(p: &mut Parser) {
