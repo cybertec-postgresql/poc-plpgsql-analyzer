@@ -47,6 +47,7 @@ mod package;
 mod procedure;
 mod query;
 mod raise;
+mod sequence;
 mod trigger;
 mod udt;
 mod view;
