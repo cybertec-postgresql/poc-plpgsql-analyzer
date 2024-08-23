@@ -333,7 +333,7 @@ Root@0..357
           RParen@128..129 ")"
         Semicolon@129..130 ";"
       Whitespace@130..135 "\n    "
-      Comment@135..157 "-- reset inner counter"
+      InlineComment@135..157 "-- reset inner counter"
       Whitespace@157..162 "\n    "
       BlockStatement@162..171
         IdentGroup@162..165
@@ -687,7 +687,7 @@ Root@0..146
           Whitespace@22..25 "\n  "
       Keyword@25..29 "LOOP"
       Whitespace@29..34 "\n    "
-      Comment@34..54 "-- skip even numbers"
+      InlineComment@34..54 "-- skip even numbers"
       Whitespace@54..59 "\n    "
       BlockStatement@59..102
         ContinueStmt@59..97
