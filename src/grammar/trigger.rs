@@ -495,7 +495,7 @@ Root@0..518
         Keyword@128..132 "NULL"
         Semicolon@132..133 ";"
       Whitespace@133..138 "\n    "
-      Comment@138..168 "-- insert a new custo ..."
+      InlineComment@138..168 "-- insert a new custo ..."
       Whitespace@168..173 "\n    "
       BlockStatement@173..368
         InsertStmt@173..336
@@ -562,7 +562,7 @@ Root@0..518
             Ident@333..335 "id"
           Semicolon@335..336 ";"
         Whitespace@336..342 "\n\n    "
-        Comment@342..363 "-- insert the contact"
+        InlineComment@342..363 "-- insert the contact"
         Whitespace@363..368 "\n    "
       BlockStatement@368..512
         InsertStmt@368..511
