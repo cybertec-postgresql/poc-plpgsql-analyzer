@@ -14,8 +14,8 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
-use super::loops::{parse_continue_stmt, parse_exit_stmt, parse_loop};
 use super::commit::parse_commit;
+use super::loops::{parse_continue_stmt, parse_exit_stmt, parse_loop};
 use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
