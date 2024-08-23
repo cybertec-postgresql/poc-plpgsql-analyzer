@@ -13,14 +13,15 @@ use source_gen::T;
 
 /// Looks ahead and parses a function invocation if applicable
 pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
-    if p.current().is_ident() && is_start_of_function(p.lookahead(3)) {
+    if p.current().is_ident() && is_start_of_function(p) {
         parse_function_invocation(p);
         return true;
     }
     false
 }
 
-fn is_start_of_function(lookahead: Vec<TokenKind>) -> bool {
+fn is_start_of_function(p: &mut Parser) -> bool {
+    let lookahead = p.lookahead(3);
     if lookahead.len() < 3 {
         false
     } else {
