@@ -16,7 +16,7 @@ use source_gen::T;
 
 use super::commit::parse_commit;
 use super::loops::{parse_continue_stmt, parse_exit_stmt, parse_loop};
-use super::{parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
+use super::{parse_cte, parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -49,6 +49,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
     match p.current() {
         T![continue] => parse_continue_stmt(p),
         T![cursor] => parse_cursor(p),
+        T![with] => parse_cte(p),
         T![declare] | T![begin] => parse_block(p),
         T![execute] => parse_execute_immediate(p),
         T![exit] => parse_exit_stmt(p),

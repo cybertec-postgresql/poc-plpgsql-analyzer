@@ -16,6 +16,8 @@ use num_traits::ToPrimitive;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd, FromPrimitive, ToPrimitive)]
 #[repr(u16)]
 pub enum SyntaxKind {
+    #[doc = "A node containing an add_calcs_clause"]
+    AddCalcsClause,
     #[doc = "A node containing an accessible by clause"]
     AccessibleByClause,
     #[doc = "An Alias for columns"]
@@ -34,6 +36,8 @@ pub enum SyntaxKind {
     AssignmentExpr,
     #[doc = "An asterisk `*`"]
     Asterisk,
+    #[doc = "A node containing a base meas clause"]
+    BaseMeasClause,
     #[doc = "A node that contains a basic LOOP"]
     BasicLoop,
     #[doc = "A bind variable, e.g. `:OLD`"]
@@ -44,6 +48,8 @@ pub enum SyntaxKind {
     BlockStatement,
     #[doc = "A node containing a BULK COLLECT INTO clause"]
     BulkIntoClause,
+    #[doc = "A node containing a calc meas clause"]
+    CalcMeasClause,
     #[doc = "A node containing a CASE statement"]
     CaseStmt,
     #[doc = "A colon token"]
@@ -70,6 +76,8 @@ pub enum SyntaxKind {
     Connect,
     #[doc = "A node that marks a full constraint"]
     Constraint,
+    #[doc = "A node that contains a cube meas clause"]
+    CubeMeasClause,
     #[doc = "A node that contains a continue statement"]
     ContinueStmt,
     #[doc = "A node containing a constructor_declaration"]
@@ -84,6 +92,8 @@ pub enum SyntaxKind {
     CursorParameterDeclarations,
     #[doc = "A node that marks a full cursor statement"]
     CursorStmt,
+    #[doc = "A node that contains a full cycle clause"]
+    CycleClause,
     #[doc = "Any built-in oracle datatype"]
     Datatype,
     #[doc = "A decimal, positive, or negative"]
@@ -112,6 +122,10 @@ pub enum SyntaxKind {
     ExitStmt,
     #[doc = "Holds a generic SQL logic/arithmetic expression"]
     Expression,
+    #[doc = "A node that contains a full filter clause"]
+    FilterClause,
+    #[doc = "A node that contains a full filter clauses"]
+    FilterClauses,
     #[doc = "A node containing a FOR LOOP"]
     ForLoop,
     #[doc = "A node containing a func_decl_in_type"]
@@ -122,6 +136,8 @@ pub enum SyntaxKind {
     FunctionHeader,
     #[doc = "An invocation of a function, from the identifier and the opening bracket to the closing bracket"]
     FunctionInvocation,
+    #[doc = "A node containing hier_ids"]
+    HierIds,
     #[doc = "A node containing a function_spec"]
     FunctionSpec,
     #[doc = "A node containing a group by clause"]
@@ -132,6 +148,8 @@ pub enum SyntaxKind {
     GroupingSetsClause,
     #[doc = "An operator in hierarchical queries"]
     HierarchicalOp,
+    #[doc = "A node that marks a hierarchies clause"]
+    HierarchiesClause,
     #[doc = "An identifier, either quoted or unquoted"]
     Ident,
     #[doc = "An identifier group, consisting of multiple idents"]
@@ -230,6 +248,8 @@ pub enum SyntaxKind {
     RowtypeClause,
     #[doc = "Right Paren"]
     RParen,
+    #[doc = "A node containing a search clause"]
+    SearchClause,
     #[doc = "A node containing a searched case expression"]
     SearchedCaseExpression,
     #[doc = "A node that contains the whole SELECT clause of a query"]
@@ -252,6 +272,12 @@ pub enum SyntaxKind {
     Slash,
     #[doc = "A STARTS WITH clause in a SELECT statement"]
     Starts,
+    #[doc = "A node containing a full subav clause"]
+    SubavClause,
+    #[doc = "A node containing a full subav factoring clause"]
+    SubavFactoringClause,
+    #[doc = "A node containing a full subquery factoring clause"]
+    SubqueryFactoringClause,
     #[doc = "A node containing a streaming clause"]
     StreamingClause,
     #[doc = "A node containing a subprog_decl_in_type"]
@@ -272,6 +298,8 @@ pub enum SyntaxKind {
     UpdateStmt,
     #[doc = "A node containing a using clause"]
     UsingClause,
+    #[doc = "A node containing a values clause"]
+    ValuesClause,
     #[doc = "A node containing a full varray_type_spec"]
     VarrayTypeSpec,
     #[doc = "A node that marks a variable declaration as part of a function or procedure"]
@@ -286,6 +314,8 @@ pub enum SyntaxKind {
     WhileLoop,
     #[doc = "Any whitespace character"]
     Whitespace,
+    #[doc = "A node containing a with clause"]
+    WithClause,
 }
 impl From<SyntaxKind> for rowan::SyntaxKind {
     fn from(kind: SyntaxKind) -> Self {
@@ -327,9 +357,11 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::AddKw => SyntaxKind::Keyword,
             TokenKind::AfterKw => SyntaxKind::Keyword,
             TokenKind::AgentKw => SyntaxKind::Keyword,
+            TokenKind::AggregateKw => SyntaxKind::Keyword,
             TokenKind::AllKw => SyntaxKind::Keyword,
             TokenKind::AllowKw => SyntaxKind::Keyword,
             TokenKind::AlterKw => SyntaxKind::Keyword,
+            TokenKind::AnalyticKw => SyntaxKind::Keyword,
             TokenKind::AnalyzeKw => SyntaxKind::Keyword,
             TokenKind::AndKw => SyntaxKind::Keyword,
             TokenKind::AnnotationsKw => SyntaxKind::Keyword,
@@ -354,6 +386,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::BinaryIntegerKw => SyntaxKind::Keyword,
             TokenKind::BlobKw => SyntaxKind::Keyword,
             TokenKind::BodyKw => SyntaxKind::Keyword,
+            TokenKind::BreadthKw => SyntaxKind::Keyword,
             TokenKind::BulkKw => SyntaxKind::Keyword,
             TokenKind::ByKw => SyntaxKind::Keyword,
             TokenKind::ByteKw => SyntaxKind::Keyword,
@@ -405,6 +438,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::DeferredKw => SyntaxKind::Keyword,
             TokenKind::DefinerKw => SyntaxKind::Keyword,
             TokenKind::DeleteKw => SyntaxKind::Keyword,
+            TokenKind::DepthKw => SyntaxKind::Keyword,
             TokenKind::DescKw => SyntaxKind::Keyword,
             TokenKind::DeterministicKw => SyntaxKind::Keyword,
             TokenKind::DisableKw => SyntaxKind::Keyword,
@@ -430,6 +464,8 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ExtendKw => SyntaxKind::Keyword,
             TokenKind::ExtendedKw => SyntaxKind::Keyword,
             TokenKind::ExternalKw => SyntaxKind::Keyword,
+            TokenKind::FactKw => SyntaxKind::Keyword,
+            TokenKind::FilterKw => SyntaxKind::Keyword,
             TokenKind::FinalKw => SyntaxKind::Keyword,
             TokenKind::FirstKw => SyntaxKind::Keyword,
             TokenKind::FloatKw => SyntaxKind::Keyword,
@@ -443,6 +479,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FunctionKw => SyntaxKind::Keyword,
             TokenKind::GlobalKw => SyntaxKind::Keyword,
             TokenKind::GrantKw => SyntaxKind::Keyword,
+            TokenKind::HierarchiesKw => SyntaxKind::Keyword,
             TokenKind::GroupKw => SyntaxKind::Keyword,
             TokenKind::GroupingKw => SyntaxKind::Keyword,
             TokenKind::HashKw => SyntaxKind::Keyword,
@@ -488,6 +525,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::LoopKw => SyntaxKind::Keyword,
             TokenKind::MapKw => SyntaxKind::Keyword,
             TokenKind::MaxlenKw => SyntaxKind::Keyword,
+            TokenKind::MeasuresKw => SyntaxKind::Keyword,
             TokenKind::MaxvalueKw => SyntaxKind::Keyword,
             TokenKind::MemberKw => SyntaxKind::Keyword,
             TokenKind::MetadataKw => SyntaxKind::Keyword,
@@ -590,6 +628,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::ScaleKw => SyntaxKind::Keyword,
             TokenKind::SchemaKw => SyntaxKind::Keyword,
             TokenKind::ScopeKw => SyntaxKind::Keyword,
+            TokenKind::SearchKw => SyntaxKind::Keyword,
             TokenKind::SecondKw => SyntaxKind::Keyword,
             TokenKind::SelectKw => SyntaxKind::Keyword,
             TokenKind::SelfKw => SyntaxKind::Keyword,
