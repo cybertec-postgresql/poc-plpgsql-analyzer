@@ -23,12 +23,9 @@ pub(crate) fn opt_function_invocation(p: &mut Parser) -> bool {
 fn is_start_of_function(lookahead: Vec<TokenKind>) -> bool {
     if lookahead.len() < 3 {
         false
-    } else if lookahead[0] == T!["("]
-        || lookahead[0] == T![.] && lookahead[1].is_ident() && lookahead[2] == T!["("]
-    {
-        true
     } else {
-        false
+        lookahead[0] == T!["("]
+            || (lookahead[0] == T![.] && lookahead[1].is_ident() && lookahead[2] == T!["("])
     }
 }
 
