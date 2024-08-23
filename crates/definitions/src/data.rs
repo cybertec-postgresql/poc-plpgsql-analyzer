@@ -60,7 +60,7 @@ pub const TOKENS: Tokens<'_> = Tokens {
             "loop_label",
             "loop_label",
             "ident",
-            r"(?i)(<<){1,2}[a-z_][a-z0-9_$#]*(>){1,2}",
+            r"(?i)<<[a-z_][a-z0-9_$#]*>>",
             1
         ),
         T!(
