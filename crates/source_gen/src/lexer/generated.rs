@@ -58,7 +58,7 @@ pub enum TokenKind {
     QuotedLiteral,
     #[regex("(?i):[a-z][a-z0-9_]*")]
     BindVar,
-    #[regex("(?i)(<<){1,2}[a-z_][a-z0-9_$#]*(>){1,2}", priority = 1)]
+    #[regex("(?i)(<<)[a-z_][a-z0-9_$#]*(>>)", priority = 1)]
     LoopLabel,
     #[regex("[0-9]*[[:space:]]?\\.\\.[[:space:]]?[0-9]*", priority = 5)]
     IterRange,

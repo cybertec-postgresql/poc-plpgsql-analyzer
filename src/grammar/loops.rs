@@ -14,7 +14,11 @@ pub(crate) fn parse_loop(p: &mut Parser) {
         T![loop] => parse_basic_loop(p),
         T![for] => parse_for_loop(p),
         T![while] => parse_while_loop(p),
-        _ => (),
+        _ => p.error(crate::ParseErrorType::ExpectedOneOfTokens(vec![
+            T![loop],
+            T![for],
+            T![while],
+        ])),
     }
     p.eat(T![;]);
     p.finish();
@@ -32,7 +36,7 @@ fn parse_basic_loop(p: &mut Parser) {
     });
     p.expect(T![end]);
     p.expect(T![loop]);
-    p.eat_one_of(&[T![unquoted_ident], T![quoted_ident]]);
+    parse_ident(p, 0..1);
     p.finish();
 }
 
@@ -50,7 +54,7 @@ fn parse_for_loop(p: &mut Parser) {
     });
     p.expect(T![end]);
     p.expect(T![loop]);
-    p.eat_one_of(&[T![unquoted_ident], T![quoted_ident]]);
+    parse_ident(p, 0..1);
     p.finish();
 }
 
@@ -68,7 +72,7 @@ fn parse_while_loop(p: &mut Parser) {
     });
     p.expect(T![end]);
     p.expect(T![loop]);
-    p.eat_one_of(&[T![unquoted_ident], T![quoted_ident]]);
+    parse_ident(p, 0..1);
     p.finish();
 }
 
@@ -407,14 +411,16 @@ Root@0..357
             Whitespace@317..318 " "
             Keyword@318..322 "LOOP"
             Whitespace@322..323 " "
-            Ident@323..333 "inner_loop"
+            IdentGroup@323..333
+              Ident@323..333 "inner_loop"
           Semicolon@333..334 ";"
         Whitespace@334..337 "\n  "
       Keyword@337..340 "END"
       Whitespace@340..341 " "
       Keyword@341..345 "LOOP"
       Whitespace@345..346 " "
-      Ident@346..356 "outer_loop"
+      IdentGroup@346..356
+        Ident@346..356 "outer_loop"
     Semicolon@356..357 ";"
 "#]],
             vec![],
@@ -479,7 +485,7 @@ Root@0..80
     fn test_for_step_by() {
         check(
             parse(
-                "FOR l_conuter IN 1..10 BY 2
+                "FOR l_counter IN 1..10 BY 2
     LOOP
         DBMS_OUTPUT.PUT_LINE( l_counter );
     END LOOP;",
@@ -493,7 +499,7 @@ Root@0..93
       Whitespace@3..4 " "
       Iterator@4..32
         IdentGroup@4..13
-          Ident@4..13 "l_conuter"
+          Ident@4..13 "l_counter"
         Whitespace@13..14 " "
         Keyword@14..16 "IN"
         Whitespace@16..17 " "
