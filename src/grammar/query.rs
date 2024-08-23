@@ -460,6 +460,11 @@ fn parse_from_list(p: &mut Parser) {
         if !expect_join {
             parse_ident(p, 1..1);
         }
+        if let Some(x) = p.nth(1) {
+            if JOIN_TOKENS.contains(&x) && !JOIN_TOKENS.contains(&p.current()) {
+                parse_ident(p, 1..1);
+            }
+        }
         if JOIN_TOKENS.contains(&p.current()) {
             let expect_r_param = p.eat(T!["("]);
             parse_join_clause(p);
@@ -512,6 +517,9 @@ fn parse_inner_join_clause(p: &mut Parser) {
     p.eat(T![inner]);
     p.expect(T![join]);
     parse_ident(p, 1..2);
+    if !p.at(T![on]) || p.at(T![using]) {
+        parse_ident(p, 1..1);
+    }
     match p.current() {
         T![on] => {
             p.expect(T![on]);
@@ -2418,6 +2426,54 @@ Root@0..56
             Dot@52..53 "."
             Ident@53..55 "id"
     Semicolon@55..56 ";"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_join_alias() {
+        check(
+            parse("SELECT * FROM abc a JOIN def d ON a.id=d.id", |p| {
+                parse_query(p, false)
+            }),
+            expect![[r#"
+Root@0..43
+  SelectStmt@0..43
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    Asterisk@7..8 "*"
+    Whitespace@8..9 " "
+    Keyword@9..13 "FROM"
+    Whitespace@13..14 " "
+    IdentGroup@14..17
+      Ident@14..17 "abc"
+    Whitespace@17..18 " "
+    IdentGroup@18..19
+      Ident@18..19 "a"
+    Whitespace@19..20 " "
+    JoinClause@20..43
+      InnerJoinClause@20..43
+        Keyword@20..24 "JOIN"
+        Whitespace@24..25 " "
+        IdentGroup@25..28
+          Ident@25..28 "def"
+        Whitespace@28..29 " "
+        IdentGroup@29..30
+          Ident@29..30 "d"
+        Whitespace@30..31 " "
+        Keyword@31..33 "ON"
+        Whitespace@33..34 " "
+        Expression@34..43
+          IdentGroup@34..38
+            Ident@34..35 "a"
+            Dot@35..36 "."
+            Ident@36..38 "id"
+          ComparisonOp@38..39 "="
+          IdentGroup@39..43
+            Ident@39..40 "d"
+            Dot@40..41 "."
+            Ident@41..43 "id"
 "#]],
             vec![],
         );
