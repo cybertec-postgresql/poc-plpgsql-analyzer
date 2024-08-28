@@ -57,7 +57,7 @@ fn parse_return_into_clause(p: &mut Parser) {
     p.finish();
 }
 
-fn parse_bulk_into_clause(p: &mut Parser) {
+pub(crate) fn parse_bulk_into_clause(p: &mut Parser) {
     p.start(SyntaxKind::BulkIntoClause);
     p.expect(T![bulk]);
     p.expect(T![collect]);
@@ -66,7 +66,7 @@ fn parse_bulk_into_clause(p: &mut Parser) {
         if !p.eat(T![bind_var]) {
             parse_ident(p, 1..1);
         }
-        if [T![using], T![;]].contains(&p.current()) {
+        if [T![from], T![where], T![using], T![;]].contains(&p.current()) {
             break;
         }
         p.expect(T![,]);

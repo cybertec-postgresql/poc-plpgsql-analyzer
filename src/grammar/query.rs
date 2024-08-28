@@ -10,11 +10,17 @@ use source_gen::lexer::TokenKind;
 use source_gen::syntax::SyntaxKind;
 use source_gen::T;
 
+use super::parse_bulk_into_clause;
+
 pub(crate) fn parse_query(p: &mut Parser, expect_into_clause: bool) {
     p.start(SyntaxKind::SelectStmt);
     p.expect(T![select]);
     parse_column_expr(p);
-    parse_into_clause(p, expect_into_clause);
+    if p.at(T![bulk]) {
+        parse_bulk_into_clause(p);
+    } else {
+        parse_into_clause(p, expect_into_clause);
+    }
     p.expect(T![from]);
     parse_from_list(p);
 
@@ -405,7 +411,7 @@ fn parse_column_expr(p: &mut Parser) {
 
         p.eat(T![,]);
 
-        if [T![into], T![from], T![EOF], T![;]].contains(&p.current()) {
+        if [T![bulk], T![into], T![from], T![EOF], T![;]].contains(&p.current()) {
             break;
         }
     });
@@ -2474,6 +2480,73 @@ Root@0..43
             Ident@39..40 "d"
             Dot@40..41 "."
             Ident@41..43 "id"
+"#]],
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_select_bulk_collect_into() {
+        check(
+            parse(
+                "SELECT target_guid
+        BULK COLLECT INTO l_tgt_array
+        FROM mgmt_metric_dependency
+       WHERE target_guid = v_target_guid
+         ORDER BY metric_guid, key_value;",
+                |p| parse_query(p, false),
+            ),
+            expect![[r#"
+Root@0..175
+  SelectStmt@0..175
+    Keyword@0..6 "SELECT"
+    Whitespace@6..7 " "
+    SelectClause@7..27
+      ColumnExpr@7..27
+        IdentGroup@7..18
+          Ident@7..18 "target_guid"
+        Whitespace@18..27 "\n        "
+    BulkIntoClause@27..65
+      Keyword@27..31 "BULK"
+      Whitespace@31..32 " "
+      Keyword@32..39 "COLLECT"
+      Whitespace@39..40 " "
+      Keyword@40..44 "INTO"
+      Whitespace@44..45 " "
+      IdentGroup@45..56
+        Ident@45..56 "l_tgt_array"
+      Whitespace@56..65 "\n        "
+    Keyword@65..69 "FROM"
+    Whitespace@69..70 " "
+    IdentGroup@70..92
+      Ident@70..92 "mgmt_metric_dependency"
+    Whitespace@92..100 "\n       "
+    WhereClause@100..143
+      Keyword@100..105 "WHERE"
+      Whitespace@105..106 " "
+      Expression@106..143
+        IdentGroup@106..117
+          Ident@106..117 "target_guid"
+        Whitespace@117..118 " "
+        ComparisonOp@118..119 "="
+        Whitespace@119..120 " "
+        IdentGroup@120..133
+          Ident@120..133 "v_target_guid"
+        Whitespace@133..143 "\n         "
+    OrderByClause@143..174
+      Keyword@143..148 "ORDER"
+      Whitespace@148..149 " "
+      Keyword@149..151 "BY"
+      Whitespace@151..152 " "
+      Expression@152..163
+        IdentGroup@152..163
+          Ident@152..163 "metric_guid"
+      Comma@163..164 ","
+      Whitespace@164..165 " "
+      Expression@165..174
+        IdentGroup@165..174
+          Ident@165..174 "key_value"
+    Semicolon@174..175 ";"
 "#]],
             vec![],
         );
