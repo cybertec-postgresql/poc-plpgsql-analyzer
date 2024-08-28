@@ -46,6 +46,8 @@ pub enum SyntaxKind {
     Block,
     #[doc = "A node that marks an individual statement inside a block"]
     BlockStatement,
+    #[doc = "A node that contains a full bounds clause"]
+    BoundsClause,
     #[doc = "A node containing a BULK COLLECT INTO clause"]
     BulkIntoClause,
     #[doc = "A node containing a calc meas clause"]
@@ -126,6 +128,8 @@ pub enum SyntaxKind {
     FilterClause,
     #[doc = "A node that contains a full filter clauses"]
     FilterClauses,
+    #[doc = "A node that contains a full forall statement"]
+    ForallStmt,
     #[doc = "A node containing a FOR LOOP"]
     ForLoop,
     #[doc = "A node containing a func_decl_in_type"]
@@ -471,6 +475,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::FloatKw => SyntaxKind::Keyword,
             TokenKind::FollowsKw => SyntaxKind::Keyword,
             TokenKind::ForKw => SyntaxKind::Keyword,
+            TokenKind::ForallKw => SyntaxKind::Keyword,
             TokenKind::ForceKw => SyntaxKind::Keyword,
             TokenKind::ForeignKw => SyntaxKind::Keyword,
             TokenKind::ForwardKw => SyntaxKind::Keyword,
@@ -625,6 +630,7 @@ impl From<TokenKind> for SyntaxKind {
             TokenKind::RowKw => SyntaxKind::Keyword,
             TokenKind::RowidKw => SyntaxKind::Keyword,
             TokenKind::RowtypeKw => SyntaxKind::Keyword,
+            TokenKind::SaveKw => SyntaxKind::Keyword,
             TokenKind::ScaleKw => SyntaxKind::Keyword,
             TokenKind::SchemaKw => SyntaxKind::Keyword,
             TokenKind::ScopeKw => SyntaxKind::Keyword,
