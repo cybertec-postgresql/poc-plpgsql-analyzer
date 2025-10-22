@@ -19,12 +19,12 @@ jobs:
     strategy:
       matrix:
         toolchain:
-          - 1.80.0 # MSRV
+          - 1.90.0 # MSRV
           - stable
           - nightly
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout
 
       - name: Install tools
         run: |
@@ -52,7 +52,7 @@ jobs:
         run: cargo clippy --all-targets -- -D warnings
 
       - name: Run tests
-        run: cargo test -p source_gen -p poc-plpgsql-analyzer --features coverage-tests 
+        run: cargo test -p source_gen -p poc-plpgsql-analyzer --features coverage-tests
 
       - name: Generate rustdoc
         run: cargo doc --no-deps
@@ -64,7 +64,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout
 
       - name: Install tools
         run: |
@@ -92,7 +92,7 @@ jobs:
       - name: Build using wasm-pack
         run: wasm-pack build --release --target nodejs
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact
         with:
           name: wasm-library
           path: pkg/
