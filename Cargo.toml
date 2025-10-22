@@ -16,17 +16,17 @@ build = true
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-indexmap = "^1.9.1"
+indexmap = "^2.12.0"
 lazy_static = "^1.4.0"
-logos = "^0.12.1"
-num-derive = "^0.3.3"
+logos = "^0.15.1"
+num-derive = "^0.4.2"
 num-traits = "^0.2.15"
-rowan = "^0.15.10"
-serde-wasm-bindgen = "^0.5.0"
+rowan = "^0.16.1"
+serde-wasm-bindgen = "^0.6.5"
 text-size = "^1.1.0"
-thiserror = "^1.0.35"
+thiserror = "^2.0.17"
 tsify = "0.4.3"
-unicode-width = "0.1.10"
+unicode-width = "^0.2.2"
 wasm-bindgen = "^0.2.86"
 
 [dependencies.serde]
@@ -40,12 +40,12 @@ path = "./crates/source_gen"
 path = "./crates/definitions"
 
 [dev-dependencies]
-datatest-stable = "^0.1.3"
+datatest-stable = "^0.3.3"
 expect-test = "^1.4.0"
-heck = "0.4.1"
+heck = "^0.5.0"
 pretty_assertions = "^1.3.0"
-proc-macro2 = "1.0.57"
-quote = "1"
+proc-macro2 = "^1.0.57"
+quote = "^1"
 
 [profile.release]
 lto = true

@@ -36,20 +36,10 @@ fn test_parse_coverage(path: &Path) -> datatest_stable::Result<()> {
     Ok(())
 }
 
-datatest_stable::harness!(
-    test_parse_coverage,
-    "tests/procedure",
-    r"^(.*).ora\.sql$",
-    test_parse_coverage,
-    "tests/function",
-    r"^(.*)\.sql$",
-    test_parse_coverage,
-    "tests/dql",
-    r"(.*)\.sql$",
-    test_parse_coverage,
-    "tests/trigger",
-    r"(.*)\.sql$",
-    test_parse_coverage,
-    "tests/view",
-    r"(.*)\.sql$"
-);
+datatest_stable::harness! {
+    { test = test_parse_coverage, root = "tests/procedure", pattern = r"^(.*).ora\.sql$" },
+    { test = test_parse_coverage, root = "tests/function", pattern = r"^(.*)\.sql$" },
+    { test = test_parse_coverage, root = "tests/dql", pattern = r"(.*)\.sql$" },
+    { test = test_parse_coverage, root = "tests/trigger", pattern = r"(.*)\.sql$" },
+    { test = test_parse_coverage, root = "tests/view", pattern = r"(.*)\.sql$" },
+}

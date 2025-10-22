@@ -110,7 +110,7 @@ fn parse_param(p: &mut Parser) {
 ///
 /// * `p`: The parser struct
 /// * `expected_components`: A range of the minimum and maximum expected components that should be present in the identifier.
-///     To allow an optional identifier, pass a range starting with `0`.
+///   To allow an optional identifier, pass a range starting with `0`.
 ///
 /// returns: ()
 ///

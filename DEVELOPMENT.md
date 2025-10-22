@@ -113,5 +113,3 @@ cargo doc --document-private-items
 It is endorsed to install the `wasm-opt` tool from the
 [`binaryen`](https://github.com/WebAssembly/binaryen) project,
 which `wasm-pack` will automatically use to optimize the generated WASM code.
-
-

@@ -5,7 +5,7 @@
 //! Generates the [`crate::TokenKind`] enum
 
 use heck::ToUpperCamelCase;
-use proc_macro2::{Ident, Literal, Punct, Spacing, TokenStream};
+use proc_macro2::{Ident, Literal, TokenStream};
 use quote::__private::ext::RepToTokensExt;
 use quote::{format_ident, quote};
 
@@ -62,11 +62,8 @@ impl Token<'_> {
                 let char = self.shorthand.next().unwrap();
                 quote! {#char}
             } else {
-                let char = self
-                    .shorthand
-                    .chars()
-                    .map(|c| Punct::new(c, Spacing::Joint));
-                quote! { #(#char)* }
+                let tokens: TokenStream = self.shorthand.parse().unwrap();
+                quote! { #tokens }
             }
         };
         let variant = self.to_ident();

@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE.md
 // SPDX-FileCopyrightText: 2023 CYBERTEC PostgreSQL International GmbH <office@cybertec.at>
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { analyze, DboAnalyzeContext } from 'poc-plpgsql-analyzer';
+import { describe, expect, it } from 'vitest';
 
 const FUNCTION_HEADINGS_DIR = '../function/heading';
 const PROCEDURE_HEADINGS_DIR = '../procedure/heading';
