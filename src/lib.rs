@@ -10,6 +10,7 @@
 pub use analyzer::*;
 pub use ast::*;
 pub use parser::*;
+pub use source_gen::syntax::*;
 pub use util::SqlIdent;
 
 mod analyzer;
