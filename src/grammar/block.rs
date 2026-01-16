@@ -16,7 +16,10 @@ use source_gen::T;
 
 use super::commit::parse_commit;
 use super::loops::{parse_continue_stmt, parse_exit_stmt, parse_loop};
-use super::{parse_cte, parse_cursor, parse_dml, parse_execute_immediate, parse_raise_stmt};
+use super::{
+    parse_cte, parse_cursor, parse_dml, parse_execute_immediate, parse_forall_stmt,
+    parse_raise_stmt,
+};
 
 /// Parses a complete block.
 pub fn parse_block(p: &mut Parser) {
@@ -64,6 +67,7 @@ pub(super) fn parse_stmt(p: &mut Parser) {
         T![raise] => parse_raise_stmt(p),
         T![delete] | T![update] => parse_dml(p),
         T![commit] => parse_commit(p),
+        T![forall] => parse_forall_stmt(p),
         current_token => {
             if !(opt_assignment_stmt(p) || opt_procedure_call(p)) {
                 p.error(ParseErrorType::ExpectedStatement(current_token));
